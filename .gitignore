@@ -1,0 +1,21 @@
+# Secrets — never commit real keys
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Frontend / Node
+node_modules/
+dist/
+
+# Local data cache (SerpApi response cache)
+cache/
+data/poi_serpapi_cache/
+data/osm_fee_cache/
+data/lodging_serpapi_cache/
+
+# macOS
+.DS_Store

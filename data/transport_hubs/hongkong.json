@@ -1,0 +1,26 @@
+[
+  {
+    "id": "hongkong-airport",
+    "name": "香港国际机场",
+    "name_en": "Hong Kong International Airport",
+    "kind": "airport",
+    "lat": 22.308,
+    "lng": 113.9185
+  },
+  {
+    "id": "west-kowloon-station",
+    "name": "西九龙站",
+    "name_en": "Hong Kong West Kowloon Station",
+    "kind": "station",
+    "lat": 22.3038,
+    "lng": 114.1622
+  },
+  {
+    "id": "hung-hom-station",
+    "name": "红磡站",
+    "name_en": "Hung Hom Station",
+    "kind": "station",
+    "lat": 22.3031,
+    "lng": 114.1808
+  }
+]

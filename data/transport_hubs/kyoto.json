@@ -1,0 +1,26 @@
+[
+  {
+    "id": "kyoto-station",
+    "name": "京都站",
+    "name_en": "Kyoto Station",
+    "kind": "station",
+    "lat": 34.9858,
+    "lng": 135.7588
+  },
+  {
+    "id": "arashiyama-station",
+    "name": "岚山站",
+    "name_en": "Arashiyama Station",
+    "kind": "station",
+    "lat": 35.0094,
+    "lng": 135.6779
+  },
+  {
+    "id": "gion-shijo-station",
+    "name": "祗园四条站",
+    "name_en": "Gion-Shijo Station",
+    "kind": "station",
+    "lat": 35.0037,
+    "lng": 135.771
+  }
+]

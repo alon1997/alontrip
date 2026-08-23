@@ -1,0 +1,34 @@
+[
+  {
+    "id": "incheon-airport",
+    "name": "仁川国际机场",
+    "name_en": "Incheon International Airport",
+    "kind": "airport",
+    "lat": 37.4602,
+    "lng": 126.4407
+  },
+  {
+    "id": "gimpo-airport",
+    "name": "金浦国际机场",
+    "name_en": "Gimpo International Airport",
+    "kind": "airport",
+    "lat": 37.5583,
+    "lng": 126.7906
+  },
+  {
+    "id": "seoul-station",
+    "name": "首尔站",
+    "name_en": "Seoul Station",
+    "kind": "station",
+    "lat": 37.5547,
+    "lng": 126.9707
+  },
+  {
+    "id": "yongsan-station",
+    "name": "龙山站",
+    "name_en": "Yongsan Station",
+    "kind": "station",
+    "lat": 37.5299,
+    "lng": 126.9648
+  }
+]

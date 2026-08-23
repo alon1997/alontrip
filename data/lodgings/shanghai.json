@@ -1,0 +1,210 @@
+[
+  {
+    "id": "blue-mountain-bund-youth-hostel",
+    "name": "Blue Mountain Bund Youth Hostel",
+    "lat": 31.2395511,
+    "lng": 121.4812792,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 4.2,
+    "area": "350 Shanxi Rd (S)",
+    "price_per_night": 45.0,
+    "price_currency": "USD"
+  },
+  {
+    "id": "dayin-international-youth-hostel-shanghai-oriental-pearl-lujiazui-branch",
+    "name": "Dayin International Youth Hostel - Shanghai Oriental Pearl Lujiazui Branch",
+    "lat": 31.2393387,
+    "lng": 121.5273589,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 3.6,
+    "area": "Lane",
+    "price_per_night": 26.0,
+    "price_currency": "USD"
+  },
+  {
+    "id": "shanghai-soho-international-youth-hostel",
+    "name": "Shanghai SOHO International Youth Hostel",
+    "lat": 31.2406185,
+    "lng": 121.4645004,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 4.0,
+    "area": "1307 Nansuzhou Rd",
+    "price_per_night": 55.0,
+    "price_currency": "USD"
+  },
+  {
+    "id": "weflow-hostel-shanghai-xintiandi",
+    "name": "WeFlow Hostel - Shanghai Xintiandi",
+    "lat": 31.221433,
+    "lng": 121.466549,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 3.6,
+    "area": "No.14-15",
+    "price_per_night": 25.0,
+    "price_currency": "USD"
+  },
+  {
+    "id": "binjia-international-youth-hostel",
+    "name": "Binjia International Youth Hostel",
+    "lat": 31.231627,
+    "lng": 121.511302,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 4.1,
+    "area": "Pudong",
+    "price_per_night": 56.0,
+    "price_currency": "USD"
+  },
+  {
+    "id": "weflow-hostel",
+    "name": "WEFLOW Hostel",
+    "lat": 31.267631,
+    "lng": 121.47239,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 2.4,
+    "area": "中山北路33号",
+    "price_per_night": 42.0,
+    "price_currency": "USD"
+  },
+  {
+    "id": "fu-di-hotel",
+    "name": "Fu Di Hotel",
+    "lat": 31.209269,
+    "lng": 121.473785,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 5.0,
+    "area": "396 Xujiahui Rd",
+    "price_per_night": 71.0,
+    "price_currency": "USD"
+  },
+  {
+    "id": "laoshan-hostel",
+    "name": "Laoshan Hostel",
+    "lat": 31.22872,
+    "lng": 121.479969,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 4.3,
+    "area": "17 Yunnan Rd (S)"
+  },
+  {
+    "id": "shanghai-le-tour-traveler-s-rest-youth-hostel",
+    "name": "Shanghai Le Tour Traveler's Rest Youth Hostel",
+    "lat": 31.2292095,
+    "lng": 121.441809,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 4.1,
+    "area": "曹家渡 Jing An Qu"
+  },
+  {
+    "id": "poi",
+    "name": "民春旅馆",
+    "lat": 31.271493,
+    "lng": 121.660011,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 0.0,
+    "area": "Pudong"
+  },
+  {
+    "id": "shanghai-rock-wood-international-youth-hostel",
+    "name": "Shanghai Rock & Wood International Youth Hostel",
+    "lat": 31.211877,
+    "lng": 121.420179,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 4.3,
+    "area": "No.278"
+  },
+  {
+    "id": "shanghai-soho-bund-international-youth-hostel",
+    "name": "Shanghai Soho Bund International Youth Hostel",
+    "lat": 31.2464112,
+    "lng": 121.4936883,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 4.0,
+    "area": "239 Daming Rd"
+  },
+  {
+    "id": "mingtown-nanjing-road-youth-hostel",
+    "name": "Mingtown Nanjing Road Youth Hostel",
+    "lat": 31.2377342,
+    "lng": 121.4815671,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 3.5,
+    "area": "258 Tianjin Rd"
+  },
+  {
+    "id": "mengli-shuixiang-hotel",
+    "name": "Mengli Shuixiang Hotel",
+    "lat": 31.279977,
+    "lng": 121.402974,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 5.0,
+    "area": "1920 Hualing Rd",
+    "price_per_night": 23.0,
+    "price_currency": "USD"
+  },
+  {
+    "id": "poi-2",
+    "name": "龙欣旅馆",
+    "lat": 31.287168,
+    "lng": 121.310263,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 0.0,
+    "area": "Jiading District"
+  },
+  {
+    "id": "shanghai-blue-mountain-youth-hostel-luwan",
+    "name": "Shanghai Blue Mountain Youth Hostel - Luwan",
+    "lat": 31.1988737,
+    "lng": 121.4747278,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 4.2,
+    "area": "Huang Pu Qu"
+  },
+  {
+    "id": "hanting-express",
+    "name": "Hanting Express",
+    "lat": 31.168278,
+    "lng": 121.435525,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 3.5,
+    "area": "Xuhui District",
+    "price_per_night": 43.0,
+    "price_currency": "USD"
+  },
+  {
+    "id": "anjie-hotel",
+    "name": "Anjie Hotel",
+    "lat": 31.168273,
+    "lng": 121.493664,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 0.0,
+    "area": "5F9V+8F3"
+  },
+  {
+    "id": "poi-3",
+    "name": "上海曙光假日旅馆",
+    "lat": 31.211617,
+    "lng": 121.52357,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 0.0,
+    "area": "Pudong"
+  }
+]

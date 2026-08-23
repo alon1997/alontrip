@@ -1,0 +1,42 @@
+[
+  {
+    "id": "beijing-capital-airport",
+    "name": "北京首都国际机场",
+    "name_en": "Beijing Capital International Airport",
+    "kind": "airport",
+    "lat": 40.0799,
+    "lng": 116.6031
+  },
+  {
+    "id": "beijing-daxing-airport",
+    "name": "北京大兴国际机场",
+    "name_en": "Beijing Daxing International Airport",
+    "kind": "airport",
+    "lat": 39.5098,
+    "lng": 116.4108
+  },
+  {
+    "id": "beijing-railway-station",
+    "name": "北京站",
+    "name_en": "Beijing Railway Station",
+    "kind": "station",
+    "lat": 39.9028,
+    "lng": 116.4275
+  },
+  {
+    "id": "beijing-south-railway-station",
+    "name": "北京南站",
+    "name_en": "Beijing South Railway Station",
+    "kind": "station",
+    "lat": 39.8652,
+    "lng": 116.3786
+  },
+  {
+    "id": "beijing-west-railway-station",
+    "name": "北京西站",
+    "name_en": "Beijing West Railway Station",
+    "kind": "station",
+    "lat": 39.8949,
+    "lng": 116.3222
+  }
+]

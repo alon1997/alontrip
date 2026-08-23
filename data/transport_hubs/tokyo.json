@@ -1,0 +1,66 @@
+[
+  {
+    "id": "narita-airport",
+    "name": "成田国际机场",
+    "name_en": "Narita International Airport",
+    "kind": "airport",
+    "lat": 35.7719,
+    "lng": 140.3928
+  },
+  {
+    "id": "haneda-airport",
+    "name": "羽田机场",
+    "name_en": "Haneda Airport",
+    "kind": "airport",
+    "lat": 35.5494,
+    "lng": 139.7798
+  },
+  {
+    "id": "tokyo-station",
+    "name": "东京站",
+    "name_en": "Tokyo Station",
+    "kind": "station",
+    "lat": 35.6812,
+    "lng": 139.7671
+  },
+  {
+    "id": "shinjuku-station",
+    "name": "新宿站",
+    "name_en": "Shinjuku Station",
+    "kind": "station",
+    "lat": 35.6896,
+    "lng": 139.7006
+  },
+  {
+    "id": "shibuya-station",
+    "name": "涩谷站",
+    "name_en": "Shibuya Station",
+    "kind": "station",
+    "lat": 35.658,
+    "lng": 139.7016
+  },
+  {
+    "id": "ikebukuro-station",
+    "name": "池袋站",
+    "name_en": "Ikebukuro Station",
+    "kind": "station",
+    "lat": 35.7295,
+    "lng": 139.7109
+  },
+  {
+    "id": "shinagawa-station",
+    "name": "品川站",
+    "name_en": "Shinagawa Station",
+    "kind": "station",
+    "lat": 35.6285,
+    "lng": 139.7387
+  },
+  {
+    "id": "ueno-station",
+    "name": "上野站",
+    "name_en": "Ueno Station",
+    "kind": "station",
+    "lat": 35.7141,
+    "lng": 139.7774
+  }
+]

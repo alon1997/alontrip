@@ -1,0 +1,10 @@
+[
+  {
+    "id": "jeju-airport",
+    "name": "济州国际机场",
+    "name_en": "Jeju International Airport",
+    "kind": "airport",
+    "lat": 33.5113,
+    "lng": 126.493
+  }
+]

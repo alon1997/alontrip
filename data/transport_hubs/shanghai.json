@@ -1,0 +1,42 @@
+[
+  {
+    "id": "pudong-airport",
+    "name": "上海浦东国际机场",
+    "name_en": "Shanghai Pudong International Airport",
+    "kind": "airport",
+    "lat": 31.1443,
+    "lng": 121.8083
+  },
+  {
+    "id": "hongqiao-airport",
+    "name": "上海虹桥国际机场",
+    "name_en": "Shanghai Hongqiao International Airport",
+    "kind": "airport",
+    "lat": 31.1979,
+    "lng": 121.3364
+  },
+  {
+    "id": "shanghai-railway-station",
+    "name": "上海站",
+    "name_en": "Shanghai Railway Station",
+    "kind": "station",
+    "lat": 31.2497,
+    "lng": 121.4557
+  },
+  {
+    "id": "shanghai-hongqiao-railway-station",
+    "name": "上海虹桥站",
+    "name_en": "Shanghai Hongqiao Railway Station",
+    "kind": "station",
+    "lat": 31.1968,
+    "lng": 121.3208
+  },
+  {
+    "id": "shanghai-south-railway-station",
+    "name": "上海南站",
+    "name_en": "Shanghai South Railway Station",
+    "kind": "station",
+    "lat": 31.1548,
+    "lng": 121.4319
+  }
+]

@@ -1,0 +1,220 @@
+[
+  {
+    "id": "peking-youth-hostel",
+    "name": "Peking Youth Hostel",
+    "lat": 39.935825,
+    "lng": 116.403,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 4.3,
+    "area": "113 S Luogu Ln",
+    "price_per_night": 52.0,
+    "price_currency": "USD"
+  },
+  {
+    "id": "p-loft-youth-hostel",
+    "name": "P.Loft Youth Hostel",
+    "lat": 39.94702,
+    "lng": 116.42042,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 3.5,
+    "area": "29 Paojutou Aly",
+    "price_per_night": 31.0,
+    "price_currency": "USD"
+  },
+  {
+    "id": "peking-station-hostel",
+    "name": "Peking station hostel",
+    "lat": 39.9062882,
+    "lng": 116.4197331,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 4.4,
+    "area": "Dong Cheng Qu",
+    "price_per_night": 55.0,
+    "price_currency": "USD"
+  },
+  {
+    "id": "peking-yard-hostel",
+    "name": "Peking Yard Hostel",
+    "lat": 39.932446,
+    "lng": 116.414825,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 4.4,
+    "area": "No. Jia 28",
+    "price_per_night": 66.0,
+    "price_currency": "USD"
+  },
+  {
+    "id": "happy-dragon-hostel",
+    "name": "Happy Dragon Hostel",
+    "lat": 39.926304,
+    "lng": 116.413429,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 4.4,
+    "area": "29 Renminshichang W Ln",
+    "price_per_night": 73.0,
+    "price_currency": "USD"
+  },
+  {
+    "id": "spring-time-hostel",
+    "name": "Spring Time Hostel",
+    "lat": 39.9241274,
+    "lng": 116.4169249,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 3.5,
+    "area": "WCF8+MQ3",
+    "price_per_night": 52.0,
+    "price_currency": "USD"
+  },
+  {
+    "id": "dragon-king-hostel",
+    "name": "Dragon King Hostel",
+    "lat": 39.9328658,
+    "lng": 116.4196301,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 3.9,
+    "area": "78 Dongsijiu Aly",
+    "price_per_night": 94.0,
+    "price_currency": "USD"
+  },
+  {
+    "id": "the-great-wall-courtyard-hostel",
+    "name": "The Great Wall Courtyard Hostel",
+    "lat": 40.362617,
+    "lng": 115.999258,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 5.0,
+    "area": "Yan Qing Qu",
+    "price_per_night": 31.0,
+    "price_currency": "USD"
+  },
+  {
+    "id": "beijing-saga-youth-hostel",
+    "name": "Beijing Saga Youth Hostel",
+    "lat": 39.9185731,
+    "lng": 116.4253136,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 4.2,
+    "area": "Dong Cheng Qu"
+  },
+  {
+    "id": "poi",
+    "name": "金师旅馆",
+    "lat": 39.913697,
+    "lng": 116.428981,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 0.0,
+    "area": "Dongcheng"
+  },
+  {
+    "id": "jinjiang-inn",
+    "name": "Jinjiang Inn",
+    "lat": 39.8963685,
+    "lng": 116.3828851,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 3.7,
+    "area": "3 Anpingli",
+    "price_per_night": 44.0,
+    "price_currency": "USD"
+  },
+  {
+    "id": "beijing-drum-tower-youth-hostel",
+    "name": "Beijing Drum Tower Youth Hostel",
+    "lat": 39.9448399,
+    "lng": 116.3937508,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 3.4,
+    "area": "51 Jiugulou St"
+  },
+  {
+    "id": "beijing-heyuan-international-youth-hostel",
+    "name": "Beijing Heyuan International Youth Hostel",
+    "lat": 39.9538873,
+    "lng": 116.3679777,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 4.6,
+    "area": "1 文慧园路志强北园"
+  },
+  {
+    "id": "yue-xuan-courtyard-garden-international-youth-hostel",
+    "name": "Yue Xuan Courtyard Garden International Youth Hostel",
+    "lat": 39.926445,
+    "lng": 116.421146,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 3.7,
+    "area": "东四二条1号"
+  },
+  {
+    "id": "leo-hostel",
+    "name": "Leo Hostel",
+    "lat": 39.895042,
+    "lng": 116.39293,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 3.9,
+    "area": "52 Dashilan W St"
+  },
+  {
+    "id": "welight-youth-hostel",
+    "name": "WeLight Youth Hostel",
+    "lat": 39.9391371,
+    "lng": 116.3836537,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 0.0,
+    "area": "北京西城区什刹海街道百花深处胡同27号"
+  },
+  {
+    "id": "beijing-sunrise-youth-hostel-beihai-branch",
+    "name": "Beijing Sunrise Youth Hostel Beihai Branch",
+    "lat": 39.927061,
+    "lng": 116.377361,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 3.4,
+    "area": "W9GG+RWH"
+  },
+  {
+    "id": "chinese-box-courtyard-hostel",
+    "name": "Chinese Box Courtyard Hostel",
+    "lat": 39.926148,
+    "lng": 116.368384,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 4.5,
+    "area": "52 Xisi North 2 Aly"
+  },
+  {
+    "id": "jinyuan-express-hotel",
+    "name": "Jinyuan Express Hotel",
+    "lat": 40.0384078,
+    "lng": 116.3317839,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 0.0,
+    "area": "Haidian District"
+  },
+  {
+    "id": "beijing-city-central-youth-hostel",
+    "name": "Beijing City Central Youth Hostel",
+    "lat": 39.9056,
+    "lng": 116.4263,
+    "kind": "hostel",
+    "listed": 1,
+    "rating": 3.8,
+    "area": "Dongcheng"
+  }
+]

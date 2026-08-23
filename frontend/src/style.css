@@ -1,0 +1,659 @@
+:root {
+  --bg: #0d1117;
+  --panel: #161b22;
+  --border: #30363d;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-green: #3fb950;
+  --danger: #f85149;
+  --gold: #ffd166;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #app { height: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+}
+
+.layout { display: flex; height: 100vh; overflow: hidden; }
+
+/* ---------- 侧边栏 35% ---------- */
+.sidebar {
+  width: 35%;
+  min-width: 320px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  padding: 16px 20px 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.brand-block {
+  padding-bottom: 16px;
+}
+
+.plan-heading {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+  font-family: ui-monospace, Menlo, monospace;
+  padding: 12px 0 4px;
+}
+
+.plan-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.plan-section-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.plan-step {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(88, 166, 255, 0.15);
+  color: var(--accent);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.section-hint {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+.spot-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.spot-tab {
+  background: var(--bg);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: ui-monospace, Menlo, monospace;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.spot-tab.active {
+  background: rgba(88, 166, 255, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.sidebar-footer {
+  margin-top: 4px;
+  padding: 16px 0 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: #000;
+}
+.brand-text { min-width: 0; }
+.brand h1 {
+  font-size: 20px;
+  font-family: ui-monospace, Menlo, monospace;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+.tagline { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+.error-banner {
+  background: rgba(248, 81, 73, 0.12);
+  border: 1px solid var(--danger);
+  color: #ff7b72;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+.error-banner .close { background: none; border: none; color: #ff7b72; cursor: pointer; font-size: 16px; line-height: 1; }
+
+.field-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-family: ui-monospace, Menlo, monospace;
+}
+
+select.select, input.search {
+  width: 100%;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+  outline: none;
+}
+select.select:focus, input.search:focus { border-color: var(--accent); }
+
+.day-group { display: flex; flex-wrap: wrap; gap: 6px; }
+.day-btn {
+  min-width: 36px;
+  background: var(--bg);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 13px;
+}
+.day-btn.active { background: rgba(88, 166, 255, 0.15); border-color: var(--accent); color: var(--accent); }
+
+.poi-list {
+  list-style: none;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+.poi-item { border-bottom: 1px solid var(--border); }
+.poi-item:last-child { border-bottom: none; }
+.poi-item label { display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: pointer; }
+.poi-item label:hover { background: rgba(88, 166, 255, 0.06); }
+.poi-item input { accent-color: var(--accent); }
+.poi-name { flex: 1; }
+.poi-rating { color: var(--gold); font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+.poi-duration { color: var(--muted); font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+
+.optimize {
+  background: var(--accent-green);
+  color: #04260f;
+  border: none;
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: ui-monospace, Menlo, monospace;
+}
+.optimize:disabled { opacity: 0.5; cursor: default; }
+
+.results { border: 1px solid var(--border); border-radius: 6px; }
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  color: var(--accent);
+}
+.day-card { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.day-card:last-child { border-bottom: none; }
+.day-title { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.day-route { color: var(--text); font-size: 12px; margin-top: 4px; opacity: 0.75; }
+.day-stats { color: var(--muted); font-size: 12px; margin-top: 4px; font-family: ui-monospace, Menlo, monospace; }
+.day-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+
+.trip-total {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(88, 166, 255, 0.05);
+}
+.trip-total-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.trip-total-label {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.trip-total-value { font-family: ui-monospace, Menlo, monospace; font-size: 16px; color: var(--gold); }
+.trip-total-note { color: var(--muted); font-size: 11px; margin-top: 4px; }
+
+.badge-real { color: var(--accent-green); }
+.badge-est { color: var(--gold); }
+
+.muted { color: var(--muted); }
+
+/* ---------- 城市多选 + 顺序 ---------- */
+.city-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.city-chip {
+  background: var(--bg);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: ui-monospace, Menlo, monospace;
+}
+.city-chip.active { background: rgba(88, 166, 255, 0.15); border-color: var(--accent); color: var(--accent); }
+.city-chip:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.city-order { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.city-order li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+.city-order-num {
+  color: var(--accent);
+  font-family: ui-monospace, Menlo, monospace;
+  font-weight: 700;
+  width: 16px;
+}
+.city-order-name { flex: 1; }
+.city-order-controls { display: flex; gap: 4px; }
+.city-order-controls button {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 2px 6px;
+  line-height: 1;
+}
+.city-order-controls button:disabled { opacity: 0.3; cursor: default; }
+
+/* ---------- 城市按国家分组 (T-016) ---------- */
+.country-group { display: flex; flex-direction: column; gap: 4px; }
+.country-label {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: ui-monospace, Menlo, monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ---------- 到达/离开机场车站选择 (T-016) ---------- */
+.hub-picker-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.hub-picker { display: flex; flex-direction: column; gap: 4px; }
+
+/* ---------- First / Last day：同一行两个 radio（T-022） ---------- */
+.density-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.density-row-name {
+  width: 72px;
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--text);
+}
+.density-choice {
+  display: flex;
+  flex: 1;
+  gap: 6px;
+}
+.density-choice .hotel-mode-option {
+  flex: 1;
+  padding: 6px 10px;
+}
+
+/* ---------- 软上限 / 警告横幅 ---------- */
+.warning-banner {
+  background: rgba(255, 209, 102, 0.1);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+/* ---------- 住法三选一 ---------- */
+.hotel-mode-group { display: flex; flex-direction: column; gap: 6px; }
+.hotel-mode-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.hotel-mode-option.active { border-color: var(--accent); }
+.hotel-mode-option input { accent-color: var(--accent); }
+
+.custom-city-block {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.day-chips { display: flex; flex-direction: column; gap: 6px; }
+.day-chip { display: flex; align-items: center; gap: 8px; }
+.day-chip-label {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  color: var(--muted);
+  width: 44px;
+  flex-shrink: 0;
+}
+.day-chip .select { flex: 1; padding: 6px 8px; font-size: 12px; }
+
+.disabled-reason {
+  color: var(--danger);
+  font-size: 12px;
+  text-align: center;
+}
+
+.sample-btn {
+  background: none;
+  border: 1px dashed var(--border);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: ui-monospace, Menlo, monospace;
+}
+.sample-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.sample-btn:disabled { opacity: 0.5; cursor: default; }
+
+.health-footer {
+  color: var(--muted);
+  font-size: 11px;
+  font-family: ui-monospace, Menlo, monospace;
+  text-align: center;
+  padding-top: 4px;
+}
+
+.poi-dot { cursor: pointer; }
+
+/* ---------- 结果页（T-014 简版；T-015 会加地图） ---------- */
+.empty-result { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.back-btn { background: var(--accent); color: #04121f; }
+.result-map-placeholder { display: flex; align-items: center; justify-content: center; }
+.placeholder-note { color: var(--muted); font-size: 13px; font-family: ui-monospace, Menlo, monospace; }
+
+/* ---------- 地图 65% ---------- */
+.map-wrap { flex: 1; position: relative; }
+#map { position: absolute; inset: 0; background: #0b0f14; }
+
+/* Leaflet 暗色化 */
+.leaflet-tooltip {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 12px;
+}
+.leaflet-tooltip-top:before { border-top-color: var(--border); }
+.leaflet-tooltip-bottom:before { border-bottom-color: var(--border); }
+.leaflet-tooltip-left:before { border-left-color: var(--border); }
+.leaflet-tooltip-right:before { border-right-color: var(--border); }
+
+.map-legend {
+  background: rgba(13, 17, 23, 0.92);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-size: 12px;
+  font-family: ui-monospace, Menlo, monospace;
+}
+.map-legend div { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
+.map-legend .legend-row { display: flex; align-items: center; gap: 6px; margin: 3px 0; cursor: pointer; }
+.map-legend .legend-row input { accent-color: var(--accent); cursor: pointer; }
+.map-legend .legend-note {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+/* The on-map hotel/hub icons are `display:flex` divs so their glyph centers
+   inside the pin shape; inside the legend they're plain inline <span>s, so
+   without re-declaring the flex display here the glyph falls back to
+   normal inline flow and drifts off-center. `inline-flex` keeps them
+   inline with the label text while still centering the glyph, and
+   `border-radius: 50%` turns the (normally teardrop-shaped, rotated)
+   hotel pin into a plain round swatch here since it's shown unrotated. */
+.map-legend .legend-icon {
+  position: static;
+  transform: none;
+  display: inline-flex;
+  border-radius: 50%;
+}
+
+/* ---------- 结果页地图：酒店图标 / 箭头 ---------- */
+.hotel-pin-icon { background: none; border: none; }
+.hotel-pin {
+  width: 20px;
+  height: 20px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--gold);
+  color: #221a00;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  transform: rotate(-45deg);
+  border: 1px solid #04121f;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+/* ---------- 结果页地图：到达/离开机场车站图标 (T-016) ---------- */
+.hub-pin-icon { background: none; border: none; }
+.hub-pin {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  color: #04210c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  border: 2px solid #04121f;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.65);
+}
+
+/* ---------- 结果页地图：常驻高亮文字标签 (T-016) ----------
+   permanent tooltip 默认是浅色气泡带小三角，这里换成跟整体暗色 UI 一致的
+   徽章样式，并去掉箭头——点的颜色已经区分了天数，标签只需要清楚易读。 */
+.leaflet-tooltip.map-label {
+  background: rgba(13, 17, 23, 0.88);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-family: ui-monospace, Menlo, monospace;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.leaflet-tooltip.map-label::before { display: none; }
+.leaflet-tooltip.map-label-hub { border-color: var(--accent-green); color: var(--accent-green); }
+.leaflet-tooltip.map-label-hotel { border-color: var(--gold); color: var(--gold); }
+/* Centered via flex so the triangle's own box (and thus its rotation
+   origin) lines up with the icon's anchor point — a border-triangle with
+   asymmetric width/height sitting at the wrapper's default top-left made
+   the arrow visibly drift off the line, especially once rotated. */
+.route-arrow-icon { background: none; border: none; display: flex; align-items: center; justify-content: center; }
+.route-arrow {
+  width: 12px;
+  height: 12px;
+  background: currentColor;
+  clip-path: polygon(50% 0%, 100% 100%, 50% 75%, 0% 100%);
+  transform-origin: 50% 50%;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8));
+}
+
+.day-schedule {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sched-row {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.sched-time {
+  font-family: ui-monospace, Menlo, monospace;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+.sched-title { color: var(--text); }
+.sched-meta { color: var(--muted); font-size: 11px; margin-top: 1px; }
+.sched-lunch .sched-title, .sched-dinner .sched-title { color: var(--accent); }
+.sched-checkin .sched-title { color: var(--gold); }
+
+/* ---------- 灰点 / 彩点弹窗（加点 / 删点） ---------- */
+.poi-popup { font-family: ui-monospace, Menlo, monospace; }
+.poi-popup-hint { color: var(--muted); font-size: 11px; margin: 4px 0; }
+.poi-popup-btn {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  background: var(--accent);
+  color: #04121f;
+  border: none;
+  border-radius: 5px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: ui-monospace, Menlo, monospace;
+}
+.poi-popup-btn-danger { background: var(--danger); color: #2a0505; }
+
+/* ---------- 结果页侧栏：更新交通 / 导出 / 待处理提示 ---------- */
+.update-btn { background: var(--gold); color: #221a00; }
+.update-btn:disabled { opacity: 0.4; cursor: default; }
+.pending-banner { border-color: var(--danger); color: var(--danger); background: rgba(255, 92, 92, 0.08); }
+.result-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+
+/* ---------- 路线详情弹窗（点击动线） ---------- */
+.route-popup .leaflet-popup-content-wrapper {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+}
+.route-popup .leaflet-popup-content { margin: 12px 14px; line-height: 1.45; }
+.route-popup .leaflet-popup-tip { background: var(--panel); border: 1px solid var(--border); }
+.route-popup a.leaflet-popup-close-button { color: var(--muted); }
+
+.rp-head {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rp-leg { margin: 8px 0; padding-left: 10px; border-left: 2px solid var(--accent); }
+.rp-line { font-weight: 600; font-size: 13px; }
+.rp-stops { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.rp-time { color: var(--muted); font-size: 11px; font-family: ui-monospace, Menlo, monospace; margin-top: 2px; }
+.rp-walk { color: var(--muted); font-size: 12px; margin: 6px 0 6px 10px; }
+
+.rp-total {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 13px;
+  color: var(--gold);
+}
+
+.rp-est {
+  color: var(--muted);
+  font-size: 12px;
+  background: rgba(139, 148, 158, 0.1);
+  border-radius: 4px;
+  padding: 8px 10px;
+}
+
+.rp-alts { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border); }
+.rp-alts-head {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.rp-alt { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; margin: 3px 0; }
+.rp-alt-line { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-alt-delta { color: var(--muted); font-family: ui-monospace, Menlo, monospace; white-space: nowrap; }
+.rp-alt-delta.is-cheaper { color: var(--accent-green); }
+.rp-alt-delta.is-pricier { color: var(--gold); }
