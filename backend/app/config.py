@@ -18,11 +18,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # CORS 白名单默认值：Vite dev (5173) + preview (4173)
 DEFAULT_CORS_ORIGINS = "http://localhost:5173,http://localhost:4173"
 
-# .env lives at the 04app/ repo root (see 方案计划.md 6.7's directory tree),
-# not inside backend/. Resolved as an absolute path (T-008 fix) so Settings
-# finds it regardless of the process's current working directory — a plain
-# ".env" only worked when uvicorn happened to be launched from 04app/.
-_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
+# Local layout: 04app/.env (parents[2]). Server layout: trip_api/backend/.env
+# (parents[1]). Prefer whichever file exists so a deploy does not silently
+# drop SerpApi / DeepSeek keys.
+_ENV_CANDIDATES = (
+    Path(__file__).resolve().parents[2] / ".env",
+    Path(__file__).resolve().parents[1] / ".env",
+)
+_ENV_FILE = next((path for path in _ENV_CANDIDATES if path.is_file()), _ENV_CANDIDATES[0])
 
 
 class Settings(BaseSettings):
