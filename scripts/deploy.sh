@@ -8,8 +8,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-HOST="${DEPLOY_HOST:-root@REDACTED_SERVER_HOST}"
-PORT="${DEPLOY_PORT:-REDACTED_SSH_PORT}"
+HOST="${DEPLOY_HOST:?set DEPLOY_HOST e.g. user@your-server}"
+PORT="${DEPLOY_PORT:-22}"
 SSH=(ssh -o BatchMode=yes -p "$PORT" "$HOST")
 RSYNC=(rsync -az -e "ssh -o BatchMode=yes -p $PORT")
 REMOTE_API=/www/wwwroot/trip_api
