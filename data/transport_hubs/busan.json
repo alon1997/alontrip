@@ -1,7 +1,7 @@
 [
   {
     "id": "gimhae-airport",
-    "name": "金海国际机场",
+    "name": "",
     "name_en": "Gimhae International Airport",
     "kind": "airport",
     "lat": 35.1795,
@@ -9,7 +9,7 @@
   },
   {
     "id": "busan-station",
-    "name": "釜山站",
+    "name": "",
     "name_en": "Busan Station",
     "kind": "station",
     "lat": 35.1152,

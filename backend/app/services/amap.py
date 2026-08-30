@@ -1,4 +1,4 @@
-"""Mainland China transit via 高德 Web 服务 (D-020).
+"""Mainland China transit via the Amap (Gaode) web service (D-020).
 
 SerpApi/Google transit is empty in Shanghai/Beijing. This talks to
 ``direction/transit/integrated`` (bus/metro) and, if that is empty, uses
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 AMAP_TRANSIT = "https://restapi.amap.com/v3/direction/transit/integrated"
 AMAP_DRIVING = "https://restapi.amap.com/v3/direction/driving"
 
-# citycode: 010 北京 / 021 上海. Names also work; codes are stabler.
+# citycode: 010 Beijing / 021 Shanghai. Names also work; codes are stabler.
 AMAP_CITY = {
     "beijing": "010",
     "shanghai": "021",
@@ -68,6 +68,10 @@ class AmapTransitProvider:
             try:
                 cached = TransitRoute.model_validate_json(cache_file.read_text(encoding="utf-8"))
                 if not cached.estimated or any(leg.travel_mode == "taxi" for leg in cached.legs):
+                    if any(leg.travel_mode == "taxi" for leg in cached.legs):
+                        cached.data_source = "taxi"
+                    else:
+                        cached.data_source = "amap"
                     return cached
             except Exception as exc:
                 logger.warning("ignoring corrupt Amap cache %s: %s", cache_file, exc)
@@ -124,6 +128,7 @@ class AmapTransitProvider:
             currency="USD",
             transfer_count=max(0, len([leg for leg in legs if leg.travel_mode == "transit"]) - 1),
             legs=legs,
+            data_source="amap",
         )
 
     def _fetch_driving_taxi(self, origin: Coord, dest: Coord, *, city: str) -> TransitRoute:

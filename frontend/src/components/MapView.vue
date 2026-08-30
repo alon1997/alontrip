@@ -1,9 +1,13 @@
 <script setup>
-// 规划页地图：只做「已勾亮、未勾灰」的预览（方案 7.2）。最终路线画在结果页
-// 的 ResultMap.vue —— 两边需求已分叉（这里不需要箭头/编辑/按天开关），拆开更好读。
-// 圆点可点：选中/取消跟左侧列表共用同一套 selectedIds。
+// Planner map: just a "checked = lit, unchecked = gray" preview (plan 7.2).
+// The final route is drawn on the result page's ResultMap.vue — the two needs
+// diverged (no arrows/editing/per-day toggles here), so separate components
+// stay easier to read.
+// Dots are clickable: selecting/deselecting shares the same selectedIds as
+// the sidebar list.
 import { ref, onMounted, watch } from 'vue'
 import L from 'leaflet'
+import { addDarkBasemap } from '../basemap'
 
 const props = defineProps({
   pois: { type: Array, default: () => [] },
@@ -27,19 +31,15 @@ let poiLayer = null
 
 onMounted(() => {
   map = L.map(mapEl.value)
-  // 瓦片由浏览器直连 CDN（OSM 数据，CARTO 暗色渲染），不经过本项目服务器
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    subdomains: 'abcd',
-    maxZoom: 19,
-  }).addTo(map)
-  map.setView([35.68, 139.69], 12) // 默认东京视野
+  // Tiles come straight from the CDN in the browser (Esri dark basemap +
+  // reference labels, no key needed), never through our own server
+  addDarkBasemap(map)
+  map.setView([35.68, 139.69], 12) // default Tokyo view
   poiLayer = L.layerGroup().addTo(map)
   renderPois(true)
 })
 
-// 景点集合变化（切城市）→ 重绘并重定位；勾选变化 → 只重绘样式
+// Spot set changes (city switch) → full redraw + refit; selection changes → restyle only
 watch(() => props.pois, () => renderPois(true), { deep: true })
 watch(() => props.selectedIds, () => renderPois(false), { deep: true })
 

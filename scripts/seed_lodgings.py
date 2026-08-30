@@ -83,7 +83,7 @@ def parse_nightly_price(raw: object, default_ccy: str) -> tuple[float | None, st
         return amount, "JPY"
     if "won" in lower or "krw" in lower:
         return amount, "KRW"
-    if "yuan" in lower or "cny" in lower or "元" in text:
+    if "yuan" in lower or "cny" in lower or "\u5143" in text:
         return amount, "CNY"
     if "hkd" in lower or "hk$" in lower:
         return amount, "HKD"

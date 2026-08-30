@@ -13,6 +13,7 @@ import {
   optimizeRoute,
 } from '../api'
 import { splitCityDays } from '../planner'
+import { haversineKm } from '../geo'
 
 const router = useRouter()
 
@@ -22,7 +23,7 @@ const DENSITY_CHOICES = [
   { id: 'none', label: 'none' },
   { id: 'few', label: 'few' },
 ]
-const COUNTRY_ORDER = ['japan', 'china', 'korea']
+const COUNTRY_ORDER = ['japan', 'korea', 'china']
 const COUNTRY_LABELS = { japan: 'Japan', china: 'China', korea: 'Korea' }
 
 const allCities = ref([])
@@ -37,11 +38,41 @@ const hubsByCity = reactive({})
 const loadingHubsFor = reactive({})
 const arrivalHubId = ref('')
 const departureHubId = ref('')
+// T-034: landing/takeoff times (HH:MM, in the hub's local timezone). Only
+// usable — and only submitted — when the matching hub is selected.
+const arrivalTime = ref('')
+const departureTime = ref('')
+
+watch(arrivalHubId, (id) => {
+  if (!id) arrivalTime.value = ''
+})
+watch(departureHubId, (id) => {
+  if (!id) departureTime.value = ''
+})
+
+// Native time inputs only accept typing when you hit the tiny hour/minute
+// segments, which is hard to target — open the native picker dropdown on any
+// click instead. showPicker needs a user gesture; skip silently on Firefox.
+function openTimePicker(e) {
+  const el = e.currentTarget
+  if (el.disabled || !el.showPicker) return
+  try {
+    el.showPicker()
+  } catch {
+    /* fall back to manual segment input if the browser refuses */
+  }
+}
 
 const poisByCity = reactive({})
 const loadingPoisFor = reactive({})
 const poiSearch = reactive({})
 const selectedPoiIds = ref([])
+
+// T-048: comfortable pace = 3×(days−2)+2 (3 spots/day on middle days + 2
+// total across the two travel days at each end). Same formula as the
+// backend's _comfortable_spot_budget, so the hint updates live pre-generate.
+const comfortableBudget = computed(() => 3 * Math.max(days.value - 2, 0) + 2)
+const overPace = computed(() => selectedPoiIds.value.length > comfortableBudget.value)
 
 const lodgingsByCity = reactive({})
 const loadingLodgingsFor = reactive({})
@@ -71,7 +102,7 @@ async function loadCities() {
   }
 }
 
-// T-016：城市按国家分组展示，顺序固定 Japan/China/Korea，未知国家兜底放最后。
+// T-016: cities grouped by country, fixed Japan/Korea/China order, unknown countries appended last.
 const groupedCities = computed(() => {
   const byCountry = {}
   for (const c of allCities.value) {
@@ -105,8 +136,10 @@ const lastCity = computed(() => selectedCities.value[selectedCities.value.length
 const arrivalHubOptions = computed(() => hubsByCity[firstCity.value] || [])
 const departureHubOptions = computed(() => hubsByCity[lastCity.value] || [])
 
-// 只负责预取，不在这里清空当前选择——清空的时机交给 disabledReason 按「当前选择
-// 是否还在候选列表里」判断，避开「城市变了但列表还没异步回来」那段时间窗口的竞态。
+// Prefetch only — don't clear the current selection here. That is left to
+// disabledReason, which checks whether the current choice is still in the
+// candidate list, avoiding the race window where the city changed but the
+// list hasn't loaded yet.
 watch(firstCity, (city) => ensureCityHubs(city), { immediate: true })
 watch(lastCity, (city) => ensureCityHubs(city), { immediate: true })
 
@@ -114,7 +147,7 @@ async function loadHealth() {
   try {
     health.value = await fetchHealth()
   } catch {
-    // 健康检查失败不影响主流程，页脚只是留空
+    // A failed health check doesn't block the main flow; the footer just stays blank.
   }
 }
 
@@ -125,7 +158,9 @@ async function ensureCityPois(city) {
     const data = await fetchPois(city)
     poisByCity[city] = data.pois || []
   } catch (e) {
-    poisByCity[city] = []
+    // T-049: on failure don't store an empty array — leave it undefined so
+    // switching to that city's tab re-fetches automatically. Writing [] used
+    // to leave the catalog permanently empty, forcing a full page reload.
     errorMsg.value = `Failed to load spots for ${cityName(city)}: ${e.message}`
   } finally {
     loadingPoisFor[city] = false
@@ -158,7 +193,7 @@ function onLodgingSearchInput(city, value) {
       const extra = (data.results || []).filter((l) => !existingIds.has(l.id))
       lodgingsByCity[city] = [...existing, ...extra]
     } catch {
-      // 搜索失败静默：目录列表仍可用，不打断用户
+      // Silent failure: the catalog list still works, so don't interrupt the user.
     }
   }, 400)
 }
@@ -171,10 +206,51 @@ const poiCityMap = computed(() => {
   return map
 })
 
-const allPoisFlat = computed(() => selectedCities.value.flatMap((c) => poisByCity[c] || []))
+const allPoisFlat = computed(() =>
+  selectedCities.value.flatMap((c) => collapseDuplicatePois(poisByCity[c] || []))
+)
+
+function nameKey(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/national|park|temple|shrine|garden/g, '')
+    .replace(/[^a-z0-9]+/g, '')
+}
+
+function collapseDuplicatePois(list) {
+  const disney = list.filter((p) => /disney/i.test(p.name_en || p.name || ''))
+  const keepDisney = disney.length
+    ? [disney.slice().sort((a, b) => (b.rating || 0) - (a.rating || 0) || a.id.localeCompare(b.id))[0].id]
+    : []
+  const kept = []
+  for (const poi of list) {
+    if (disney.length && disney.some((d) => d.id === poi.id)) {
+      if (keepDisney.includes(poi.id)) kept.push(poi)
+      continue
+    }
+    const dup = kept.find((other) => {
+      const km = haversineKm(
+        { lat: poi.lat, lng: poi.lng },
+        { lat: other.lat, lng: other.lng },
+      )
+      if (km < 0.08) return true
+      const a = nameKey(poi.name_en || poi.name)
+      const b = nameKey(other.name_en || other.name)
+      return Boolean(a) && a === b && km < 0.4
+    })
+    if (!dup) {
+      kept.push(poi)
+      continue
+    }
+    if ((poi.rating || 0) > (dup.rating || 0) || ((poi.rating || 0) === (dup.rating || 0) && poi.id < dup.id)) {
+      kept.splice(kept.indexOf(dup), 1, poi)
+    }
+  }
+  return kept
+}
 
 function filteredPois(city) {
-  const list = poisByCity[city] || []
+  const list = collapseDuplicatePois(poisByCity[city] || [])
   const q = (poiSearch[city] || '').trim().toLowerCase()
   if (!q) return list
   return list.filter((p) => p.name.toLowerCase().includes(q) || p.name_en.toLowerCase().includes(q))
@@ -209,6 +285,13 @@ function togglePoi(id) {
   else selectedPoiIds.value.push(id)
 }
 
+// T-049: re-fetch the catalog when a city tab is opened (breaks the dead end
+// where a tab kept showing 0 spots after a failed load)
+function openSpotCity(city) {
+  activeSpotCity.value = city
+  ensureCityPois(city)
+}
+
 function onMapTogglePoi(id) {
   const city = poiCityMap.value[id]
   if (city) activeSpotCity.value = city
@@ -224,8 +307,9 @@ const poiCountsByCity = computed(() => {
   return counts
 })
 
-// 预览用：跟后端 `_split_city_days` 同一套最大余数法，只是让 custom 住法的
-// 按天芯片能按城市分块显示；真正拍板仍由后端在 Generate 时算一遍。
+// Preview only: same largest-remainder method as the backend's
+// `_split_city_days`, just so the custom-hotel day chips can be grouped by
+// city; the backend still computes the real split on Generate.
 const cityDaySplit = computed(() => splitCityDays(selectedCities.value, days.value, poiCountsByCity.value))
 
 const softLimitExceeded = computed(() => selectedPoiIds.value.length > days.value * 5)
@@ -238,8 +322,10 @@ const disabledReason = computed(() => {
     (c) => !selectedPoiIds.value.some((id) => poiCityMap.value[id] === c)
   )
   if (emptyCity) return 'each city must have at least one selected poi'
-  if (!arrivalHubOptions.value.some((h) => h.id === arrivalHubId.value)) return 'choose an arrival airport/station'
-  if (!departureHubOptions.value.some((h) => h.id === departureHubId.value)) return 'choose a departure airport/station'
+  // T-049: hubs are optional again (matches the backend contract and plan
+  // 6.1b — with no hub the chain is simply hotel→spots→hotel). The frontend
+  // used to require them, leaving judges stuck on "choose an arrival
+  // airport/station" with the reason buried at the bottom of the page.
   if (hotelMode.value === 'custom') {
     for (let d = 1; d <= days.value; d++) {
       if (!customLodgingByDay[d]) return 'custom_stays must cover every day'
@@ -288,6 +374,8 @@ async function onGenerate() {
       customStays: hotelMode.value === 'custom' ? buildCustomStays() : [],
       arrivalHubId: arrivalHubId.value,
       departureHubId: departureHubId.value,
+      arrivalTime: arrivalTime.value || null,
+      departureTime: departureTime.value || null,
       firstDayDensity: firstDayDensity.value,
       lastDayDensity: lastDayDensity.value,
     })
@@ -302,6 +390,8 @@ async function onGenerate() {
         customLodgingByDay: { ...customLodgingByDay },
         arrivalHubId: arrivalHubId.value,
         departureHubId: departureHubId.value,
+        arrivalTime: arrivalTime.value,
+        departureTime: departureTime.value,
         firstDayDensity: firstDayDensity.value,
         lastDayDensity: lastDayDensity.value,
       })
@@ -313,20 +403,6 @@ async function onGenerate() {
     generating.value = false
     stopProgress()
   }
-}
-
-async function loadSample() {
-  errorMsg.value = ''
-  selectedCities.value = ['tokyo', 'kyoto']
-  days.value = 5
-  hotelMode.value = 'system_one'
-  firstDayDensity.value = 'few'
-  lastDayDensity.value = 'none'
-  activeSpotCity.value = 'tokyo'
-  await Promise.all([ensureCityPois('tokyo'), ensureCityPois('kyoto'), ensureCityHubs('tokyo'), ensureCityHubs('kyoto')])
-  selectedPoiIds.value = ['senso-ji', 'shibuya-crossing', 'ginza', 'fushimi-inari', 'kinkaku-ji']
-  arrivalHubId.value = 'haneda-airport'
-  departureHubId.value = 'kyoto-station'
 }
 
 function restoreFromSession() {
@@ -349,6 +425,8 @@ function restoreFromSession() {
     Promise.all([ensureCityHubs(selectedCities.value[0]), ensureCityHubs(selectedCities.value[selectedCities.value.length - 1])]).then(() => {
       arrivalHubId.value = saved.arrivalHubId || ''
       departureHubId.value = saved.departureHubId || ''
+      arrivalTime.value = saved.arrivalTime || ''
+      departureTime.value = saved.departureTime || ''
     })
     return true
   } catch {
@@ -439,6 +517,16 @@ onBeforeUnmount(() => {
                 {{ h.name_en }} ({{ h.kind }})
               </option>
             </select>
+            <div class="field-label sub-label">Flight landing time (local)</div>
+            <input
+              v-model="arrivalTime"
+              class="select time-input"
+              type="time"
+              lang="en-GB"
+              step="300"
+              :disabled="!arrivalHubId"
+              @click="openTimePicker"
+            />
           </div>
           <div class="hub-picker">
             <div class="field-label">Leave from ({{ cityName(lastCity) }})</div>
@@ -450,6 +538,16 @@ onBeforeUnmount(() => {
                 {{ h.name_en }} ({{ h.kind }})
               </option>
             </select>
+            <div class="field-label sub-label">Flight takeoff time (local)</div>
+            <input
+              v-model="departureTime"
+              class="select time-input"
+              type="time"
+              lang="en-GB"
+              step="300"
+              :disabled="!departureHubId"
+              @click="openTimePicker"
+            />
           </div>
         </div>
       </section>
@@ -489,12 +587,17 @@ onBeforeUnmount(() => {
             :key="city"
             class="spot-tab"
             :class="{ active: activeSpotCity === city }"
-            @click="activeSpotCity = city"
+            @click="openSpotCity(city)"
           >
             {{ cityName(city) }}
             <span class="muted">{{ poiCountsByCity[city] || 0 }}</span>
           </button>
         </div>
+        <!-- T-048: live comfortable-pace counter — see if the trip is overloaded before generating -->
+        <p class="pace-hint" :class="{ over: overPace }">
+          {{ selectedPoiIds.length }} / {{ comfortableBudget }} spots ·
+          {{ overPace ? 'above the comfortable pace — expect squeezed days' : 'comfortable pace' }}
+        </p>
         <template v-if="activeSpotCity">
           <input
             class="search"
@@ -613,13 +716,10 @@ onBeforeUnmount(() => {
       </section>
 
       <div class="sidebar-footer">
-        <button class="optimize" :disabled="!canGenerate" @click="onGenerate">
+        <button class="optimize generate-cta" :disabled="!canGenerate" @click="onGenerate">
           {{ generating ? progressText || 'Generating…' : 'Generate route' }}
         </button>
         <div v-if="!canGenerate && !generating" class="disabled-reason">{{ disabledReason }}</div>
-        <button class="sample-btn" :disabled="generating" @click="loadSample">
-          Load Tokyo + Kyoto sample
-        </button>
         <div class="health-footer">
           grouper: {{ health.grouper || '…' }} · poi_provider: {{ health.poi_provider || '…' }}
         </div>

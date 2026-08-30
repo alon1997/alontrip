@@ -1,14 +1,22 @@
 <script setup>
-// T-015 结果页地图：彩点(按天)+灰点(目录未选)+酒店端点+带箭头折线+城际虚线+
-// 按天开关+几何微调(加灰点/删彩点)+ Update transit(只查变化段)+导出 PNG。
-// 规划页的简单预览留在 MapView.vue；两边需求已分叉，拆成独立组件更好维护。
+// T-015 result map: colored dots (per day) + gray dots (in catalog, unselected)
+// + hotel endpoints + arrowed polylines + dashed intercity legs + per-day
+// toggles + geometry tweaks (add gray / remove colored) + Update transit
+// (re-queries only changed legs) + PNG export.
+// The planner's simple preview stays in MapView.vue; the two needs diverged,
+// so separate components are easier to maintain.
 import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import L from 'leaflet'
-import { toPng } from 'html-to-image'
 import { DAY_COLORS } from '../colors'
 import { haversineKm } from '../geo'
 import { transitLegs } from '../api'
 import { money, toUsd } from '../money'
+import { sourceLabel } from '../transitSource'
+import { clipVisit } from '../hours'
+import { fmt, scheduleMeta } from '../scheduleText'
+import { addDarkBasemap } from '../basemap'
+import { cityDisplayName } from '../cityNames'
+import { exportTripImages } from '../exportCards'
 
 const props = defineProps({
   itinerary: { type: Array, required: true },
@@ -18,6 +26,11 @@ const props = defineProps({
   // as plain objects, not a per-city catalog like pois/lodgings.
   arrivalHub: { type: Object, default: null },
   departureHub: { type: Object, default: null },
+  // T-034: minutes-from-midnight — day 1 sightseeing start (landing + 90)
+  // and the last day's latest sightseeing end (takeoff − 120). Null when no
+  // flight time was given; the 22:00 hard cap still applies either way.
+  arrivalStartMin: { type: Number, default: null },
+  departureCutoffMin: { type: Number, default: null },
 })
 
 function escapeHtml(value) {
@@ -29,12 +42,10 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;')
 }
 
-const fmt = (min) => (min >= 60 ? `${Math.floor(min / 60)}h ${min % 60}m` : `${min} min`)
-
-// ---------- 可编辑的行程副本（深拷贝，不改 sessionStorage 里的原始结果） ----------
+// ---------- Editable copy of the itinerary (deep copy; the sessionStorage original stays untouched) ----------
 const days = reactive(JSON.parse(JSON.stringify(props.itinerary)))
 const dayVisible = reactive(Object.fromEntries(days.map((d) => [d.day, true])))
-// legCache 的 key 见 edgeKey()；命中即代表这段已经有真实/估算的交通数据可画。
+// legCache keys are edgeKey() strings; a hit means that leg already has real/estimated transit data to draw.
 const legCache = reactive(new Map())
 for (const day of days) {
   for (const leg of day.legs || []) {
@@ -54,8 +65,10 @@ const lodgingById = computed(() => {
   for (const day of days) m[day.lodging.id] = day.lodging
   return m
 })
-// 每个酒店归属哪座城市：换城当晚已经住下一城（方案 6.1b E），所以用「当天」的
-// 城市记它，换城日早上那家（属于上一城）会被上一天的记录覆盖到正确答案。
+// Which city each hotel belongs to: on a city-change night you are already
+// sleeping in the next city (plan 6.1b E), so record it under that day's
+// city — the morning hotel (previous city) gets overwritten by the later
+// day's entry, which is the correct answer.
 const lodgingCityMap = computed(() => {
   const m = {}
   for (const day of days) m[day.lodging.id] = day.city
@@ -112,8 +125,9 @@ const usedPoiIds = computed(() => {
   for (const day of days) for (const n of day.nodes) if (n.kind === 'poi') s.add(n.id)
   return s
 })
-// 灰点：已选城市目录里、当前不在任何一天行程内的点——现算而不是只信服务器
-// 首次返回的 unselected_poi_ids，这样加/删点之后灰点集合会跟着实时变化。
+// Gray dots: catalog spots of the selected cities not currently in any day —
+// computed live rather than trusting the server's initial unselected_poi_ids,
+// so the set tracks add/remove edits in real time.
 const grayPois = computed(() => {
   const used = usedPoiIds.value
   const list = []
@@ -145,22 +159,35 @@ function lineSummary(route) {
   return 'No public transit · taxi'
 }
 
+function sourceBadge(route) {
+  return sourceLabel(route?.data_source)
+}
+
 // Mirror backend schedule.py so "Update transit" / add-remove POI keep the
 // clock honest instead of freezing the first optimize-route payload.
+// T-034: arrival-day clock starts after landing; every day is capped at
+// 22:00, and the departure day additionally at the flight cutoff.
 function buildDaySchedule(day) {
   const chain = day.nodes
   const events = []
-  let clock = 9 * 60
+  const isFirst = day.day === 1
+  const isLast = day.day === Math.max(...days.map((d) => d.day))
+  let clock = isFirst && props.arrivalStartMin != null ? props.arrivalStartMin : 9 * 60
+  let cap = 22 * 60
+  if (isLast && props.departureCutoffMin != null) cap = Math.min(cap, props.departureCutoffMin)
   let lunchDone = false
   let dinnerDone = false
   const poiCount = chain.filter((n) => n.kind === 'poi').length
-  const isFirst = day.day === 1
   const hasArrival = chain[0]?.kind === 'hub'
-  const dinnerEarliest = 17 * 60 + 30
-  const dinnerLatest = 19 * 60 + 30
-  const dinnerBeforeHome = 17 * 60 + 20
+  // T-040 dinner rule (mirrors schedule.py): target 18:00; early finishers
+  // wait until 18:00, late finishers eat right away (no 19:30 upper window).
+  const dinnerEarliest = 18 * 60
 
   const addDinner = () => {
+    if (clock + 90 > cap) {
+      dinnerDone = true // past the day's cutoff — skip, don't late-night it
+      return
+    }
     events.push({
       kind: 'dinner',
       start: clockStr(clock),
@@ -193,6 +220,7 @@ function buildDaySchedule(day) {
       cost: transitCost,
       currency: 'USD',
       estimated,
+      data_source: route?.data_source || '',
     })
     clock += dur
 
@@ -214,6 +242,13 @@ function buildDaySchedule(day) {
       const ticket = toUsd(poi?.ticket_price ?? null, poi?.ticket_currency)
       const tcur = ticket == null ? null : 'USD'
       const visitName = poi ? (poi.name_en || poi.name) : to.id
+      const clipped = clipVisit(clock, remain, poi?.opening_hours)
+      clock = clipped.clock
+      remain = clipped.remain
+      // Hard day cap (22:00, or the departure-day flight cutoff):
+      // never start or extend a visit past it.
+      if (clock >= cap) remain = 0
+      else remain = Math.min(remain, cap - clock)
       const lunchStart = 11 * 60 + 30
       const lunchNoon = 12 * 60
       const lunchEnd = 14 * 60
@@ -271,20 +306,23 @@ function buildDaySchedule(day) {
         clock += remain
         remain = 0
       }
-      if (!dinnerDone && !morePois && clock >= dinnerBeforeHome && clock <= dinnerLatest) {
-        addDinner()
+      if (!dinnerDone && !morePois) {
+        if (clock < dinnerEarliest) clock = dinnerEarliest
+        addDinner() // skipped entirely when it would run past the cap
       }
     }
   }
-  if (poiCount && !dinnerDone) {
+  const endsAtHub = chain[chain.length - 1]?.kind === 'hub'
+  if (poiCount && !dinnerDone && !endsAtHub) {
     if (clock < dinnerEarliest) clock = dinnerEarliest
     addDinner()
   }
   return events
 }
 
-// 每天汇总（给结果页侧栏用）：分钟/票价/换乘按当前 legCache 现算，未更新的
-// 段不计入且单独计数，侧栏据此提示「还有 N 段没更新」。
+// Per-day summary (for the result sidebar): minutes/fare/transfers recomputed
+// from the current legCache; unupdated legs are excluded and counted
+// separately, so the sidebar can report "N segments not updated yet".
 const daySummaries = computed(() =>
   days.map((day) => {
     const edges = currentEdges.value.filter((e) => e.day === day.day)
@@ -320,7 +358,7 @@ const daySummaries = computed(() =>
 const hasPending = computed(() => pendingEdges.value.length > 0)
 const updating = ref(false)
 
-// ---------- 几何微调 v1：只允许在「同城」的内部边上加/删点，城际那一段锁死 ----------
+// ---------- Geometry tweaks v1: add/remove points only on same-city interior edges; the intercity leg stays locked ----------
 function addPoiToDay(poi, day) {
   const interior = []
   for (let i = 0; i < day.nodes.length - 1; i++) {
@@ -380,19 +418,106 @@ async function updateTransit() {
   }
 }
 
-async function downloadPng() {
-  try {
-    const dataUrl = await toPng(mapEl.value, { cacheBust: true, pixelRatio: 2 })
-    const link = document.createElement('a')
-    link.download = 'alontrip-route.png'
-    link.href = dataUrl
-    link.click()
-  } catch {
-    window.alert('Download failed — the map tiles likely blocked this by CORS. Please take a screenshot instead.')
+// ---------- Rich export (T-043): 1 full-trip image + N day cards ----------
+// This only assembles the plain data model exportCards.js needs (resolving
+// coords/colors/numbers relies on this component's closures such as
+// coordOf/legCache); DOM structure and temp-map lifecycle live in exportCards.
+function buildExportModel() {
+  const summaries = daySummaries.value
+  const dayModels = days.map((day) => {
+    const color = DAY_COLORS[(day.day - 1) % DAY_COLORS.length]
+    const summary = summaries.find((s) => s.day === day.day)
+    // Itinerary order of that day's POIs, shared by the numbered pins and the
+    // card rows; the two visit rows split by lunch have the same title → same
+    // number, which is correct.
+    const poiOrder = new Map()
+    day.nodes.forEach((node) => {
+      if (node.kind === 'poi') poiOrder.set(nodeLabel(node), poiOrder.size + 1)
+    })
+    const schedule = (summary?.schedule || []).map((ev) => ({
+      kind: ev.kind,
+      start: ev.start,
+      title: ev.title,
+      meta: scheduleMeta(ev),
+      num: ev.kind === 'visit' ? poiOrder.get(ev.title) ?? null : null,
+    }))
+    const statsBits = [
+      fmt(summary?.minutes ?? 0),
+      money(summary?.cost ?? 0, summary?.currency || 'USD'),
+      summary?.transfers ? `${summary.transfers} transfer${summary.transfers === 1 ? '' : 's'}` : 'direct',
+    ]
+    let statsText = statsBits.join(' · ')
+    if (summary?.pending) statsText += ` · ${summary.pending} pending`
+
+    const pins = []
+    const legs = []
+    const fit = []
+    const seenLodging = new Set()
+    for (const node of day.nodes) {
+      const coord = coordOf(node)
+      if (!coord) continue
+      fit.push([coord.lat, coord.lng])
+      if (node.kind === 'poi') {
+        pins.push({ lat: coord.lat, lng: coord.lng, color, n: poiOrder.get(nodeLabel(node)), type: 'poi', name: nodeLabel(node) })
+      } else if (node.kind === 'lodging') {
+        if (seenLodging.has(node.id)) continue
+        seenLodging.add(node.id)
+        pins.push({ lat: coord.lat, lng: coord.lng, color, n: null, type: 'hotel', name: lodgingById.value[node.id]?.name || node.id })
+      } else {
+        const hub = hubById.value[node.id]
+        pins.push({ lat: coord.lat, lng: coord.lng, color, n: null, type: 'hub', symbol: hub?.kind === 'airport' ? '✈' : '🚉', name: hub ? hub.name_en || hub.name : node.id })
+      }
+    }
+    for (let i = 0; i < day.nodes.length - 1; i++) {
+      const a = day.nodes[i]
+      const b = day.nodes[i + 1]
+      const ca = coordOf(a)
+      const cb = coordOf(b)
+      if (!ca || !cb) continue
+      legs.push({ from: ca, to: cb, intercity: edgeIsIntercity(a, b), pending: !legCache.has(edgeKey(a, b)), color })
+    }
+    return {
+      day: day.day,
+      city: cityDisplayName(day.city),
+      color,
+      title: `Day ${day.day} — ${cityDisplayName(day.city)}`,
+      schedule,
+      statsText,
+      pins,
+      legs,
+      fit,
+    }
+  })
+  const cityLine = [...new Set(dayModels.map((ds) => ds.city))].join(' → ')
+  return {
+    tripTitle: `${days.length} day${days.length === 1 ? '' : 's'} · ${cityLine}`,
+    fit: dayModels.flatMap((ds) => ds.fit),
+    days: dayModels,
   }
 }
 
-defineExpose({ daySummaries, dayVisible, hasPending, pendingCount: computed(() => pendingEdges.value.length), updating, updateTransit, downloadPng })
+const exporting = ref(false)
+const exportProgress = ref('')
+
+async function exportImages() {
+  if (exporting.value) return
+  exporting.value = true
+  exportProgress.value = ''
+  try {
+    const { ok, failed } = await exportTripImages(buildExportModel(), (i, total) => {
+      exportProgress.value = `${i}/${total}`
+    })
+    if (ok === 0) {
+      window.alert('Download failed — the map tiles likely blocked this by CORS. Please take a screenshot instead.')
+    } else if (failed.length) {
+      window.alert(`Exported ${ok} image${ok === 1 ? '' : 's'}; ${failed.length} failed (${failed.map((f) => f.label).join(', ')}). Click export again to retry.`)
+    }
+  } finally {
+    exporting.value = false
+  }
+}
+
+defineExpose({ daySummaries, dayVisible, hasPending, pendingCount: computed(() => pendingEdges.value.length), updating, updateTransit, exportImages, exporting, exportProgress })
 
 // ---------- Leaflet ----------
 const mapEl = ref(null)
@@ -404,20 +529,24 @@ const dayLayers = {}
 let legendControl = null
 
 function summaryLine(r) {
+  const src = sourceBadge(r)
+  const srcBit = src ? ` · ${src}` : ''
   if ((r.legs || []).some((l) => l.travel_mode === 'taxi') || r.estimated) {
-    return `No public transit · taxi ${fmt(r.total_duration_min)} · ${money(r.total_cost, r.currency)}`
+    return `No public transit · taxi ${fmt(r.total_duration_min)} · ${money(r.total_cost, r.currency)}${srcBit}`
   }
   const lines = (r.legs || []).filter((l) => l.travel_mode === 'transit' && l.line_name)
   const names = lines.map((l) => l.line_name).join(' → ') || 'Transit'
-  return `${names} · ${fmt(r.total_duration_min)} · ${money(r.total_cost, r.currency)}`
+  return `${names} · ${fmt(r.total_duration_min)} · ${money(r.total_cost, r.currency)}${srcBit}`
 }
 
 function routeDetail(r, fromLabel, toLabel) {
   const head = `<div class="rp-head">${escapeHtml(fromLabel)} → ${escapeHtml(toLabel)}</div>`
   if (r.estimated) {
+    const src = sourceBadge(r)
+    const srcBit = src ? ` · ${src}` : ''
     return `${head}
       <div class="rp-est">No public transit found. Taxi estimate:</div>
-      <div class="rp-total">${fmt(r.total_duration_min)} · ${money(r.total_cost, r.currency)}</div>`
+      <div class="rp-total">${fmt(r.total_duration_min)} · ${money(r.total_cost, r.currency)}${srcBit}</div>`
   }
   const legs = (r.legs || [])
     .map((l) => {
@@ -552,18 +681,25 @@ function renderHotels() {
       if (!lodging) continue
       const marker = L.marker([lodging.lat, lodging.lng], { icon: hotelIcon() })
       marker.bindTooltip(shortLabel(lodging.name), {
-        permanent: true, direction: 'right', offset: [10, -6], className: 'map-label map-label-hotel',
+        permanent: true, direction: 'right', offset: [12, -6], className: 'map-label map-label-hotel',
       })
       marker.bindPopup(
         `<div class="rp-head">${escapeHtml(lodging.name)}</div><div class="poi-popup-hint">${escapeHtml(lodging.area || '')}</div><div class="poi-popup-hint">Fixed — hotels can't be moved or removed here.</div>`
       )
+      marker.options._rank = 1000000 + day.day
+      bindLabelReveal(marker)
       marker.addTo(hotelLayer)
     }
   }
 }
 
 function hotelIcon() {
-  return L.divIcon({ className: 'hotel-pin-icon', html: '<div class="hotel-pin">⌂</div>', iconSize: [22, 22], iconAnchor: [11, 20] })
+  return L.divIcon({
+    className: 'hotel-pin-icon',
+    html: '<div class="hotel-pin"><svg class="hotel-pin-glyph" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 2.2 2.4 7.1v6.5h3.5V9.2h4.2v4.4h3.5V7.1L8 2.2z"/></svg></div>',
+    iconSize: [26, 26],
+    iconAnchor: [13, 22],
+  })
 }
 
 // T-016: the arrival/departure hub, if the traveller picked one — at most
@@ -571,7 +707,7 @@ function hotelIcon() {
 // need; each is a fixed anchor (never editable, same as a hotel).
 function renderHubs() {
   hubLayer.clearLayers()
-  for (const hub of [props.arrivalHub, props.departureHub]) {
+  for (const [hi, hub] of [props.arrivalHub, props.departureHub].entries()) {
     if (!hub) continue
     const symbol = hub.kind === 'airport' ? '✈' : '🚉'
     const marker = L.marker([hub.lat, hub.lng], { icon: hubIcon(symbol) })
@@ -581,6 +717,8 @@ function renderHubs() {
     marker.bindPopup(
       `<div class="rp-head">${escapeHtml(hub.name_en || hub.name)}</div><div class="poi-popup-hint">${hub.kind}</div><div class="poi-popup-hint">Fixed — the trip's arrival/departure anchor.</div>`
     )
+    marker.options._rank = 2000000 + hi
+    bindLabelReveal(marker)
     marker.addTo(hubLayer)
   }
 }
@@ -616,6 +754,8 @@ function renderDay(day) {
       permanent: true, direction: 'top', offset: [0, -8], className: 'map-label map-label-poi',
     })
     marker.bindPopup(buildPoiPopup(day, i, poi))
+    marker.options._rank = day.day * 1000 + i
+    bindLabelReveal(marker)
     marker.addTo(group)
   })
   for (let i = 0; i < day.nodes.length - 1; i++) {
@@ -675,12 +815,12 @@ function renderLegend() {
       dot.className = 'day-dot'
       dot.style.background = color
       row.appendChild(dot)
-      row.appendChild(document.createTextNode(`Day ${day.day} — ${day.city}`))
+      row.appendChild(document.createTextNode(`Day ${day.day} — ${cityDisplayName(day.city)}`))
       div.appendChild(row)
     }
     const note = document.createElement('div')
     note.className = 'legend-note'
-    note.innerHTML = '<span class="hotel-pin legend-icon">⌂</span> hotel &nbsp; <span class="hub-pin legend-icon">✈</span> arrival/departure &nbsp; <span class="day-dot" style="background:#6e7681"></span> not in trip'
+    note.innerHTML = '<span class="hotel-pin legend-icon"><svg class="hotel-pin-glyph" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 2.2 2.4 7.1v6.5h3.5V9.2h4.2v4.4h3.5V7.1L8 2.2z"/></svg></span> hotel &nbsp; <span class="hub-pin legend-icon">✈</span> arrival/departure &nbsp; <span class="day-dot" style="background:#6e7681"></span> not in trip'
     div.appendChild(note)
     return div
   }
@@ -694,6 +834,65 @@ function applyVisibility() {
     if (dayVisible[day.day]) { if (!map.hasLayer(group)) group.addTo(map) }
     else if (map.hasLayer(group)) map.removeLayer(group)
   }
+  resolveLabelCollisions()
+}
+
+// ---------- Permanent-label collision avoidance: greedy keep by screen rects ----------
+// With many spots, permanent tooltips overlap. Greedily keep the labels that
+// fit, by priority (hub > hotel > itinerary order, via the _rank set in the
+// three render functions); losers are hidden entirely (.map-label--hidden),
+// and .map-label--peek temporarily reveals them while their marker is
+// hovered. Each pass strips all hidden classes before rebuilding the set, so
+// re-renders (clearLayers swapping out tooltip elements) leave no dangling
+// references. Pan/zoom needs no special handling: the pane transforms as a
+// whole, labels keep their relative positions, and rects are final by the
+// time zoomend/moveend fires.
+let hiddenLabels = new Set()
+
+function bindLabelReveal(marker) {
+  marker.on('mouseover', () => {
+    const el = marker.getTooltip()?.getElement()
+    if (el && hiddenLabels.has(el)) el.classList.add('map-label--peek')
+  })
+  marker.on('mouseout', () => {
+    marker.getTooltip()?.getElement()?.classList.remove('map-label--peek')
+  })
+}
+
+function resolveLabelCollisions() {
+  if (!map || document.hidden) return
+  const entries = []
+  const scan = (group) => {
+    if (!group || !map.hasLayer(group)) return
+    group.eachLayer((layer) => {
+      // Only permanent tooltips have a rendered element; hover/sticky ones return null from getElement().
+      const el = layer.getTooltip ? layer.getTooltip()?.getElement() : null
+      if (!el) return
+      entries.push({ el, rank: layer.options?._rank ?? 0 })
+    })
+  }
+  scan(hubLayer)
+  scan(hotelLayer)
+  for (const day of days) {
+    if (dayVisible[day.day]) scan(dayLayers[day.day])
+  }
+  entries.sort((a, b) => a.rank - b.rank)
+  const PAD = 4
+  const kept = []
+  const nextHidden = new Set()
+  for (const { el } of entries) {
+    el.classList.remove('map-label--hidden', 'map-label--peek')
+    const r = el.getBoundingClientRect()
+    if (!r.width) continue
+    const box = { l: r.left - PAD, t: r.top - PAD, r: r.right + PAD, b: r.bottom + PAD }
+    if (kept.some((k) => box.l < k.r && box.r > k.l && box.t < k.b && box.b > k.t)) {
+      el.classList.add('map-label--hidden')
+      nextHidden.add(el)
+    } else {
+      kept.push(box)
+    }
+  }
+  hiddenLabels = nextHidden
 }
 
 let firstRender = true
@@ -716,6 +915,7 @@ function renderAll() {
     map.fitBounds(allBounds, { padding: [50, 50], maxZoom: 15 })
     firstRender = false
   }
+  resolveLabelCollisions()
 }
 
 function applyGrayZoomVisibility() {
@@ -726,16 +926,12 @@ function applyGrayZoomVisibility() {
 
 onMounted(() => {
   map = L.map(mapEl.value, { preferCanvas: true })
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    subdomains: 'abcd',
-    maxZoom: 19,
-    crossOrigin: true,
-  }).addTo(map)
+  addDarkBasemap(map)
   map.setView([35.68, 139.69], 12)
   hotelLayer.addTo(map)
   hubLayer.addTo(map)
   map.on('zoomend', applyGrayZoomVisibility)
+  map.on('zoomend moveend resize', resolveLabelCollisions)
   renderAll()
   applyGrayZoomVisibility()
 })

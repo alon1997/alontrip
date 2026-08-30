@@ -1,7 +1,7 @@
 [
   {
     "id": "the-bund",
-    "name": "外滩",
+    "name": "",
     "name_en": "The Bund",
     "lat": 31.24,
     "lng": 121.4905,
@@ -9,50 +9,53 @@
     "suggested_duration_min": 120,
     "category": "landmark",
     "area": "Zhongshan Rd (E-1)",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "yu-garden",
-    "name": "豫园",
+    "name": "",
     "name_en": "Yu Garden",
     "lat": 31.227,
     "lng": 121.4913,
     "rating": 4.4,
     "suggested_duration_min": 90,
     "category": "garden",
-    "area": "四牌楼 Huangpu",
-    "opening_hours": "Open · Closes 4:30 PM",
+    "area": "Huangpu",
+    "opening_hours": "Open Closes 4:30 PM",
     "requires_ticket": "yes",
-    "ticket_price": 40,
-    "ticket_currency": "CNY"
+    "ticket_price": 5.56,
+    "ticket_currency": "USD"
   },
   {
     "id": "lujiazui",
-    "name": "陆家嘴",
+    "name": "",
     "name_en": "Lujiazui (Shanghai Tower)",
     "lat": 31.2354,
     "lng": 121.501,
     "rating": 4.5,
     "suggested_duration_min": 90,
     "category": "landmark",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "xintiandi",
-    "name": "新天地",
+    "name": "",
     "name_en": "Xintiandi",
     "lat": 31.2196,
     "lng": 121.4751,
     "rating": 4.3,
     "suggested_duration_min": 120,
     "category": "district",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "shanghai-tower",
@@ -64,10 +67,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "501 Yincheng Rd (M)",
-    "opening_hours": "Open · Closes 9:30 PM",
-    "ticket_price": 180,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 9:30 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 25.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "shanghai-museum",
@@ -79,10 +82,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "201 Renmin Ave",
-    "opening_hours": "Open · Closes 5 PM",
+    "opening_hours": "Open Closes 5 PM",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "CNY"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tianzifang",
@@ -93,11 +96,11 @@
     "rating": 4.3,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "210弄 Taikang Rd",
+    "area": "210 Taikang Rd",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "oriental-pearl-tv-tower",
@@ -109,9 +112,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "1 Shiji Blvd",
-    "ticket_price": 199,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 27.64,
+    "ticket_currency": "USD"
   },
   {
     "id": "jing-an-temple",
@@ -123,10 +127,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "1686 Nanjing Rd (W)",
-    "opening_hours": "Open · Closes 5 PM",
-    "ticket_price": 50,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 6.94,
+    "ticket_currency": "USD"
   },
   {
     "id": "jade-buddha-temple",
@@ -138,9 +142,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "170 Anyuan Rd",
-    "ticket_price": 20,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 2.78,
+    "ticket_currency": "USD"
   },
   {
     "id": "shanghai-science-and-technology-museum",
@@ -152,9 +157,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "2000 Shiji Blvd",
+    "opening_hours": "Open Closes 5 PM",
     "requires_ticket": "yes",
-    "ticket_price": 60,
-    "ticket_currency": "CNY"
+    "ticket_price": 8.33,
+    "ticket_currency": "USD"
   },
   {
     "id": "waitan-sightseeing-tunnel",
@@ -166,10 +172,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "98 Fenghe Rd",
-    "opening_hours": "Open · Closes 10:30 PM",
-    "ticket_price": 50,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 10:30 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 6.94,
+    "ticket_currency": "USD"
   },
   {
     "id": "sightseeing-hall-f88-shanghai-jinmao-tower",
@@ -181,24 +187,25 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "88 Shiji Blvd",
-    "opening_hours": "Open · Closes 9:30 PM",
-    "ticket_price": 120,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 9:30 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 16.67,
+    "ticket_currency": "USD"
   },
   {
     "id": "shanghai-natural-history-museum",
-    "name": "Shanghai Natural History Museum.",
-    "name_en": "Shanghai Natural History Museum.",
+    "name": "Shanghai Natural History Museum",
+    "name_en": "Shanghai Natural History Museum",
     "lat": 31.235006,
     "lng": 121.462662,
     "rating": 4.6,
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "Jing An Qu",
-    "ticket_price": 30,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 4.17,
+    "ticket_currency": "USD"
   },
   {
     "id": "qibao-ancient-town",
@@ -211,9 +218,9 @@
     "category": "Tourist attraction",
     "area": "5933+JGJ",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "longhua-temple",
@@ -225,9 +232,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "2853 Longhua Rd",
-    "ticket_price": 10,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 1.39,
+    "ticket_currency": "USD"
   },
   {
     "id": "shanghai-old-street",
@@ -239,9 +247,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "6FGW+4QG",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "lujiazui-central-green-space",
@@ -253,10 +262,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "717 Lujiazui Ring Rd",
-    "opening_hours": "Open · Closes 10 PM",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 10 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "shanghai-ocean-aquarium",
@@ -268,10 +277,10 @@
     "suggested_duration_min": 150,
     "category": "Aquarium",
     "area": "1388 Lujiazui Ring Rd",
-    "opening_hours": "Open · Closes 6 PM",
-    "ticket_price": 160,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 22.22,
+    "ticket_currency": "USD"
   },
   {
     "id": "zhongshan-park",
@@ -283,9 +292,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "780 Changning Rd",
+    "opening_hours": "Open Closes 6 PM",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "CNY"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "century-park",
@@ -297,9 +307,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "409 Huamu Rd",
-    "ticket_price": 10,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 1.39,
+    "ticket_currency": "USD"
   },
   {
     "id": "shanghai-ancient-city-wall",
@@ -311,9 +322,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "6FGM+RR3",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "nanjing-road-pedestrian-street",
@@ -326,9 +338,9 @@
     "category": "Tourist attraction",
     "area": "6FMF+VXJ",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "sihang-warehouse-museum",
@@ -339,11 +351,11 @@
     "rating": 4.8,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "1 光复路",
-    "opening_hours": "Open · Closes 12 PM · Reopens 2 PM",
-    "ticket_price": 20,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "area": "1",
+    "opening_hours": "Open Closes 12 PM Reopens 2 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 2.78,
+    "ticket_currency": "USD"
   },
   {
     "id": "shanghai-disneyland-park",
@@ -355,10 +367,10 @@
     "suggested_duration_min": 540,
     "category": "Theme park",
     "area": "4MV5+945",
-    "opening_hours": "Open · Closes 9:30 PM",
-    "ticket_price": 475,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 9 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 65.97,
+    "ticket_currency": "USD"
   },
   {
     "id": "dongfangmingzhu-pleasure-cruise-boat-wharf",
@@ -369,7 +381,11 @@
     "rating": 4.6,
     "suggested_duration_min": 45,
     "category": "Tourist attraction",
-    "area": "2852 Binjiang Blvd"
+    "area": "2852 Binjiang Blvd",
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 16.67,
+    "ticket_currency": "USD"
   },
   {
     "id": "fuxing-park",
@@ -381,9 +397,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "516 Fuxing Rd (M)",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "people-s-park",
@@ -395,9 +412,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "231 Nanjing Rd (W)",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "qibao-old-street",
@@ -409,9 +427,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "Minhang District",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "changfeng-park",
@@ -423,9 +442,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "451 Daduhe Rd",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "shanghai-circus-world",
@@ -434,9 +454,13 @@
     "lat": 31.3065,
     "lng": 121.4479,
     "rating": 4.5,
-    "suggested_duration_min": 90,
+    "suggested_duration_min": 120,
     "category": "Tourist attraction",
-    "area": "2266 Gonghexin Rd"
+    "area": "2266 Gonghexin Rd",
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 27.78,
+    "ticket_currency": "USD"
   },
   {
     "id": "the-bund-historical-museum",
@@ -448,23 +472,25 @@
     "suggested_duration_min": 120,
     "category": "Tourist attraction",
     "area": "475 Zhongshan Rd (E-1)",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "gucheng-park-northeast-gate",
-    "name": "Gucheng Park （Northeast Gate）",
-    "name_en": "Gucheng Park （Northeast Gate）",
+    "name": "Gucheng Park Northeast Gate",
+    "name_en": "Gucheng Park Northeast Gate",
     "lat": 31.228537,
     "lng": 121.493922,
     "rating": 4.6,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "333 Renmin Rd",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "waterfront-of-oriental-fisherman-wharf-of-shanghai",
@@ -476,8 +502,9 @@
     "suggested_duration_min": 45,
     "category": "Tourist attraction",
     "area": "Yang Pu Qu",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   }
 ]

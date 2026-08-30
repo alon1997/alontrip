@@ -43,7 +43,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 4.5,
-    "area": "GRAND HOSTEL LDK 大阪心斎橋",
+    "area": "GRAND HOSTEL LDK",
     "price_per_night": 27.0,
     "price_currency": "USD"
   },
@@ -55,7 +55,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 4.8,
-    "area": "ＴＨＥＰＡＸ新世界",
+    "area": "",
     "price_per_night": 45.0,
     "price_currency": "USD"
   },
@@ -79,7 +79,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 4.5,
-    "area": "〒556-0003 Osaka",
+    "area": "556-0003 Osaka",
     "price_per_night": 26.0,
     "price_currency": "USD"
   },
@@ -115,7 +115,7 @@
     "kind": "capsule",
     "listed": 1,
     "rating": 4.2,
-    "area": "〒550-0012 Osaka",
+    "area": "550-0012 Osaka",
     "price_per_night": 39.0,
     "price_currency": "USD"
   },
@@ -151,7 +151,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 3.9,
-    "area": "ヤンマースタジアム 北側入口",
+    "area": "",
     "price_per_night": 67.0,
     "price_currency": "USD"
   },
@@ -163,7 +163,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 4.6,
-    "area": "〒543-0053 Osaka",
+    "area": "543-0053 Osaka",
     "price_per_night": 15.0,
     "price_currency": "USD"
   },
@@ -175,7 +175,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 3.9,
-    "area": "西梅田ファーストビル",
+    "area": "",
     "price_per_night": 30.0,
     "price_currency": "USD"
   },
@@ -193,7 +193,7 @@
   },
   {
     "id": "hostel-furoya",
-    "name": "Hostel Furoya ホステル 風呂屋",
+    "name": "Hostel Furoya",
     "lat": 34.6756959,
     "lng": 135.5352926,
     "kind": "hostel",
@@ -211,7 +211,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 4.1,
-    "area": "千日ビル 2階",
+    "area": "2",
     "price_per_night": 28.0,
     "price_currency": "USD"
   },
@@ -223,7 +223,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 4.7,
-    "area": "〒556-0005 Osaka",
+    "area": "556-0005 Osaka",
     "price_per_night": 29.0,
     "price_currency": "USD"
   }

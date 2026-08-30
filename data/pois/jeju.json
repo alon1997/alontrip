@@ -9,7 +9,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "182 Manjanggul-gil",
-    "opening_hours": "Open · Closes 5 PM"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 1.48,
+    "ticket_currency": "USD"
   },
   {
     "id": "hallasan-national-park",
@@ -18,10 +21,13 @@
     "lat": 33.3606281,
     "lng": 126.5358345,
     "rating": 4.7,
-    "suggested_duration_min": 300,
+    "suggested_duration_min": 360,
     "category": "Tourist attraction",
-    "area": "2070-61 1100로",
-    "opening_hours": "Open · Closes 6 PM"
+    "area": "2070-61 1100",
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "seopjikoji",
@@ -33,7 +39,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "Seopjikoji-ro",
-    "opening_hours": "Open · Closes 7 PM"
+    "opening_hours": "Open Closes 7 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "hyeopjae-beach",
@@ -45,7 +54,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "329-10 Hallim-ro",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "hallim-park",
@@ -57,7 +69,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "300 Hallim-ro",
-    "opening_hours": "Open · Closes 6:30 PM"
+    "opening_hours": "Open Closes 6:30 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 11.11,
+    "ticket_currency": "USD"
   },
   {
     "id": "yongduam-rock",
@@ -69,7 +84,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "15 Yongduam-gil",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "cheonjeyeon-waterfalls",
@@ -81,7 +99,10 @@
     "suggested_duration_min": 90,
     "category": "Nature preserve",
     "area": "2232 Jungmun-dong",
-    "opening_hours": "Open · Closes 5:10 PM"
+    "opening_hours": "Open Closes 5:10 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 1.48,
+    "ticket_currency": "USD"
   },
   {
     "id": "jejumok-gwana",
@@ -93,19 +114,25 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "13 Gwandeok-ro 7-gil",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 1.11,
+    "ticket_currency": "USD"
   },
   {
     "id": "jeju-folk-village",
-    "name": "Jeju Folk Village 제주민속촌",
-    "name_en": "Jeju Folk Village 제주민속촌",
+    "name": "Jeju Folk Village",
+    "name_en": "Jeju Folk Village",
     "lat": 33.322511,
     "lng": 126.841868,
     "rating": 4.1,
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "631-34 Minsokhaean-ro",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 8.15,
+    "ticket_currency": "USD"
   },
   {
     "id": "sangumburi-crater",
@@ -117,7 +144,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "768 Bijarim-ro",
-    "opening_hours": "Open · Closes 5 PM"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 4.44,
+    "ticket_currency": "USD"
   },
   {
     "id": "mysterious-road",
@@ -129,7 +159,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "2894-63 1100-ro",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "halla-arboretum",
@@ -141,7 +174,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "72 Sumogwon-gil",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "camellia-hill-botanical-garden",
@@ -153,10 +189,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "166 Byeongak-ro",
-    "opening_hours": "Open · Closes 6 PM",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "seogwipo-jeongbang-waterfall",
@@ -168,7 +204,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "37 Chilsimni-ro 214beon-gil",
-    "opening_hours": "Open · Closes 5:20 PM"
+    "opening_hours": "Open Closes 5:20 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 1.48,
+    "ticket_currency": "USD"
   },
   {
     "id": "gimnyeong-maze-park",
@@ -180,7 +219,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "122 Iljudong-ro",
-    "opening_hours": "Open · Closes 7 PM"
+    "opening_hours": "Open Closes 7 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 8.15,
+    "ticket_currency": "USD"
   },
   {
     "id": "jeju-glass-castle",
@@ -192,7 +234,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "462 Nokchabunjae-ro",
-    "opening_hours": "Open · Closes 7 PM"
+    "opening_hours": "Open Closes 7 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 8.15,
+    "ticket_currency": "USD"
   },
   {
     "id": "bijarim-forest",
@@ -204,10 +249,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "55 Bijasup-gil",
-    "opening_hours": "Open · Closes 6 PM",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "spirited-garden",
@@ -219,7 +264,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "675 Nokchabunjae-ro",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 8.89,
+    "ticket_currency": "USD"
   },
   {
     "id": "jeju-rail-bike",
@@ -231,7 +279,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "4639 Jongdal-ri",
-    "opening_hours": "Open · Closes 5:30 PM"
+    "opening_hours": "Open Closes 5:30 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 11.11,
+    "ticket_currency": "USD"
   },
   {
     "id": "jeju-national-museum",
@@ -243,7 +294,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "17 Iljudong-ro",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "jeju-haenyeo-museum",
@@ -255,7 +309,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "26 Haenyeobangmulgwan-gil",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 0.81,
+    "ticket_currency": "USD"
   },
   {
     "id": "lee-jung-seop-street",
@@ -267,10 +324,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "Seogwi-dong",
-    "opening_hours": "Open · Closes 6 PM",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "aqua-planet-jeju",
@@ -282,7 +339,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "95 Seopjikoji-ro",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 31.78,
+    "ticket_currency": "USD"
   },
   {
     "id": "osulloc-tea-museum",
@@ -294,7 +354,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "15 Sinhwayeoksa-ro",
-    "opening_hours": "Open · Closes 7 PM"
+    "opening_hours": "Open Closes 7 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "nuwemaru-street-pedestrian-shopping-street",
@@ -307,9 +370,9 @@
     "category": "Tourist attraction",
     "area": "Yeondong 7-gil",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "jeju-stone-park",
@@ -321,22 +384,25 @@
     "suggested_duration_min": 150,
     "category": "Park",
     "area": "2023 Namjo-ro",
-    "opening_hours": "Open · Closes 6 PM",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "poi",
-    "name": "일출랜드",
-    "name_en": "일출랜드",
+    "name": "",
+    "name_en": "",
     "lat": 33.3822761,
     "lng": 126.8418303,
     "rating": 4.1,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "4150-30 Jungsangandong-ro",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 8.15,
+    "ticket_currency": "USD"
   },
   {
     "id": "arte-museum-jeju",
@@ -348,7 +414,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "478 Eorimbi-ro",
-    "opening_hours": "Open · Closes 8 PM"
+    "opening_hours": "Open Closes 8 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 13.33,
+    "ticket_currency": "USD"
   },
   {
     "id": "seongeup-folk-village",
@@ -359,7 +428,11 @@
     "rating": 3.8,
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
-    "area": "30번지 Seongeupjeonguihyeon-ro"
+    "area": "30 Seongeupjeonguihyeon-ro",
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "jeju-samyang-dong-prehistoric-site",
@@ -371,7 +444,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "Cheju",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "oedolgae",
@@ -383,7 +459,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "791 Seohong-dong",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "gwangchigi-beach",
@@ -395,7 +474,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "224-33 Goseong-ri",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "jeju-teseum",
@@ -407,7 +489,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "2159 Pyeonghwa-ro",
-    "opening_hours": "Open · Closes 7 PM"
+    "opening_hours": "Open Closes 7 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 10.37,
+    "ticket_currency": "USD"
   },
   {
     "id": "dodubong-peak",
@@ -418,8 +503,11 @@
     "rating": 4.6,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "산1 Dodu-dong",
-    "opening_hours": "Open 24 hours"
+    "area": "1 Dodu-dong",
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "jeju-aerospace-museum",
@@ -431,19 +519,25 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "218 Nokchabunjae-ro",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 4.44,
+    "ticket_currency": "USD"
   },
   {
     "id": "jeju-4-3-peace-park",
-    "name": "Jeju 4 · 3 Peace Park",
-    "name_en": "Jeju 4 · 3 Peace Park",
+    "name": "Jeju 4 3 Peace Park",
+    "name_en": "Jeju 4 3 Peace Park",
     "lat": 33.4510818,
     "lng": 126.6186384,
     "rating": 4.7,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "430 Myeongnim-ro",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "sinchang-windmill-coastal-road",
@@ -455,7 +549,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "1323 Sinchang-ri",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "cherry-blossom-tunnel",
@@ -467,17 +564,24 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "1121-4 Jangjeon-ri",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "poi-2",
-    "name": "중문관광단지",
-    "name_en": "중문관광단지",
+    "name": "",
+    "name_en": "",
     "lat": 33.2486522,
     "lng": 126.4124374,
     "rating": 4.3,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "Jeju-do"
+    "area": "Jeju-do",
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   }
 ]

@@ -13,7 +13,7 @@
   },
   {
     "id": "yesinn-hotel-youth-hostel",
-    "name": "Yesinn Hotel & Youth Hostel 悦思酒店&青年旅舍",
+    "name": "Yesinn Hotel & Youth Hostel &",
     "lat": 22.3108391,
     "lng": 114.1701209,
     "kind": "hostel",
@@ -61,7 +61,7 @@
   },
   {
     "id": "hop-inn",
-    "name": "Hop Inn 撲撲旅舍",
+    "name": "Hop Inn",
     "lat": 22.297039,
     "lng": 114.17485,
     "kind": "hostel",
@@ -91,7 +91,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 4.3,
-    "area": "10-16號 Pak Tai St",
+    "area": "10-16 Pak Tai St",
     "price_per_night": 72.0,
     "price_currency": "USD"
   },
@@ -115,7 +115,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 3.8,
-    "area": "66號 Tai Mei Tuk Rd",
+    "area": "66 Tai Mei Tuk Rd",
     "price_per_night": 43.0,
     "price_currency": "USD"
   },
@@ -133,7 +133,7 @@
   },
   {
     "id": "sleeplicity",
-    "name": "SLEEPLICITY 簡休旅",
+    "name": "SLEEPLICITY",
     "lat": 22.2973052,
     "lng": 114.1719927,
     "kind": "hostel",

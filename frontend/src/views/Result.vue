@@ -5,6 +5,8 @@ import BrandHeader from '../components/BrandHeader.vue'
 import ResultMap from '../components/ResultMap.vue'
 import { fetchPois } from '../api'
 import { money } from '../money'
+import { fmt, scheduleMeta } from '../scheduleText'
+import { cityDisplayName } from '../cityNames'
 
 const router = useRouter()
 const result = ref(null)
@@ -23,6 +25,10 @@ const daySummaries = computed(() => resultMapRef.value?.daySummaries ?? [])
 const hasPending = computed(() => resultMapRef.value?.hasPending ?? false)
 const pendingCount = computed(() => resultMapRef.value?.pendingCount ?? 0)
 const updating = computed(() => resultMapRef.value?.updating ?? false)
+// T-043 rich export: disable the button and show progress while running
+// (exposed refs unwrap automatically, same as the ones above)
+const exporting = computed(() => resultMapRef.value?.exporting ?? false)
+const exportProgress = computed(() => resultMapRef.value?.exportProgress ?? '')
 const liveTotals = computed(() => {
   const days = daySummaries.value
   if (!days.length) return null
@@ -32,6 +38,21 @@ const liveTotals = computed(() => {
     transfers: days.reduce((a, d) => a + d.transfers, 0),
     currency: days[0].currency,
     allReal: days.every((d) => d.allReal),
+  }
+})
+
+// T-040: whole-trip budget from the optimize-route payload (transit + tickets
+// + nightly stays). Unknown prices are already 0 in the backend sums; the
+// count surfaces so the number stays honest.
+const budget = computed(() => {
+  const t = result.value?.totals
+  if (!t || t.grand_total == null) return null
+  return {
+    grand: t.grand_total,
+    transit: t.transit_cost,
+    tickets: t.ticket_cost ?? 0,
+    stays: t.lodging_cost ?? 0,
+    unknown: t.unknown_prices ?? 0,
   }
 })
 
@@ -76,26 +97,7 @@ async function onUpdateTransit() {
 }
 
 async function onDownload() {
-  await resultMapRef.value?.downloadPng()
-}
-
-const fmt = (min) => (min >= 60 ? `${Math.floor(min / 60)}h ${min % 60}m` : `${min} min`)
-
-function ticketLine(ev) {
-  if (ev.cost == null) return 'ticket unknown'
-  if (ev.cost === 0) return 'free'
-  return money(ev.cost, ev.currency)
-}
-
-function scheduleMeta(ev) {
-  if (ev.kind === 'transit') {
-    const bits = [ev.line_summary]
-    if (ev.cost != null && ev.cost > 0) bits.push(money(ev.cost, ev.currency))
-    bits.push(fmt(ev.duration_min))
-    return bits.join(' · ')
-  }
-  if (ev.kind === 'visit') return `${ticketLine(ev)} · ${fmt(ev.duration_min)}`
-  return fmt(ev.duration_min)
+  await resultMapRef.value?.exportImages()
 }
 </script>
 
@@ -133,6 +135,16 @@ function scheduleMeta(ev) {
               · <span class="badge-est">partly estimated</span>
             </template>
           </div>
+          <div v-if="budget" class="trip-total-row budget-row">
+            <span class="trip-total-label">Trip budget</span>
+            <span class="trip-total-value">≈ {{ money(budget.grand, 'USD') }}</span>
+          </div>
+          <div v-if="budget" class="trip-total-note">
+            transit {{ money(budget.transit, 'USD') }} ·
+            tickets {{ money(budget.tickets, 'USD') }} ·
+            stays {{ money(budget.stays, 'USD') }}<template v-if="budget.unknown">
+              · {{ budget.unknown }} unknown price{{ budget.unknown === 1 ? '' : 's' }} (counted as $0)</template>
+          </div>
         </div>
 
         <div v-if="result.warnings && result.warnings.length" class="warning-banner">
@@ -148,7 +160,7 @@ function scheduleMeta(ev) {
         </button>
 
         <div v-for="day in daySummaries" :key="day.day" class="day-card">
-          <div class="day-title">Day {{ day.day }} — {{ day.city }}</div>
+          <div class="day-title">Day {{ day.day }} — {{ cityDisplayName(day.city) }}</div>
           <ol class="day-schedule">
             <li
               v-for="(ev, i) in day.schedule"
@@ -175,7 +187,9 @@ function scheduleMeta(ev) {
         </div>
 
         <div class="result-actions">
-          <button class="optimize" @click="onDownload">Download map</button>
+          <button class="optimize" :disabled="exporting" @click="onDownload">
+            {{ exporting ? `Exporting ${exportProgress}…` : 'Export images' }}
+          </button>
           <button class="optimize back-btn" @click="backToPlan">Back to plan</button>
         </div>
       </template>
@@ -187,6 +201,8 @@ function scheduleMeta(ev) {
       :pois-by-city="poisByCity"
       :arrival-hub="result.arrival_hub"
       :departure-hub="result.departure_hub"
+      :arrival-start-min="result.arrival_start_min ?? null"
+      :departure-cutoff-min="result.departure_cutoff_min ?? null"
     />
     <div v-else-if="result" class="map-wrap result-map-placeholder">
       <div class="placeholder-note">Loading map data…</div>

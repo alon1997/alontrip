@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import logging
 import math
+import os
 from abc import ABC, abstractmethod
 from pathlib import Path
 
@@ -47,7 +48,7 @@ TAXI_FARE_USD = {
     "HK": (3.0, 1.1),
 }
 
-# T-012 / 方案 7.3: straight-line hops shorter than this never call SerpApi —
+# T-012 / plan 7.3: straight-line hops shorter than this never call SerpApi —
 # a paid transit query for two spots on the same block wastes quota and
 # usually returns a worse answer than "just walk there" anyway.
 WALKING_SHORT_CIRCUIT_KM = 0.8
@@ -99,6 +100,9 @@ class TransitRoute(BaseModel):
     estimated: bool = False
     frequency: str = ""                        # e.g. "every 5 min"
     alternatives: list[RouteOption] = []       # excludes the chosen route
+    # How this route was produced. Old cache files omit the field — default
+    # is SerpApi's on-disk response, not a live HTTP call.
+    data_source: str = "serpapi_cache"
 
 
 def haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
@@ -160,12 +164,15 @@ def taxi_estimate(
         transfer_count=0,
         legs=[leg],
         estimated=True,
+        data_source="taxi",
     )
 
 
 def estimate_route(origin: Coord, dest: Coord, *, city: str = "") -> TransitRoute:
-    """Back-compat name: a missing timetable is a taxi, not a fake metro."""
-    return taxi_estimate(origin, dest, country=country_for(origin.lat, origin.lng, city))
+    """Exception-path fallback: same numbers as taxi, tagged ``estimate``."""
+    route = taxi_estimate(origin, dest, country=country_for(origin.lat, origin.lng, city))
+    route.data_source = "estimate"
+    return route
 
 
 def route_in_usd(route: TransitRoute) -> TransitRoute:
@@ -202,6 +209,7 @@ def _walking_route(distance_km: float) -> TransitRoute:
         transfer_count=0,
         legs=[leg],
         estimated=True,
+        data_source="walk",
     )
 
 
@@ -341,14 +349,22 @@ class SerpApiTransitProvider(TransitProvider):
                     logger.warning("ignoring corrupt legacy route cache %s: %s", legacy_file, exc)
 
         if cached is not None and not _is_stale_no_timetable(cached):
+            cached.data_source = "serpapi_cache"
             return route_in_usd(cached)
 
         try:
             route = self._fetch(origin, dest, depart_at=depart_at)
+            route.data_source = "serpapi_live"
         except Exception as exc:
             logger.warning("SerpApi transit miss (%s); taxi estimate", exc)
             route = taxi_estimate(origin, dest, country=country_for(origin.lat, origin.lng, city))
-        cache_file.write_text(route.model_dump_json(), encoding="utf-8")
+        # T-046: once transit queries run in parallel, threads can write the
+        # same cache file at once — write to a temp file + atomic rename so
+        # interleaved writes can never corrupt the JSON (a corrupt file only
+        # costs one extra query, but there is no reason to allow it).
+        tmp = cache_file.with_name(cache_file.name + ".tmp")
+        tmp.write_text(route.model_dump_json(), encoding="utf-8")
+        os.replace(tmp, cache_file)
         return route_in_usd(route)
 
     def _fetch(self, origin: Coord, dest: Coord, *, depart_at: int | None = None) -> TransitRoute:
@@ -439,6 +455,7 @@ class LocalTransitProvider(TransitProvider):
             return walking
         precomputed = self._load_precomputed(origin, dest, hour_bucket)
         if precomputed is not None and not _is_stale_no_timetable(precomputed):
+            precomputed.data_source = "serpapi_cache"
             return route_in_usd(precomputed)
         return taxi_estimate(origin, dest, country=country_for(origin.lat, origin.lng, city))
 

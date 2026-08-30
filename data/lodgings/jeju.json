@@ -37,7 +37,7 @@
   },
   {
     "id": "bedradio-dongmoon",
-    "name": "베드라디오 동문 BedRadio Dongmoon",
+    "name": "BedRadio Dongmoon",
     "lat": 33.5162895,
     "lng": 126.529299,
     "kind": "hostel",
@@ -67,7 +67,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 3.2,
-    "area": "1층",
+    "area": "1",
     "price_per_night": 20.0,
     "price_currency": "USD"
   },
@@ -155,7 +155,7 @@
   },
   {
     "id": "poi",
-    "name": "솔숲펜션",
+    "name": "",
     "lat": 33.5112916,
     "lng": 126.8489745,
     "kind": "hostel",
@@ -177,7 +177,7 @@
   },
   {
     "id": "poi-2",
-    "name": "솔트 애월",
+    "name": "",
     "lat": 33.467014,
     "lng": 126.3363786,
     "kind": "hostel",
@@ -187,7 +187,7 @@
   },
   {
     "id": "poi-3",
-    "name": "카이리조트",
+    "name": "",
     "lat": 33.3922148,
     "lng": 126.2409676,
     "kind": "hostel",
@@ -211,7 +211,7 @@
   },
   {
     "id": "poi-4",
-    "name": "레드클레이펜션",
+    "name": "",
     "lat": 33.4486892,
     "lng": 126.3660238,
     "kind": "hostel",

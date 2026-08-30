@@ -1,7 +1,7 @@
 [
   {
     "id": "senso-ji",
-    "name": "浅草寺",
+    "name": "",
     "name_en": "Senso-ji Temple",
     "lat": 35.7148,
     "lng": 139.7967,
@@ -9,54 +9,57 @@
     "suggested_duration_min": 90,
     "category": "temple",
     "area": "2 Chome-3-1 Asakusa",
+    "opening_hours": "Open Closes 5 PM",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "JPY"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "akihabara",
-    "name": "秋叶原",
+    "name": "",
     "name_en": "Akihabara Electric Town",
     "lat": 35.6984,
     "lng": 139.7731,
     "rating": 4.4,
     "suggested_duration_min": 120,
     "category": "district",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "shibuya-crossing",
-    "name": "涩谷",
+    "name": "",
     "name_en": "Shibuya Scramble Crossing",
     "lat": 35.6595,
     "lng": 139.7005,
     "rating": 4.4,
     "suggested_duration_min": 90,
     "category": "landmark",
-    "area": "〒150-6145 Tokyo",
-    "opening_hours": "Open · Closes 10:30 PM",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "area": "150-6145 Tokyo",
+    "opening_hours": "Open Closes 10:30 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "shinjuku",
-    "name": "新宿",
+    "name": "",
     "name_en": "Shinjuku",
     "lat": 35.6909,
     "lng": 139.7003,
     "rating": 4.4,
     "suggested_duration_min": 120,
     "category": "district",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "harajuku",
-    "name": "原宿",
+    "name": "",
     "name_en": "Harajuku Takeshita Street",
     "lat": 35.6702,
     "lng": 139.7027,
@@ -65,100 +68,107 @@
     "category": "district",
     "area": "6 Chome Jingumae",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "omotesando",
-    "name": "表参道",
+    "name": "",
     "name_en": "Omotesando",
     "lat": 35.6652,
     "lng": 139.712,
     "rating": 4.3,
     "suggested_duration_min": 120,
     "category": "district",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "roppongi-hills",
-    "name": "六本木",
+    "name": "",
     "name_en": "Roppongi Hills",
     "lat": 35.6604,
     "lng": 139.7292,
     "rating": 4.3,
     "suggested_duration_min": 120,
     "category": "district",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tsukiji-market",
-    "name": "筑地市场",
+    "name": "",
     "name_en": "Tsukiji Outer Market",
     "lat": 35.6654,
     "lng": 139.7707,
     "rating": 4.3,
     "suggested_duration_min": 120,
     "category": "market",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 2 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "ginza",
-    "name": "银座",
+    "name": "",
     "name_en": "Ginza",
     "lat": 35.6717,
     "lng": 139.765,
     "rating": 4.4,
     "suggested_duration_min": 120,
     "category": "district",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tokyo-station",
-    "name": "东京站",
+    "name": "",
     "name_en": "Tokyo Station",
     "lat": 35.6812,
     "lng": 139.7671,
     "rating": 4.4,
     "suggested_duration_min": 90,
     "category": "landmark",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "imperial-palace",
-    "name": "皇居",
+    "name": "",
     "name_en": "Imperial Palace East Gardens",
     "lat": 35.6888,
     "lng": 139.7544,
     "rating": 4.4,
     "suggested_duration_min": 180,
     "category": "garden",
+    "opening_hours": "Open Closes 5 PM",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "JPY"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "ueno-park",
-    "name": "上野",
+    "name": "",
     "name_en": "Ueno Park",
     "lat": 35.7141,
     "lng": 139.7774,
     "rating": 4.5,
     "suggested_duration_min": 90,
     "category": "park",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tokyo-tower",
@@ -170,10 +180,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "4 Chome-2-8 Shibakoen",
-    "opening_hours": "Open · Closes 11 PM",
+    "opening_hours": "Open Closes 11 PM",
     "requires_ticket": "yes",
-    "ticket_price": 1500,
-    "ticket_currency": "JPY"
+    "ticket_price": 10.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tokyo-skytree",
@@ -185,10 +195,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "1 Chome-1-2 Oshiage",
-    "opening_hours": "Open · Closes 10 PM",
+    "opening_hours": "Open Closes 10 PM",
     "requires_ticket": "yes",
-    "ticket_price": 2100,
-    "ticket_currency": "JPY"
+    "ticket_price": 14.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "imperial-palace-east-national-gardens",
@@ -200,10 +210,10 @@
     "suggested_duration_min": 180,
     "category": "Tourist attraction",
     "area": "1-1 Chiyoda",
-    "opening_hours": "Open · Closes 6 PM",
+    "opening_hours": "Open Closes 6 PM",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "JPY"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "shinjuku-gyoen-national-garden",
@@ -215,10 +225,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "11 Naitomachi",
-    "opening_hours": "Open · Closes 6 PM",
+    "opening_hours": "Open Closes 6 PM",
     "requires_ticket": "yes",
-    "ticket_price": 500.0,
-    "ticket_currency": "JPY"
+    "ticket_price": 3.33,
+    "ticket_currency": "USD"
   },
   {
     "id": "omoide-yokocho-memory-lane",
@@ -231,9 +241,9 @@
     "category": "Tourist attraction",
     "area": "1 Chome-2-2 Nishishinjuku",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tokyo-metropolitan-government-building",
@@ -245,10 +255,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "2 Chome-8-1 Nishishinjuku",
-    "opening_hours": "Open · Closes 6:45 PM",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6:45 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tokyo-national-museum",
@@ -260,10 +270,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "13-9 Uenokoen",
-    "opening_hours": "Open · Closes 5 PM",
+    "opening_hours": "Open Closes 5 PM",
     "requires_ticket": "yes",
-    "ticket_price": 1000,
-    "ticket_currency": "JPY"
+    "ticket_price": 6.67,
+    "ticket_currency": "USD"
   },
   {
     "id": "yoyogi-park",
@@ -277,8 +287,8 @@
     "area": "2-1 Yoyogikamizonocho",
     "opening_hours": "Open 24 hours",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "JPY"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "shinjuku-golden-gai",
@@ -289,11 +299,11 @@
     "rating": 4.3,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "あかるい花園 五番街",
+    "area": "",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tokyo-disneyland",
@@ -305,10 +315,10 @@
     "suggested_duration_min": 540,
     "category": "Tourist attraction",
     "area": "1-1 Maihama",
-    "opening_hours": "Open · Closes 9 PM",
-    "ticket_price": 10900,
-    "ticket_currency": "JPY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 9 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 72.67,
+    "ticket_currency": "USD"
   },
   {
     "id": "nakamise-shopping-street",
@@ -320,10 +330,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "1 Chome-36-3 Asakusa",
-    "opening_hours": "Open · Closes 5 PM",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "meiji-jingu",
@@ -335,9 +345,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "1-1 Yoyogikamizonocho",
+    "opening_hours": "Open Closes 5 PM",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "JPY"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "godzilla-statue",
@@ -350,9 +361,9 @@
     "category": "Tourist attraction",
     "area": "1 Chome-3-2 Yurakucho",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "ueno-park-2",
@@ -364,10 +375,10 @@
     "suggested_duration_min": 90,
     "category": "Park",
     "area": "Uenokoen",
-    "opening_hours": "Open · Closes 11 PM",
+    "opening_hours": "Open Closes 11 PM",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "JPY"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tokyo-joypolis",
@@ -378,11 +389,11 @@
     "rating": 4.0,
     "suggested_duration_min": 240,
     "category": "Tourist attraction",
-    "area": "〒135-0091 Tokyo",
-    "opening_hours": "Open · Closes 9 PM",
+    "area": "135-0091 Tokyo",
+    "opening_hours": "Open Closes 9 PM",
     "requires_ticket": "yes",
-    "ticket_price": 3000.0,
-    "ticket_currency": "JPY"
+    "ticket_price": 20.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tokyo-disneysea",
@@ -394,10 +405,10 @@
     "suggested_duration_min": 540,
     "category": "Tourist attraction",
     "area": "1-13 Maihama",
-    "opening_hours": "Open · Closes 9 PM",
-    "ticket_price": 10900,
-    "ticket_currency": "JPY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 9 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 72.67,
+    "ticket_currency": "USD"
   },
   {
     "id": "edo-tokyo-open-air-architectural-museum",
@@ -408,11 +419,11 @@
     "rating": 4.5,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "都立小金井公園 内",
-    "opening_hours": "Open · Closes 5:30 PM",
+    "area": "",
+    "opening_hours": "Open Closes 5:30 PM",
     "requires_ticket": "yes",
-    "ticket_price": 400,
-    "ticket_currency": "JPY"
+    "ticket_price": 2.67,
+    "ticket_currency": "USD"
   },
   {
     "id": "tokyo-word-mark-monument",
@@ -425,9 +436,9 @@
     "category": "Tourist attraction",
     "area": "1 Chome-3 Aomi",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tokyo-disney-resort",
@@ -439,14 +450,15 @@
     "suggested_duration_min": 540,
     "category": "Tourist attraction",
     "area": "1-1 Maihama",
-    "ticket_price": 10900,
-    "ticket_currency": "JPY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 9 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 72.67,
+    "ticket_currency": "USD"
   },
   {
     "id": "kiky-mon-gate",
-    "name": "Kikyō-mon Gate",
-    "name_en": "Kikyō-mon Gate",
+    "name": "Kiky -mon Gate",
+    "name_en": "Kiky -mon Gate",
     "lat": 35.6840122,
     "lng": 139.758499,
     "rating": 4.3,
@@ -454,9 +466,9 @@
     "category": "Tourist attraction",
     "area": "1-1 Chiyoda",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tokyo-dome-city",
@@ -467,7 +479,11 @@
     "rating": 4.3,
     "suggested_duration_min": 240,
     "category": "Tourist attraction",
-    "area": "1 Chome-3-61 Koraku"
+    "area": "1 Chome-3-61 Koraku",
+    "opening_hours": "Open Closes 10 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 26.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "remains-of-tokyo-prefectural-office",
@@ -480,9 +496,9 @@
     "category": "Tourist attraction",
     "area": "3 Chome-5-1 Marunouchi",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "godzilla-head",
@@ -494,9 +510,10 @@
     "suggested_duration_min": 45,
     "category": "Tourist attraction",
     "area": "1 Chome-19-1 Kabukicho",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "statue-of-liberty",
@@ -509,9 +526,9 @@
     "category": "Tourist attraction",
     "area": "1 Chome-4-2 Daiba",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "yoyogi-park-clock-tower",
@@ -525,8 +542,8 @@
     "area": "2-1 Yoyogikamizonocho",
     "opening_hours": "Open 24 hours",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "JPY"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tokyo-daibutsu",
@@ -538,25 +555,25 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "5 Chome-28-3 Akatsuka",
-    "opening_hours": "Open · Closes 3:45 PM",
+    "opening_hours": "Open Closes 3:45 PM",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "JPY"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "te-mon-gate",
-    "name": "Ōte-mon Gate",
-    "name_en": "Ōte-mon Gate",
+    "name": "te-mon Gate",
+    "name_en": "te-mon Gate",
     "lat": 35.6861142,
     "lng": 139.7602531,
     "rating": 4.4,
     "suggested_duration_min": 45,
     "category": "Tourist attraction",
     "area": "1-1 Chiyoda",
-    "opening_hours": "Open · Closes 4:30 PM",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 4:30 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "cat-street",
@@ -567,11 +584,11 @@
     "rating": 4.4,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "旧渋谷川遊歩道路",
+    "area": "",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "shiomizaka",
@@ -584,9 +601,9 @@
     "category": "Tourist attraction",
     "area": "3 Chome-1 Kasumigaseki",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "meguro-sky-garden",
@@ -598,9 +615,9 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "1 Chome-9-2 Ohashi",
-    "opening_hours": "Open · Closes 9 PM",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 9 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   }
 ]

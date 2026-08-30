@@ -53,13 +53,13 @@ BBOX_PAD = 0.12
 CURRENCY_HINT = {
     "yen": "JPY",
     "jpy": "JPY",
-    "円": "JPY",
+    "\u5186": "JPY",
     "won": "KRW",
     "krw": "KRW",
     "yuan": "CNY",
     "cny": "CNY",
     "rmb": "CNY",
-    "元": "CNY",
+    "\u5143": "CNY",
     "hkd": "HKD",
 }
 

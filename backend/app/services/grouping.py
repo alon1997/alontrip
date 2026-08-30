@@ -24,7 +24,7 @@ from .transit import TransitRoute, haversine_km
 
 logger = logging.getLogger(__name__)
 
-# Model id on DeepSeek's Anthropic-compatible endpoint.
+DISTRICT_MERGE_KM = 1.2
 # Official list: deepseek-v4-flash / deepseek-v4-pro
 # (https://api-docs.deepseek.com/zh-cn/). Product grouping uses flash:
 # cheaper and faster; a timeout still falls back to the rule-based grouper.
@@ -45,6 +45,11 @@ def deepseek_messages_body(prompt: str, *, max_tokens: int = DEEPSEEK_MAX_TOKENS
     return {
         "model": DEEPSEEK_MODEL,
         "max_tokens": max_tokens,
+        # Structured extraction (copying ids, grouping by day) needs no
+        # creativity. 2026-08-28 prod: at the default high temperature the same
+        # 17-spot prompt failed three different ways across three runs (wrong
+        # id / near-miss id / non-JSON).
+        "temperature": 0.2,
         "thinking": {"type": "disabled"},
         "messages": [{"role": "user", "content": prompt}],
     }
@@ -59,7 +64,7 @@ def _content_block_types(content: object) -> list[str]:
 def _find_text_block(content: list[dict]) -> str:
     """DeepSeek's reasoning model emits a ``thinking`` block before the
     actual reply, so ``content[0]`` is not reliably the text (found in T-007,
-    fixed here and in planner.py's own DeepSeek call — see 开发日志.md T-007)."""
+    fixed here and in planner.py's own DeepSeek call — see dev log T-007)."""
     for block in content:
         if block.get("type") == "text":
             return block.get("text", "")
@@ -118,11 +123,18 @@ class RuleBasedGrouper(Grouper):
         if not pois:
             return []
         k = max(1, min(days, len(pois)))
-        clusters = self._cluster(pois, k)
-        clusters = self._rebalance(clusters, len(pois))
-        ordered = [self._order_cluster(cluster) for cluster in clusters]
-        # Present days north-to-south for a natural reading order.
-        ordered.sort(key=lambda group: sum(p.lat for p in group) / len(group), reverse=True)
+        clusters = [group for group in self._cluster(pois, k) if group]
+        clusters = self._merge_close_clusters(clusters)
+        # Fit to day count by merging nearest districts / splitting the
+        # largest. Do not call _rebalance (that evened counts and split
+        # the Bund / Lujiazui apart). Shanghai check: the-bund + lujiazui + shanghai-tower
+        # stay one day when grouped with yu-garden/xintiandi into 3 days.
+        clusters = self._fit_to_day_count(clusters, k)
+        ordered = [self._order_cluster(cluster) if cluster else [] for cluster in clusters]
+        ordered.sort(
+            key=lambda group: (sum(p.lat for p in group) / len(group)) if group else -90.0,
+            reverse=True,
+        )
         return ordered
 
     def _cluster(self, pois: list[Poi], k: int) -> list[list[Poi]]:
@@ -175,17 +187,66 @@ class RuleBasedGrouper(Grouper):
                 groups[j].append(farthest)
         return [group for group in groups if group]
 
-    def _rebalance(self, groups: list[list[Poi]], n: int) -> list[list[Poi]]:
-        """容量约束均衡：任意两天的景点数差 ≤ 1（落在 n//k ~ ceil(n/k)）。
+    def _merge_close_clusters(self, groups: list[list[Poi]]) -> list[list[Poi]]:
+        """Merge districts whose centroids are closer than DISTRICT_MERGE_KM."""
+        groups = [list(group) for group in groups if group]
+        changed = True
+        while changed and len(groups) > 1:
+            changed = False
+            best_pair: tuple[int, int] | None = None
+            best_d = DISTRICT_MERGE_KM
+            for i in range(len(groups)):
+                for j in range(i + 1, len(groups)):
+                    dist = _centroid_distance(groups[i], groups[j])
+                    if dist < best_d:
+                        best_d = dist
+                        best_pair = (i, j)
+            if best_pair is not None:
+                i, j = best_pair
+                groups[i] = groups[i] + groups[j]
+                groups.pop(j)
+                changed = True
+        return groups
 
-        先聚类、再均衡：把超载簇里离欠载簇质心最近的点移给最近的欠载簇，
-        保证均衡的同时不牺牲「同一天景点地理上尽量接近」的目标。
+    def _fit_to_day_count(self, groups: list[list[Poi]], days: int) -> list[list[Poi]]:
+        """End with exactly ``days`` groups: merge closest extras, split oversized."""
+        groups = [list(group) for group in groups if group]
+        while len(groups) > days and len(groups) >= 2:
+            best_pair = (0, 1)
+            best_d = _centroid_distance(groups[0], groups[1])
+            for i in range(len(groups)):
+                for j in range(i + 1, len(groups)):
+                    dist = _centroid_distance(groups[i], groups[j])
+                    if dist < best_d:
+                        best_d = dist
+                        best_pair = (i, j)
+            i, j = best_pair
+            groups[i] = groups[i] + groups[j]
+            groups.pop(j)
+        while len(groups) < days:
+            largest = max(groups, key=len) if groups else []
+            if len(largest) < 2:
+                groups.append([])
+                continue
+            clat, clng = _centroid(largest)
+            farthest = max(largest, key=lambda p: haversine_km(p.lat, p.lng, clat, clng))
+            largest.remove(farthest)
+            groups.append([farthest])
+        while len(groups) < days:
+            groups.append([])
+        return groups[:days]
+
+    def _rebalance(self, groups: list[list[Poi]], n: int) -> list[list[Poi]]:
+        """Unused leftover: count-balancing split districts. Do not call from group().
+
+        Capacity-balanced: any two days differ by at most 1 spot (lands in
+        the n//k ~ ceil(n/k) range).
         """
         k = len(groups)
         if k <= 1:
             return groups
         target_low, target_high = n // k, -(-n // k)
-        for _ in range(n):  # 每次移动严格减小失衡量，n 步内必然收敛
+        for _ in range(n):  # each move strictly decreases the imbalance; converges within n steps
             overloaded = [g for g in groups if len(g) > target_high]
             underloaded = [g for g in groups if len(g) < target_low]
             if not overloaded or not underloaded:
@@ -219,15 +280,16 @@ class RuleBasedGrouper(Grouper):
 class LLMGrouper(Grouper):
     """DeepSeek-powered grouping with a silent, reliable rule-based fallback.
 
-    ``name`` 上报的是「上一次实际执行」的实现：LLM 成功报 deepseek，
-    降级到规则则报 rule-based (deepseek unavailable)——不对调用方撒谎。
+    ``name`` reports whichever implementation actually ran last: deepseek on
+    an LLM success, rule-based (deepseek unavailable) after a fallback —
+    never lie to the caller.
     """
 
     def __init__(self, api_key: str, base_url: str, rules: Grouper):
         self._api_key = api_key
         self._base_url = base_url.rstrip("/")
         self._rules = rules
-        self._effective_name = "deepseek"  # 已配置，尚未实际调用
+        self._effective_name = "deepseek"  # configured, no call made yet
 
     @property
     def name(self) -> str:

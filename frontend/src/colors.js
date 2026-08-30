@@ -1,17 +1,18 @@
-// 按天配色：14 种分得开的颜色（方案 7.2：14 天不能只有 3 色循环撞车）
+// Per-day palette: 14 clearly distinguishable colors (plan 7.2: 14 days can't
+// share a 3-color cycling loop)
 export const DAY_COLORS = [
-  '#4da3ff', // Day 1 蓝
-  '#3ddc84', // Day 2 绿
-  '#ff9f43', // Day 3 橙
-  '#a55eea', // Day 4 紫
-  '#ff5c5c', // Day 5 红
-  '#00d2d3', // Day 6 青
-  '#f368e0', // Day 7 粉
-  '#feca57', // Day 8 黄
-  '#1dd1a1', // Day 9 薄荷绿
-  '#5f27cd', // Day 10 深紫
-  '#ff6b81', // Day 11 玫红
-  '#54a0ff', // Day 12 天蓝
-  '#c8d6e5', // Day 13 灰蓝
-  '#ee5253', // Day 14 砖红
+  '#4da3ff', // Day 1 blue
+  '#3ddc84', // Day 2 green
+  '#ff9f43', // Day 3 orange
+  '#a55eea', // Day 4 purple
+  '#ff5c5c', // Day 5 red
+  '#00d2d3', // Day 6 cyan
+  '#f368e0', // Day 7 pink
+  '#feca57', // Day 8 yellow
+  '#1dd1a1', // Day 9 mint
+  '#5f27cd', // Day 10 deep purple
+  '#ff6b81', // Day 11 rose
+  '#54a0ff', // Day 12 sky blue
+  '#c8d6e5', // Day 13 gray blue
+  '#ee5253', // Day 14 brick red
 ]

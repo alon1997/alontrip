@@ -19,3 +19,11 @@ data/lodging_serpapi_cache/
 
 # macOS
 .DS_Store
+
+# Chinese docs kept local-only (English versions live in docs/)
+docs-zh/
+
+# DB seed data carries localized (CJK) catalog values — kept local only
+db/seed_pois.sql
+db/seed_lodgings.sql
+db/create_lodgings.sql

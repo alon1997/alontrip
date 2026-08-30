@@ -83,6 +83,13 @@ Current routes, and which ones call SerpApi / DeepSeek: **[docs/API.md](docs/API
 
 ## Project Status
 
-- Live demo: https://alonuniverse.com/trip/ (older build; local work through 8.23 not deployed)
+- Live demo: https://alonuniverse.com/trip/ (kept current with the repo via `scripts/deploy.sh`)
 - Local: frontend `http://localhost:5173/trip/`, backend `:5003`
 - This folder is its own git repo, kept out of the private `personal` remote (D-005).
+
+## Acknowledgments
+
+- **SerpApi** — powers every transit leg and the POI catalog. Extra thanks to
+  **Alaa, Roi and Jordanne** from the SerpApi team, who manually onboarded this
+  project when signup was blocked and granted hackathon credits mid-competition.
+- **DeepSeek** (`deepseek-v4-flash`) — fast, affordable day-by-day plan drafting.

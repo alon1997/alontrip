@@ -1,7 +1,7 @@
 [
   {
     "id": "kansai-airport",
-    "name": "关西国际机场",
+    "name": "",
     "name_en": "Kansai International Airport",
     "kind": "airport",
     "lat": 34.4347,
@@ -9,7 +9,7 @@
   },
   {
     "id": "itami-airport",
-    "name": "伊丹机场",
+    "name": "",
     "name_en": "Osaka Itami Airport",
     "kind": "airport",
     "lat": 34.7855,
@@ -17,7 +17,7 @@
   },
   {
     "id": "osaka-station",
-    "name": "大阪站",
+    "name": "",
     "name_en": "Osaka Station (Umeda)",
     "kind": "station",
     "lat": 34.7025,
@@ -25,7 +25,7 @@
   },
   {
     "id": "namba-station",
-    "name": "难波站",
+    "name": "",
     "name_en": "Namba Station",
     "kind": "station",
     "lat": 34.6656,
@@ -33,7 +33,7 @@
   },
   {
     "id": "shin-osaka-station",
-    "name": "新大阪站",
+    "name": "",
     "name_en": "Shin-Osaka Station",
     "kind": "station",
     "lat": 34.7334,
@@ -41,7 +41,7 @@
   },
   {
     "id": "tennoji-station",
-    "name": "天王寺站",
+    "name": "",
     "name_en": "Tennoji Station",
     "kind": "station",
     "lat": 34.6466,

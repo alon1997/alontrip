@@ -1,4 +1,4 @@
-// Frontend-only preview of the backend's city→day allocation (方案 6.1b A /
+// Frontend-only preview of the backend's city→day allocation (plan 6.1b A /
 // backend/app/services/planner.py `_split_city_days`). Used purely so the
 // custom-hotel day chips can be grouped under the right city *before*
 // Generate is clicked — the backend is still the source of truth and

@@ -12,7 +12,9 @@ local JSON and rule-based implementations are selected automatically.
 from __future__ import annotations
 
 import logging
+import re
 import time
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from datetime import date, datetime, time as dt_time, timedelta
 from zoneinfo import ZoneInfo
@@ -22,6 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from .config import get_cors_origins, get_settings
+from .services.currency import to_usd
 from .services.factory import (
     get_grouper,
     get_lodging_provider,
@@ -35,7 +38,11 @@ from .services.planner import (
     plan_trip,
     resolve_edge_modes,
 )
-from .services.schedule import build_day_schedule
+from .services.schedule import (
+    LANDING_BUFFER_MIN,
+    TAKEOFF_BUFFER_MIN,
+    build_day_schedule,
+)
 from .services.search import search_lodgings, search_pois
 from .services.transit import Coord, TransitRoute, estimate_route
 
@@ -44,20 +51,20 @@ logger = logging.getLogger(__name__)
 
 # T-016: ``country`` groups the city picker on the frontend (Japan/China/Korea).
 CITIES = [
-    {"id": "tokyo", "name": "东京", "name_en": "Tokyo", "country": "japan"},
-    {"id": "osaka", "name": "大阪", "name_en": "Osaka", "country": "japan"},
-    {"id": "kyoto", "name": "京都", "name_en": "Kyoto", "country": "japan"},
-    {"id": "beijing", "name": "北京", "name_en": "Beijing", "country": "china"},
-    {"id": "shanghai", "name": "上海", "name_en": "Shanghai", "country": "china"},
-    {"id": "hongkong", "name": "香港", "name_en": "Hong Kong", "country": "china"},
-    {"id": "seoul", "name": "首尔", "name_en": "Seoul", "country": "korea"},
-    {"id": "busan", "name": "釜山", "name_en": "Busan", "country": "korea"},
-    {"id": "jeju", "name": "济州", "name_en": "Jeju", "country": "korea"},
+    {"id": "tokyo", "name": "Tokyo", "name_en": "Tokyo", "country": "japan"},
+    {"id": "osaka", "name": "Osaka", "name_en": "Osaka", "country": "japan"},
+    {"id": "kyoto", "name": "Kyoto", "name_en": "Kyoto", "country": "japan"},
+    {"id": "beijing", "name": "Beijing", "name_en": "Beijing", "country": "china"},
+    {"id": "shanghai", "name": "Shanghai", "name_en": "Shanghai", "country": "china"},
+    {"id": "hongkong", "name": "Hong Kong", "name_en": "Hong Kong", "country": "china"},
+    {"id": "seoul", "name": "Seoul", "name_en": "Seoul", "country": "korea"},
+    {"id": "busan", "name": "Busan", "name_en": "Busan", "country": "korea"},
+    {"id": "jeju", "name": "Jeju", "name_en": "Jeju", "country": "korea"},
 ]
 CITY_IDS = {city["id"] for city in CITIES}
 COUNTRY_NAMES = {"japan": "Japan", "china": "China", "korea": "Korea"}
 
-# T-012 / 方案 7.3: query transit at a plausible local time, not server time.
+# T-012 / plan 7.3: query transit at a plausible local time, not server time.
 CITY_TIMEZONES = {
     "tokyo": "Asia/Tokyo", "kyoto": "Asia/Tokyo", "osaka": "Asia/Tokyo",
     "seoul": "Asia/Seoul", "busan": "Asia/Seoul", "jeju": "Asia/Seoul",
@@ -88,18 +95,21 @@ def _timezone_for_lng(lng: float) -> str:
     UTC+8 (lng < 124, e.g. Shanghai 121.5, Beijing 116.4, Hong Kong 114.1)
     versus Japan/Korea at UTC+9 with no DST in either (lng >= 124, e.g.
     Seoul 127.0, Tokyo 139.7) — so a longitude split is enough to avoid
-    hardcoding Shanghai server time (方案 7.3) without needing a city field.
+    hardcoding Shanghai server time (plan 7.3) without needing a city field.
     """
     return "Asia/Shanghai" if lng < 124 else "Asia/Tokyo"
 
 
 def _query_leg(
     transit, origin: Coord, dest: Coord, *, tz_name: str, intercity: bool, trip_day: int = 1, city: str = "",
+    hour_override: int | None = None,
 ) -> TransitRoute:
     """Shared by ``/optimize-route`` and ``/transit-legs`` (T-013): same
     time-of-day rule, same cache, same per-leg estimate fallback so a single
-    bad SerpApi call never fails the whole request."""
-    hour = INTERCITY_HOUR if intercity else INTRA_CITY_HOUR
+    bad SerpApi call never fails the whole request. ``hour_override`` (T-034)
+    replaces the 09:00 default on arrival-day legs so the queried schedule
+    matches the post-landing start instead of a morning that never existed."""
+    hour = hour_override if hour_override is not None else (INTERCITY_HOUR if intercity else INTRA_CITY_HOUR)
     hour_bucket = f"{hour:02d}"
     depart_at = _depart_at(tz_name, trip_day, hour)
     try:
@@ -132,6 +142,19 @@ def _require_known_city(city: str) -> None:
         raise HTTPException(status_code=400, detail="unknown city")
 
 
+_HHMM = re.compile(r"^(\d{1,2}):(\d{2})$")
+
+
+def _parse_hhmm(value: str | None, field: str) -> int | None:
+    """``"14:30"`` → 870 minutes from midnight (T-034). ``None``/``""`` → None."""
+    if value is None or not value.strip():
+        return None
+    match = _HHMM.match(value.strip())
+    if not match or int(match.group(1)) > 23 or int(match.group(2)) > 59:
+        raise HTTPException(status_code=400, detail=f"{field} must be HH:MM (24h)")
+    return int(match.group(1)) * 60 + int(match.group(2))
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     # Resolve all providers at startup so the active data sources are logged
@@ -147,7 +170,7 @@ app = FastAPI(title="AlonTrip API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=get_cors_origins(),  # CORS_ORIGINS 环境变量可配，默认 dev + preview
+    allow_origins=get_cors_origins(),  # CORS_ORIGINS env var; defaults to dev + preview
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -160,7 +183,7 @@ class CustomStayBody(BaseModel):
 
 
 class OptimizeRequest(BaseModel):
-    """New contract (实现批次.md 2.6). ``city`` (singular) is the pre-T-010
+    """New contract (implementation batches doc 2.6). ``city`` (singular) is the pre-T-010
     legacy field: bodies that send only ``city`` are treated as
     ``cities=[city]``, ``hotel_mode="system_one"`` — see the endpoint.
     Field-level constraints are deliberately loose here so every rejection
@@ -179,6 +202,10 @@ class OptimizeRequest(BaseModel):
     # last. Optional: omitting either keeps the pre-T-016 hotel-only chain.
     arrival_hub_id: str | None = None
     departure_hub_id: str | None = None
+    # T-034: flight landing / takeoff time as HH:MM (24h), local to the
+    # matching hub's city. Optional; must be sent together with the hub id.
+    arrival_time: str | None = None
+    departure_time: str | None = None
     first_day_density: str | None = None
     last_day_density: str | None = None
     # Packed T-016 field; used only when the two switches above are omitted.
@@ -225,15 +252,22 @@ MAX_TRANSIT_LEGS_PAIRS = 30
 VALID_NODE_KINDS = {"poi", "lodging", "hub"}
 
 
+def _configured(value: str | None) -> bool:
+    return bool(value and value.strip())
+
+
 @app.get("/api/trip/health")
-def health() -> dict[str, str]:
+def health() -> dict[str, object]:
     """Liveness probe; also reports which data sources are active."""
+    settings = get_settings()
     return {
         "status": "ok",
         "poi_provider": get_poi_provider().name,
         "lodging_provider": get_lodging_provider().name,
         "transit_provider": get_transit_provider().name,
         "grouper": get_grouper().name,
+        "serpapi_configured": _configured(settings.serpapi_key),
+        "deepseek_configured": _configured(settings.deepseek_api_key),
     }
 
 
@@ -371,6 +405,16 @@ def optimize_route(req: OptimizeRequest, request: Request) -> dict[str, object]:
     custom_stays = [CustomStayInput(lodging_id=cs.lodging_id, days=cs.days) for cs in req.custom_stays]
 
     settings = get_settings()
+    # T-034: flight landing/takeoff times (HH:MM, hub-local). A time without
+    # its hub is a client bug — reject rather than silently ignoring it.
+    arrival_time_min = _parse_hhmm(req.arrival_time, "arrival_time")
+    departure_time_min = _parse_hhmm(req.departure_time, "departure_time")
+    if arrival_time_min is not None and not req.arrival_hub_id:
+        raise HTTPException(status_code=400, detail="arrival_time requires arrival_hub_id")
+    if departure_time_min is not None and not req.departure_hub_id:
+        raise HTTPException(status_code=400, detail="departure_time requires departure_hub_id")
+    arrival_start_min = arrival_time_min + LANDING_BUFFER_MIN if arrival_time_min is not None else None
+    departure_cutoff_min = departure_time_min - TAKEOFF_BUFFER_MIN if departure_time_min is not None else None
     try:
         first_d = req.first_day_density
         last_d = req.last_day_density
@@ -390,6 +434,8 @@ def optimize_route(req: OptimizeRequest, request: Request) -> dict[str, object]:
             arrival_hub_id=req.arrival_hub_id,
             departure_hub_id=req.departure_hub_id,
             hub_catalog=hub_catalog,
+            arrival_time_min=arrival_time_min,
+            departure_time_min=departure_time_min,
         )
         first_day_density, last_day_density = resolve_edge_modes(first_d, last_d, req.edge_density)
     except PlanningError as exc:
@@ -397,24 +443,67 @@ def optimize_route(req: OptimizeRequest, request: Request) -> dict[str, object]:
 
     transit = get_transit_provider()
     itinerary: list[dict[str, object]] = []
+    # T-046: query the legs in parallel. Root cause of the 504s (2026-08-28
+    # prod): when a new grouping produces brand-new pairs, serially fetching
+    # 17+ SerpApi legs took ~51 s and hit Nginx's 60 s timeout. Legs are
+    # independent of each other, so a thread pool turns "the sum of all legs"
+    # into "the slowest single leg".
+    leg_specs: list[dict[str, object]] = []
+    day_plans: list[tuple[object, list]] = []
     for planned_day in plan.days:
         chain = _build_day_chain(planned_day, req.days, plan.arrival_hub, plan.departure_hub)
-        legs: list[Leg] = []
+        day_plans.append((planned_day, chain))
         for (from_kind, from_id, from_lat, from_lng, _from_role, from_city), \
             (to_kind, to_id, to_lat, to_lng, _to_role, to_city) in zip(chain, chain[1:]):
-            intercity = from_city != to_city
-            origin, dest = Coord(lat=from_lat, lng=from_lng), Coord(lat=to_lat, lng=to_lng)
-            tz_name = CITY_TIMEZONES.get(from_city, "Asia/Tokyo")
-            route = _query_leg(
-                transit, origin, dest, tz_name=tz_name, intercity=intercity,
-                trip_day=planned_day.day, city=from_city,
-            )
-            legs.append(Leg(
-                from_id=from_id, from_kind=from_kind,
-                to_id=to_id, to_kind=to_kind,
-                intercity=intercity,
+            leg_specs.append({
+                "day": planned_day.day,
+                "from_id": from_id, "from_kind": from_kind,
+                "to_id": to_id, "to_kind": to_kind,
+                "origin": Coord(lat=from_lat, lng=from_lng),
+                "dest": Coord(lat=to_lat, lng=to_lng),
+                # T-034: on the arrival day the first legs leave around the
+                # post-landing start, not 09:00 — query a schedule that matches.
+                "hour_override": (
+                    arrival_start_min // 60
+                    if planned_day.day == 1 and arrival_start_min is not None
+                    else None
+                ),
+                "tz_name": CITY_TIMEZONES.get(from_city, "Asia/Tokyo"),
+                "intercity": from_city != to_city,
+                "trip_day": planned_day.day,
+                "city": from_city,
+            })
+
+    def _fetch(spec: dict[str, object]) -> TransitRoute:
+        return _query_leg(
+            transit, spec["origin"], spec["dest"],  # type: ignore[arg-type]
+            tz_name=spec["tz_name"], intercity=bool(spec["intercity"]),
+            trip_day=spec["trip_day"], city=spec["city"],           # type: ignore[arg-type]
+            hour_override=spec["hour_override"],                    # type: ignore[arg-type]
+        )
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        all_routes = list(pool.map(_fetch, leg_specs))
+    routes_by_day: dict[int, list[tuple[dict[str, object], TransitRoute]]] = {}
+    for spec, route in zip(leg_specs, all_routes):
+        routes_by_day.setdefault(spec["day"], []).append((spec, route))  # type: ignore[union-attr]
+
+    # Honest reporting (bug-hunt 2026-08-28): a spot that is on the plan but
+    # never got a visit row (closed by the time the chain reaches it) must be
+    # surfaced — the map dot alone would silently promise a visit that
+    # schedule.py refused to fabricate. Planner-side stuck spots already have
+    # their own warnings; match on id to avoid double-reporting.
+    unvisited_warnings: list[str] = []
+    for planned_day, chain in day_plans:
+        legs: list[Leg] = [
+            Leg(
+                from_id=spec["from_id"], from_kind=spec["from_kind"],     # type: ignore[arg-type]
+                to_id=spec["to_id"], to_kind=spec["to_kind"],             # type: ignore[arg-type]
+                intercity=bool(spec["intercity"]),
                 route=route,
-            ))
+            )
+            for spec, route in routes_by_day.get(planned_day.day, [])
+        ]
 
         # T-016: the last day's "night stay" is fictional once a departure
         # hub replaces the chain's end node — nobody actually checks into
@@ -446,9 +535,34 @@ def optimize_route(req: OptimizeRequest, request: Request) -> dict[str, object]:
             is_first_day=planned_day.day == 1,
             has_arrival_hub=plan.arrival_hub is not None,
             node_labels=node_labels,
+            # T-034: arrival-day clock starts after landing; the departure
+            # day's sightseeing must end before the flight cutoff.
+            day_start_min=arrival_start_min if planned_day.day == 1 else None,
+            day_end_cutoff_min=departure_cutoff_min if planned_day.day == req.days else None,
         )
 
         routes = [leg.route for leg in legs]
+        # T-040: only POIs that actually got a visit row cost their ticket —
+        # a spot dropped by opening-hours clipping (schedule visit skipped)
+        # must not charge the traveller (kinkaku-ji case). Lunch-split visits
+        # are still one ticket.
+        visit_titles = {e["title"] for e in schedule if e["kind"] == "visit"}
+        visited_pois = [
+            p for p in planned_day.pois
+            if (p.name_en or p.name) in visit_titles
+        ]
+        for p in planned_day.pois:
+            if (p.name_en or p.name) not in visit_titles and not any(
+                p.id in w for w in plan.warnings
+            ):
+                # Two reasons a spot can go unvisited (already closed / the day
+                # is packed to its 22:00 cap); say which and give an action —
+                # "closed" alone would be a lie (even 24h harajuku gets squeezed
+                # out by an over-packed day, hit 2026-08-28).
+                unvisited_warnings.append(
+                    f"{p.id} is on the route but the day runs out before it — "
+                    "try moving it to another day on the map"
+                )
         itinerary.append({
             "day": planned_day.day,
             "city": planned_day.city,
@@ -459,10 +573,30 @@ def optimize_route(req: OptimizeRequest, request: Request) -> dict[str, object]:
             "schedule": schedule,
             "transit_minutes": sum(r.total_duration_min for r in routes),
             "transit_cost": sum(r.total_cost for r in routes),
+            "ticket_cost": round(sum(to_usd(p.ticket_price, p.ticket_currency) or 0 for p in visited_pois), 2),
             "currency": "USD",
             "transfer_count": sum(r.transfer_count for r in routes),
             "all_real_data": all(not r.estimated for r in routes),
         })
+
+    # T-040: trip budget. Transit comes from the itinerary; tickets from the
+    # day plans; stays count every night actually slept — the departure day
+    # has no night when the trip ends at an airport/station. Unknown prices
+    # count as 0 and are reported so the number stays honest.
+    lodging_nights = [
+        planned_day for planned_day in plan.days
+        if not (planned_day.day == req.days and plan.departure_hub is not None)
+    ]
+    lodging_cost = round(sum(
+        to_usd(pd.lodging.price_per_night, pd.lodging.price_currency) or 0
+        for pd in lodging_nights
+    ), 2)
+    ticket_total = round(sum(day["ticket_cost"] for day in itinerary), 2)
+    transit_total = round(sum(day["transit_cost"] for day in itinerary), 2)
+    unknown_prices = (
+        sum(1 for pd in plan.days for p in pd.pois if to_usd(p.ticket_price, p.ticket_currency) is None)
+        + sum(1 for pd in lodging_nights if to_usd(pd.lodging.price_per_night, pd.lodging.price_currency) is None)
+    )
 
     return {
         "cities": cities,
@@ -472,21 +606,30 @@ def optimize_route(req: OptimizeRequest, request: Request) -> dict[str, object]:
         "last_day_density": last_day_density,
         "arrival_hub": plan.arrival_hub,
         "departure_hub": plan.departure_hub,
+        # T-034: post-landing sightseeing start / pre-takeoff cutoff, in
+        # minutes from midnight (hub-local). Null when no flight time given —
+        # the frontend's schedule mirror uses these instead of hardcoding 09:00.
+        "arrival_start_min": arrival_start_min,
+        "departure_cutoff_min": departure_cutoff_min,
         # Honest per-request report (T-011): "deepseek" only if every city's
         # day-filling actually came from the model this call, "rule-based"
         # only if none did (including whenever no key is configured), else
         # "mixed" — never hardcoded, never claims deepseek without a real call.
         "grouper": plan.grouper,
         "transit_provider": transit.name,
-        "warnings": plan.warnings,
+        "warnings": plan.warnings + unvisited_warnings,
         "unselected_poi_ids": plan.unselected_poi_ids,
         "itinerary": itinerary,
         "totals": {
             "transit_minutes": sum(day["transit_minutes"] for day in itinerary),
-            "transit_cost": sum(day["transit_cost"] for day in itinerary),
+            "transit_cost": transit_total,
+            "ticket_cost": ticket_total,
+            "lodging_cost": lodging_cost,
+            "grand_total": round(transit_total + ticket_total + lodging_cost, 2),
             "currency": "USD",
             "transfer_count": sum(day["transfer_count"] for day in itinerary),
             "all_real_data": all(day["all_real_data"] for day in itinerary),
+            "unknown_prices": unknown_prices,
         },
     }
 
@@ -512,18 +655,23 @@ def transit_legs(req: TransitLegsRequest) -> dict[str, object]:
                 raise HTTPException(status_code=400, detail="lat and lng are required")
 
     transit = get_transit_provider()
-    legs: list[Leg] = []
-    for pair in req.pairs:
+
+    def _fetch(pair: LegPairRequest) -> Leg:
         origin = Coord(lat=pair.from_.lat, lng=pair.from_.lng)
         dest = Coord(lat=pair.to.lat, lng=pair.to.lng)
         tz_name = _timezone_for_lng(pair.from_.lng)
         route = _query_leg(transit, origin, dest, tz_name=tz_name, intercity=pair.intercity)
-        legs.append(Leg(
+        return Leg(
             from_id=pair.from_.id, from_kind=pair.from_.kind,
             to_id=pair.to.id, to_kind=pair.to.kind,
             intercity=pair.intercity,
             route=route,
-        ))
+        )
+
+    # T-046: the fine-tuning endpoint is parallel too (removing/adding a stop
+    # on the frontend can introduce several new pairs at once).
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        legs = list(pool.map(_fetch, req.pairs))
     return {"legs": legs}
 
 
@@ -531,5 +679,6 @@ if __name__ == "__main__":
     import uvicorn
 
     settings = get_settings()
-    # 只监听本机回环：生产由 Nginx 反代到 127.0.0.1，端口不暴露公网
+    # Loopback only: production reverse-proxies to 127.0.0.1 via Nginx, so the
+    # port is never exposed to the public internet
     uvicorn.run(app, host="127.0.0.1", port=settings.app_port)

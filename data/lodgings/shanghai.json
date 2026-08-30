@@ -67,7 +67,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 2.4,
-    "area": "中山北路33号",
+    "area": "33",
     "price_per_night": 42.0,
     "price_currency": "USD"
   },
@@ -101,11 +101,11 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 4.1,
-    "area": "曹家渡 Jing An Qu"
+    "area": "Jing An Qu"
   },
   {
     "id": "poi",
-    "name": "民春旅馆",
+    "name": "",
     "lat": 31.271493,
     "lng": 121.660011,
     "kind": "hostel",
@@ -157,7 +157,7 @@
   },
   {
     "id": "poi-2",
-    "name": "龙欣旅馆",
+    "name": "",
     "lat": 31.287168,
     "lng": 121.310263,
     "kind": "hostel",
@@ -199,7 +199,7 @@
   },
   {
     "id": "poi-3",
-    "name": "上海曙光假日旅馆",
+    "name": "",
     "lat": 31.211617,
     "lng": 121.52357,
     "kind": "hostel",

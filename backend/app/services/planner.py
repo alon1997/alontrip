@@ -1,4 +1,4 @@
-"""Rule-based itinerary planner v1 (T-010, 方案计划.md 6.1b).
+"""Rule-based itinerary planner v1 (T-010, plan doc 6.1b).
 
 Turns a multi-city trip request into a day-by-day plan: which city each day
 belongs to, which POIs happen that day (ordered), and which lodging that
@@ -7,13 +7,15 @@ queried. DeepSeek per-city filling (2.8) is T-011: this module both is the
 fallback when the model is unavailable and defines the shape/validation the
 model's JSON must satisfy.
 
-All 400 `detail` strings here are frozen by 实现批次.md 2.6 — the frontend
-matches on them, so don't reword.
+All 400 `detail` strings here are frozen by implementation batches doc 2.6
+(the frontend matches on them, so don't reword).
 """
 
 from __future__ import annotations
 
 import logging
+import re
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
 import httpx
@@ -26,8 +28,18 @@ from .grouping import (
     _find_text_block,
     deepseek_messages_body,
 )
+from .hours import parse_hours
 from .lodging import Lodging
 from .poi import Poi
+from .schedule import (
+    DAY_END_MIN,
+    DAY_START_MIN,
+    DINNER_MIN,
+    INTERCITY_MIN,
+    LANDING_BUFFER_MIN,
+    LUNCH_MIN,
+    TAKEOFF_BUFFER_MIN,
+)
 from .transit import haversine_km
 from .transport_hub import TransportHub
 
@@ -55,10 +67,36 @@ VALID_EDGE_MODES = {"none", "few"}
 DEFAULT_EDGE_DENSITY = "first_few_last_none"
 DEFAULT_FIRST_DAY_DENSITY = "few"
 DEFAULT_LAST_DAY_DENSITY = "none"
-REASONABLE_DAY_POIS = 5
 IDEAL_FEW_POIS = 1
 # Parks / mountains that fill a calendar day. Do not mix with other POIs.
 FULL_DAY_DURATION_MIN = 360
+DAYLIGHT_BUDGET_MIN = 9 * 60
+TRANSIT_SLACK_PER_HOP_MIN = 25
+# T-048: comfortable mid-trip pace = 3 spots/day (same bar as
+# _comfortable_spot_budget). Only drives edge-day rebalance counts on the
+# rule path; the real hard constraints are budget packing + the closing-time
+# final check.
+REASONABLE_DAY_POIS = 3
+# T-045: at planner time the arrival day's first leg has no real duration
+# (legs are queried by main.py), so a flat 25 min/hop approximation blesses
+# phantom "16:20 arrival at Ueno Park" plans (real 18:40, already closed).
+# The final check's simulation uses a conservative estimate instead: 20 min
+# check-in + 1.2 min/km airport rail — Narita -> city 60 km ~= 92 min vs
+# 99 min measured, right order of magnitude. Better to move spots to another
+# day (harmless) than leave an "arrive after closing" spot on the arrival day.
+_CHECKIN_MIN = 20
+_COMMUTE_BASE_MIN = 20.0
+_COMMUTE_PER_KM_MIN = 1.2
+# Airport -> city does not follow straight-line distance: Narita -> Akihabara
+# is only 17 km straight-line (the formula says 40 min) but Narita Express
+# takes 99 min. Airports always use a flat conservative 90 min; stations use
+# the straight-line formula.
+_AIRPORT_COMMUTE_MIN = 90.0
+# Fixed overhead on an intercity day after the 16:00 station arrival, before
+# sightseeing really starts (baggage storage / transfers / first leg into town)
+_INTERCITY_ARRIVAL_BUFFER_MIN = 60
+DISTRICT_OUTLIER_KM = 8.0
+DISTRICT_CLOSER_OTHER_KM = 2.0
 
 
 def resolve_edge_modes(
@@ -123,6 +161,31 @@ def _centroid(pois: list[Poi]) -> tuple[float, float]:
     return (sum(p.lat for p in pois) / len(pois), sum(p.lng for p in pois) / len(pois))
 
 
+def _hhmm(minutes: int) -> str:
+    minutes = int(minutes) % (24 * 60)
+    return f"{minutes // 60:02d}:{minutes % 60:02d}"
+
+
+def _flight_day_budgets(
+    n_days: int,
+    owns_global_first_day: bool,
+    owns_global_last_day: bool,
+    arrival_start_min: int | None,
+    departure_cutoff_min: int | None,
+) -> list[int]:
+    """Per-day load budgets (T-034). The comfort target stays ~9 h, but the
+    arrival day is capped at 22:00 minus its late start, and the departure
+    day at the flight cutoff minus the 09:00 start. Floors at 30 min so a
+    pathological 23:50 landing still yields a (tiny) valid budget."""
+    budgets = [DAYLIGHT_BUDGET_MIN] * n_days
+    floor = 30
+    if owns_global_first_day and arrival_start_min is not None:
+        budgets[0] = min(budgets[0], max(DAY_END_MIN - arrival_start_min, floor))
+    if owns_global_last_day and departure_cutoff_min is not None:
+        budgets[-1] = min(budgets[-1], max(departure_cutoff_min - DAY_START_MIN, floor))
+    return budgets
+
+
 def _nearest_lodging(lat: float, lng: float, candidates: list[Lodging]) -> Lodging:
     return min(candidates, key=lambda l: haversine_km(lat, lng, l.lat, l.lng))
 
@@ -171,6 +234,336 @@ def _group_city_pois(pois: list[Poi], n_days: int) -> list[list[Poi]]:
         slot = min(round((i + 0.5) * n_days / len(ordered)), n_days - 1)
         groups[slot] = [poi]
     return groups
+
+
+def _day_load_min(pois: list[Poi]) -> int:
+    """Daily load: stays + hops + both meals. T-048: hops now use the
+    distance-calibrated formula (fitted on 163 real cache entries) instead
+    of a flat 25 min — the flat value under-measured Tokyo (real median
+    41 min for 6-10 km hops) and let days silently hold a 5th spot. The
+    packer now speaks the same units as the terminal check's simulator:
+    ~3 comfortable spots/day."""
+    if not pois:
+        return 0
+    stay = sum(p.suggested_duration_min or 90 for p in pois)
+    hops = sum(_hop_min(a.lat, a.lng, b.lat, b.lng) for a, b in zip(pois, pois[1:]))
+    if hops:
+        hops += TRANSIT_SLACK_PER_HOP_MIN  # hotel -> first stop hop; keep a 25 min floor
+    return stay + hops + LUNCH_MIN + DINNER_MIN
+
+
+def _pack_day_capacity(
+    groups: list[list[Poi]],
+    empty_idx: set[int] | frozenset[int] | None = None,
+    budget_by_idx: list[int] | None = None,
+) -> list[list[Poi]]:
+    """Move overflow spots so each day fits its load budget.
+
+    ``empty_idx`` are days that must stay empty (arrival/departure ``none``).
+    Overflow never lands on those days. ``budget_by_idx`` (T-034) lets the
+    arrival/departure days run on shorter flight-aware budgets; days without
+    an entry keep the ~9 hour comfort budget. Moves go to the lightest
+    allowed day; stop when a move would not reduce the source day's load peak.
+    """
+    empty = set(empty_idx or ())
+    budgets = list(budget_by_idx or [])
+    packed = [list(group) for group in groups]
+    n = len(packed)
+
+    def budget_of(i: int) -> int:
+        return budgets[i] if i < len(budgets) else DAYLIGHT_BUDGET_MIN
+
+    def open_days() -> list[int]:
+        return [j for j in range(n) if j not in empty]
+
+    def last_movable(group: list[Poi]) -> int | None:
+        return next(
+            (
+                j
+                for j in range(len(group) - 1, -1, -1)
+                if (group[j].suggested_duration_min or 0) < FULL_DAY_DURATION_MIN
+            ),
+            None,
+        )
+
+    for i in sorted(empty):
+        while packed[i]:
+            dests = open_days()
+            if not dests:
+                break
+            dest = min(dests, key=lambda j: abs(j - i))
+            mover = packed[i].pop(0)
+            if dest > i:
+                packed[dest].insert(0, mover)
+            else:
+                packed[dest].append(mover)
+
+    blocked: set[int] = set()
+    for _ in range(sum(len(g) for g in packed) + 1):
+        overloaded = [
+            i for i in open_days()
+            if i not in blocked
+            and _day_load_min(packed[i]) > budget_of(i)
+            and len(packed[i]) > 1
+        ]
+        if not overloaded:
+            break
+        src = max(overloaded, key=lambda i: _day_load_min(packed[i]))
+        idx = last_movable(packed[src])
+        if idx is None:
+            blocked.add(src)
+            continue
+        mover = packed[src][idx]
+        # T-045: a destination day must have room (including its own budget)
+        # before a move is allowed — comparing load alone made the arrival day
+        # (budget 365), the lightest day, the overflow dumping ground where
+        # "arrive after closing" spots got parked (2026-08-28 prod: a museum
+        # as the day's last stop at 21:00).
+        dests = [
+            j for j in open_days()
+            if j != src and _day_load_min(packed[j] + [mover]) <= budget_of(j)
+        ]
+        if not dests:
+            blocked.add(src)
+            continue
+        dest = min(dests, key=lambda j: _day_load_min(packed[j]))
+        src_load = _day_load_min(packed[src])
+        dest_load_after = _day_load_min(packed[dest] + [mover])
+        if dest_load_after >= src_load:
+            blocked.add(src)
+            continue
+        packed[src].pop(idx)
+        if dest > src:
+            packed[dest].insert(0, mover)
+        else:
+            packed[dest].append(mover)
+    return packed
+
+
+def _empty_day_indices(
+    n_days: int,
+    first_mode: str | None,
+    last_mode: str | None,
+) -> set[int]:
+    if n_days <= 1:
+        return set()
+    if first_mode == "none" and last_mode == "none" and n_days == 2:
+        return set()
+    empty: set[int] = set()
+    if first_mode == "none":
+        empty.add(0)
+    if last_mode == "none":
+        empty.add(n_days - 1)
+    return empty
+
+
+def _districts_ok(days: list[list[Poi]]) -> bool:
+    """Reject a table that parked a point with a far-away day instead of its district."""
+    centroids: list[tuple[float, float] | None] = [
+        _centroid(group) if group else None for group in days
+    ]
+    for i, group in enumerate(days):
+        if len(group) < 2 or centroids[i] is None:
+            continue
+        clat, clng = centroids[i]
+        for poi in group:
+            dist_own = haversine_km(poi.lat, poi.lng, clat, clng)
+            if dist_own <= DISTRICT_OUTLIER_KM:
+                continue
+            for j, other in enumerate(days):
+                if i == j or not other or centroids[j] is None:
+                    continue
+                dist_other = haversine_km(poi.lat, poi.lng, *centroids[j])
+                if dist_own - dist_other > DISTRICT_CLOSER_OTHER_KM:
+                    return False
+    return True
+
+
+def _insert_best_position(day: list[Poi], poi: Poi) -> None:
+    """Insert ``poi`` at the chain position adding the least travel distance."""
+    if not day:
+        day.append(poi)
+        return
+    best_k, best_cost = 0, None
+    for k in range(len(day) + 1):
+        trial = day[:k] + [poi] + day[k:]
+        cost = sum(
+            haversine_km(a.lat, a.lng, b.lat, b.lng) for a, b in zip(trial, trial[1:])
+        )
+        if best_cost is None or cost < best_cost:
+            best_k, best_cost = k, cost
+    day.insert(best_k, poi)
+
+
+def _norm_pid(pid: str) -> str:
+    """ids down to [a-z0-9] so "Edo-Tokyo_OpenAir" style near-misses compare."""
+    return re.sub(r"[^a-z0-9]", "", str(pid).lower())
+
+
+def _pid_tokens(pid: str) -> list[str]:
+    return [t for t in re.split(r"[^a-z0-9]+", str(pid).lower()) if t]
+
+
+def _tokens_in_order(sub: list[str], seq: list[str]) -> bool:
+    """Every token of ``sub`` appears in ``seq`` in order (greedy scan)."""
+    it = iter(seq)
+    return all(tok in it for tok in sub)
+
+
+def _repair_poi_ids(raw_days: list, by_id: dict[str, Poi]) -> list[str] | None:
+    """Fix near-miss poi ids in place instead of dropping the whole table.
+
+    With long spot lists the model sometimes mis-echoes an id (prod
+    2026-08-28, 17-spot tokyo: "unknown or duplicate poi id" killed
+    otherwise-good tables twice). A returned id resolves when it matches
+    exactly ONE catalog id after normalization ([a-z0-9] squeeze): equal,
+    contained as a substring on either side, or its hyphen-tokens appear
+    in order in the catalog id ("edo-tokyo-open-air-museum" repairs to
+    "...-architectural-..."; dropped middle words are fine, reordered or
+    foreign words are not). Ambiguous or unresolvable → ``None`` and the
+    caller falls back to rule-based as before. Same-day duplicates are
+    deduped keeping the first; cross-day ones stay for
+    :func:`_repair_poi_set`."""
+    catalog = [(pid, _norm_pid(pid), _pid_tokens(pid)) for pid in by_id]
+    notes: list[str] = []
+    for entry in raw_days:
+        if not isinstance(entry, dict):
+            continue
+        fixed: list[str] = []
+        for pid in entry.get("poi_ids") or []:
+            if pid in by_id:
+                fixed.append(pid)
+                continue
+            norm, tokens = _norm_pid(pid), _pid_tokens(pid)
+            if not norm:
+                return None
+            matches = [
+                canon
+                for canon, c_norm, c_tokens in catalog
+                if norm == c_norm
+                or c_norm in norm
+                or norm in c_norm
+                or _tokens_in_order(tokens, c_tokens)
+            ]
+            if len(matches) != 1:
+                logger.warning(
+                    "poi id %r unresolvable (candidates=%s); table will fall back",
+                    pid, matches if len(matches) <= 3 else f"{len(matches)} matches",
+                )
+                return None
+            canon = matches[0]
+            notes.append(f"{pid!r}->{canon}")
+            fixed.append(canon)
+        deduped = list(dict.fromkeys(fixed))
+        if len(deduped) != len(fixed):
+            notes.append("dropped same-day duplicate id")
+        entry["poi_ids"] = deduped
+    return notes
+
+
+def _repair_poi_set(
+    groups_by_local_day: dict[int, list[Poi]],
+    by_id: dict[str, Poi],
+    empty_ok: set[int],
+) -> list[str] | None:
+    """Fix a minor ``poi set mismatch`` instead of dropping the whole table.
+
+    The model sometimes omits one selected spot or lists the same spot on two
+    days (prod 2026-08-28: 10-spot tokyo table, "poi set mismatch"). Omissions
+    are appended to the nearest non-empty day (never an arrival/departure
+    ``none`` day); cross-day duplicates keep the occurrence closest to their
+    day's centroid. ``None`` = beyond minor repair (>2 discrepancies) —
+    caller falls back to rule-based. Returns a human-readable move list."""
+    missing = [pid for pid in by_id if pid not in set(groups_by_local_day and
+                 [p.id for g in groups_by_local_day.values() for p in g] or [])]
+    seen: list[str] = [p.id for g in groups_by_local_day.values() for p in g]
+    dupes = sorted({pid for pid in seen if seen.count(pid) > 1})
+    if not missing and not dupes:
+        return []
+    if len(missing) + len(dupes) > 2:
+        return None
+    notes: list[str] = []
+    for pid in dupes:
+        occurrences = [(d, g) for d, g in groups_by_local_day.items() if any(p.id == pid for p in g)]
+        if len(occurrences) < 2:
+            continue  # same-day duplicate already rejected per-entry upstream
+        centroids = {
+            d: _centroid([p for p in groups_by_local_day[d] if p.id != pid] or
+                         [p for p in groups_by_local_day[d]])
+            for d, _ in occurrences
+        }
+        poi = next(p for p in groups_by_local_day[occurrences[0][0]] if p.id == pid)
+        keep_day = min(occurrences, key=lambda t: haversine_km(poi.lat, poi.lng, *centroids[t[0]]))[0]
+        for d, _ in occurrences:
+            if d != keep_day:
+                groups_by_local_day[d] = [p for p in groups_by_local_day[d] if p.id != pid]
+                notes.append(f"dropped duplicate {pid} on day {d}")
+    for pid in missing:
+        candidates = [
+            d for d, g in groups_by_local_day.items() if g and d not in empty_ok
+        ] or [d for d, g in groups_by_local_day.items() if g]
+        if not candidates:
+            return None
+        poi = by_id[pid]
+        dest = min(candidates, key=lambda d: haversine_km(poi.lat, poi.lng, *_centroid(groups_by_local_day[d])))
+        _insert_best_position(groups_by_local_day[dest], poi)
+        notes.append(f"added missing {pid} to day {dest}")
+    # Re-verify the invariant actually holds now.
+    seen = [p.id for g in groups_by_local_day.values() for p in g]
+    if set(seen) != set(by_id) or len(seen) != len(by_id):
+        return None
+    return notes
+
+
+def _repair_districts(
+    days: list[list[Poi]],
+) -> tuple[list[list[Poi]], list[tuple[str, int, int]]]:
+    """Surgically fix a district-split instead of throwing the table away
+    (2026-08-28: ueno-park grouped with two far-west suburbs killed an
+    otherwise-good 4/5 of a table, and whole-city fallback was worse than the
+    mistake).
+
+    A spot that is > ``DISTRICT_OUTLIER_KM`` from its own day's centroid while
+    some other non-empty day is > ``DISTRICT_CLOSER_OTHER_KM`` closer moves to
+    that day (at the chain position adding least distance). Days keep ≥1 spot:
+    single-spot days can't produce outliers, and moving never empties a source
+    day. Caller still re-runs :func:`_districts_ok` — repair is a second
+    chance, not a licence.
+    """
+    days = [list(group) for group in days]
+    moved: list[tuple[str, int, int]] = []
+    for _ in range(2):  # a move shifts centroids; re-scan after each
+        centroids = [_centroid(g) if g else None for g in days]
+        violation: tuple[int, Poi, int, float] | None = None
+        for i, group in enumerate(days):
+            if len(group) < 2 or centroids[i] is None:
+                continue
+            for poi in group:
+                dist_own = haversine_km(poi.lat, poi.lng, *centroids[i])
+                if dist_own <= DISTRICT_OUTLIER_KM:
+                    continue
+                dests = [
+                    (haversine_km(poi.lat, poi.lng, *centroids[j]), j)
+                    for j in range(len(days))
+                    if j != i and days[j]
+                ]
+                if not dests:
+                    continue
+                dist_best, j_best = min(dests)
+                if dist_own - dist_best > DISTRICT_CLOSER_OTHER_KM:
+                    violation = (i, poi, j_best, dist_best)
+                    break
+            if violation:
+                break
+        if violation is None:
+            return days, moved
+        if len(moved) >= 4:  # runaway scatter means the table is beyond repair
+            return days, moved
+        i, poi, j, _dist = violation
+        days[i].remove(poi)
+        _insert_best_position(days[j], poi)
+        moved.append((poi.id, i + 1, j + 1))
+    return days, moved
 
 
 def _even_split(n_slots: int, n_items: int) -> list[int]:
@@ -223,11 +616,11 @@ def _edge_target_counts(
                 capped.append(REASONABLE_DAY_POIS)
             else:
                 capped.append(count)
-        if overflow and few_idx:
-            extra = _even_split(len(few_idx), overflow)
-            for i, add in zip(few_idx, extra):
-                counts[i] += add
-            overflow = 0
+        # T-048: overflow no longer pours into the few days — once the packer
+        # grew a budget guard, arrival days physically cannot absorb it (the
+        # old logic set an arrival-day target of 8 spots for 17 spots / 6 days).
+        # Saturated is saturated: middle days split the overload, and packing +
+        # the closing-time final check handle it honestly.
         if overflow:
             extra = _even_split(len(mid_idx), overflow)
             capped = [c + a for c, a in zip(capped, extra)]
@@ -267,6 +660,335 @@ def _rebalance_edge_days(
 
 def _is_full_day(poi: Poi) -> bool:
     return poi.suggested_duration_min >= FULL_DAY_DURATION_MIN
+
+
+def _two_opt_order(day: list[Poi]) -> list[Poi]:
+    """Deterministic 2-opt on the day's spot sequence (T-039). Hotel endpoints
+    are excluded — districts are small enough that interior ordering is where
+    the waste is. No-op for <4 spots."""
+    if len(day) < 4:
+        return day
+
+    def length(seq: list[Poi]) -> float:
+        return sum(haversine_km(a.lat, a.lng, b.lat, b.lng) for a, b in zip(seq, seq[1:]))
+
+    best = list(day)
+    best_len = length(best)
+    improved = True
+    while improved:
+        improved = False
+        for i in range(len(best) - 1):
+            for j in range(i + 2, len(best)):
+                cand = best[:i + 1] + best[i + 1:j + 1][::-1] + best[j + 1:]
+                cand_len = length(cand)
+                if cand_len + 1e-9 < best_len:
+                    best, best_len = cand, cand_len
+                    improved = True
+    return best
+
+
+# A spot closing at/before this hour is treated as time-boxed (morning
+# markets, early museums) and goes to the front of its day (T-036).
+EARLY_CLOSING_MIN = 15 * 60
+
+
+def _close_time(poi: Poi) -> int:
+    return parse_hours(poi.opening_hours)[1] or 24 * 60
+
+
+def _order_day(day: list[Poi]) -> list[Poi]:
+    """Final within-day order: 2-opt for geography (T-039), then early-closing
+    spots move to the front, earliest first (T-036) — the rest keep their
+    relative order. Runs after all packing/repair, right before chain build."""
+    ordered = _two_opt_order(day)
+    early = sorted(
+        (p for p in ordered if _close_time(p) <= EARLY_CLOSING_MIN), key=_close_time,
+    )
+    if not early or len(early) == len(ordered):
+        return ordered
+    early_ids = {p.id for p in early}
+    return early + [p for p in ordered if p.id not in early_ids]
+
+
+def _hop_min(a_lat: float, a_lng: float, b_lat: float, b_lng: float) -> int:
+    """T-045b: minutes for one intra-city hop — "15 + 3.5 min/km", fitted on
+    163 real SerpApi cache entries (2 km ~= 20, 5 km ~= 33, 8 km ~= 43;
+    between median and P90), replacing the flat 25 min (real Tokyo median for
+    a 6-10 km hop is 41 min, so the old value badly under-measured)."""
+    km = haversine_km(a_lat, a_lng, b_lat, b_lng)
+    return min(int(_HOP_BASE_MIN + _HOP_PER_KM_MIN * km), 90)
+
+
+_HOP_BASE_MIN = 15
+_HOP_PER_KM_MIN = 3.5
+
+
+def _closed_at_arrival(
+    order: list[Poi],
+    start_min: int,
+    first_from: tuple[float, float] | None = None,
+    end_min: int | None = None,
+) -> list[int]:
+    """Indices the day clock reaches AFTER the spot became unvisitable
+    (planner approximation of schedule.py's honest clipping:
+    distance-calibrated hops, lunch 60 once the clock crosses noon).
+    ``first_from`` is the day's morning-hotel coordinate — the hop to the
+    FIRST spot is real transit too (2026-08-28 prod: skipping that hop let
+    ueno pass as a phantom 17:27 arrival; real arrival 18:22). ``end_min`` is
+    the day's hard cap
+    (22:00, or the departure-day flight cutoff) — a 24h spot can still be
+    unreachable when the day is simply too full (harajuku 2026-08-28).
+    Unknown closing time is treated as open — only a *parsed* close can
+    veto."""
+    clock = start_min
+    lunch_done = False
+    closed: list[int] = []
+    prev: tuple[float, float] | None = first_from
+    for k, poi in enumerate(order):
+        if prev is not None:
+            clock += _hop_min(prev[0], prev[1], poi.lat, poi.lng)
+        opens, closes = parse_hours(poi.opening_hours)
+        if opens is not None and clock < opens:
+            clock = opens
+        if closes is not None and clock >= closes:
+            closed.append(k)
+            continue
+        if end_min is not None and clock >= end_min:
+            closed.append(k)
+            continue
+        stay = poi.suggested_duration_min or 90
+        if closes is not None:
+            stay = min(stay, closes - clock)
+        if end_min is not None:
+            stay = min(stay, end_min - clock)  # matches schedule: visit clipped by the day cap
+        clock_before = clock
+        clock += max(stay, 0)
+        # T-045b fix: insert lunch only when the visit truly straddles the
+        # 11:30-14:00 window — the old "past noon = +60" rule charged lunch to
+        # an 8 pm visit too, inflating evening days by 1 hour (24h shinjuku was
+        # falsely flagged as over the line, confirmed 2026-08-29).
+        if not lunch_done and clock_before < 14 * 60 and clock >= 12 * 60:
+            clock += LUNCH_MIN
+            lunch_done = True
+        prev = (poi.lat, poi.lng)
+    return closed
+
+
+def _reorder_for_closing(
+    order: list[Poi],
+    start_min: int,
+    first_from: tuple[float, float] | None = None,
+    end_min: int | None = None,
+) -> list[Poi]:
+    """T-045 final check: spots over the line (closing time or day cap) move
+    earlier within their day until everything fits or is confirmed
+    unrescuable. If nothing can move, keep the original order (the unvisited
+    warning is still reported honestly)."""
+    order = list(order)
+    if len(order) < 2:
+        return order
+    for _ in range(len(order)):
+        bad = _closed_at_arrival(order, start_min, first_from, end_min)
+        if not bad:
+            return order
+        k = bad[0]
+        spot = order.pop(k)
+        placed = False
+        for pos in range(k):  # earlier positions only; moving it later never helps
+            trial = order[:pos] + [spot] + order[pos:]
+            if not _closed_at_arrival(trial, start_min, first_from, end_min):
+                order = trial
+                placed = True
+                break
+        if not placed:
+            order.insert(k, spot)
+            break
+    return order
+
+
+def _enforce_closing(
+    groups: list[list[Poi]],
+    starts: dict[int, int],
+    empty_idx: set[int] | frozenset[int],
+    budget_by_idx: list[int] | None,
+    first_from_by_day: dict[int, tuple[float, float] | None] | None = None,
+    ends_by_day: dict[int, int] | None = None,
+) -> tuple[list[list[Poi]], list[tuple[str, int, int]], list[str]]:
+    """T-045 final check main entry: keep "unreachable" spots alive.
+
+    1. Reorder within the day (:func:`_reorder_for_closing`) — early-closing
+       / over-the-cap spots move to the front;
+    2. Spots still over the line move across days: the target day must have
+       room (budget), the whole-day simulation must stay feasible after the
+       insertion, and it must not be an arrival/departure day kept empty;
+    3. If even a cross-day move cannot save it -> the ids go back to the
+       caller as warnings (the last line of honest reporting).
+    Only spots move, never hotels (hotels are settled before this stage;
+    "nearest hotel after a day swap" yields to correctness).
+    ``first_from_by_day`` is each day's morning-hotel coordinate — the first
+    hop (hotel -> first spot) is real transit and cannot count as 0 min.
+    ``ends_by_day`` is each day's hard cap (22:00, or the departure-day
+    flight cutoff) — even a 24h spot gets squeezed out by an over-packed day
+    (harajuku, hit in prod 2026-08-28)."""
+    groups = [list(g) for g in groups]
+    moved: list[tuple[str, int, int]] = []
+
+    def start_of(i: int) -> int:
+        return starts.get(i, DAY_START_MIN)
+
+    def end_of(i: int) -> int | None:
+        return (ends_by_day or {}).get(i)
+
+    def origin_of(i: int) -> tuple[float, float] | None:
+        return (first_from_by_day or {}).get(i)
+
+    def budget_of(i: int) -> int:
+        return budget_by_idx[i] if budget_by_idx and i < len(budget_by_idx) else DAYLIGHT_BUDGET_MIN
+
+    for i in range(len(groups)):
+        order = _reorder_for_closing(list(groups[i]), start_of(i), origin_of(i), end_of(i))
+        for _ in range(len(order) + 2):
+            order = _reorder_for_closing(order, start_of(i), origin_of(i), end_of(i))
+            bad = _closed_at_arrival(order, start_of(i), origin_of(i), end_of(i))
+            if not bad:
+                break
+            spot = order[bad[-1]]
+            # — Rescue 1: move across days (target day has room and stays feasible) —
+            dests: list[tuple[int, int, list[Poi]]] = []
+            for j in range(len(groups)):
+                if j == i or j in empty_idx or not groups[j]:
+                    continue
+                if _day_load_min(groups[j] + [spot]) > budget_of(j):
+                    continue
+                trial = _reorder_for_closing(groups[j] + [spot], start_of(j), origin_of(j), end_of(j))
+                if not _closed_at_arrival(trial, start_of(j), origin_of(j), end_of(j)):
+                    dests.append((_day_load_min(groups[j]), j, trial))
+            if dests:
+                _, j, trial = min(dests)
+                groups[j] = trial
+                order.pop(bad[-1])
+                moved.append((spot.id, i + 1, j + 1))
+                continue
+            # — Rescue 2: swap across days (last resort once the trip is
+            # saturated) — trade for a spot from another day that still fits
+            # this evening; budgets must not get worse (the arrival day is
+            # already over its target budget, and a hard 365 cap would make
+            # every swap fail).
+            swapped = False
+            for j in range(len(groups)):
+                if j == i or j in empty_idx or not groups[j]:
+                    continue
+                for s in list(groups[j]):
+                    if s.id == spot.id:
+                        continue
+                    trial_i = _reorder_for_closing(
+                        [p for p in groups[i] if p.id != spot.id] + [s], start_of(i), origin_of(i), end_of(i),
+                    )
+                    if _closed_at_arrival(trial_i, start_of(i), origin_of(i), end_of(i)):
+                        continue
+                    trial_j = _reorder_for_closing(
+                        [p for p in groups[j] if p.id != s.id] + [spot], start_of(j), origin_of(j), end_of(j),
+                    )
+                    if _closed_at_arrival(trial_j, start_of(j), origin_of(j), end_of(j)):
+                        continue
+                    if _day_load_min(trial_i) > max(budget_of(i), _day_load_min(groups[i])):
+                        continue
+                    if _day_load_min(trial_j) > max(budget_of(j), _day_load_min(groups[j])):
+                        continue
+                    groups[i], groups[j] = trial_i, trial_j
+                    order = trial_i
+                    moved.append((f"{spot.id}<->{s.id}", i + 1, j + 1))
+                    swapped = True
+                    break
+                if swapped:
+                    break
+            if not swapped:
+                # — Rescue 3 (last resort): move into a none (empty) day —
+                # "none" means "as light as possible", not "forbidden": when no
+                # regular day fits and an empty day can hold the spot without
+                # missing the line, using the empty day beats dropping a spot
+                # the user selected (2026-08-29 prod: kinkaku-ji on an
+                # intercity day had nowhere to go).
+                empty_dests: list[tuple[int, int, list[Poi]]] = []
+                for j in sorted(empty_idx):
+                    if j == i:
+                        continue
+                    if _day_load_min(groups[j] + [spot]) > budget_of(j):
+                        continue
+                    trial = _reorder_for_closing(groups[j] + [spot], start_of(j), origin_of(j), end_of(j))
+                    if not _closed_at_arrival(trial, start_of(j), origin_of(j), end_of(j)):
+                        empty_dests.append((_day_load_min(groups[j]), j, trial))
+                if empty_dests:
+                    _, j, trial = min(empty_dests)
+                    groups[j] = trial
+                    order.pop(bad[-1])
+                    moved.append((spot.id, i + 1, j + 1))
+                    continue
+                break
+        groups[i] = order
+
+    remaining: list[str] = []
+    for i, g in enumerate(groups):
+        for k in _closed_at_arrival(g, start_of(i), origin_of(i), end_of(i)):
+            remaining.append(g[k].id)
+    return groups, moved, sorted(set(remaining))
+
+
+# Minimum open-in-window overlap for a POI to be considered visitable (T-034).
+FEASIBLE_OVERLAP_MIN = 30
+# A window's start is optimistic — the traveller still has to check in and
+# ride transit before the first spot. Shave this off when testing whether a
+# spot can actually be reached while open.
+WINDOW_MARGIN_MIN = 60
+
+
+def _window_feasible(poi: Poi, start_min: int, end_min: int) -> bool:
+    """Can ``poi`` actually be visited inside ``[start_min, end_min]``?
+
+    Unknown hours are assumed feasible — we only veto when the catalog says
+    the place cannot possibly be open long enough in the day's window. The
+    start gets ``WINDOW_MARGIN_MIN`` shaved off (check-in + transit).
+    """
+    opens, closes = parse_hours(poi.opening_hours)
+    lo = start_min + WINDOW_MARGIN_MIN if opens is None else max(start_min + WINDOW_MARGIN_MIN, opens)
+    hi = end_min if closes is None else min(end_min, closes)
+    return hi - lo >= FEASIBLE_OVERLAP_MIN
+
+
+def _move_infeasible_for_windows(
+    groups: list[list[Poi]],
+    windows: dict[int, tuple[int, int]],
+    empty_idx: set[int] | frozenset[int],
+) -> tuple[list[list[Poi]], list[tuple[str, int, int]], list[str]]:
+    """T-034: a spot that can never be open during its day's reachable
+    window (late flight landing, mid-afternoon intercity arrival, early
+    departure cutoff) is moved to the lightest day where it IS visitable.
+    Days that must stay empty (``none``) never receive moves. Spots with no
+    legal home stay put and are reported so the trip response can warn."""
+    if not windows:
+        return groups, [], []
+    packed = [list(group) for group in groups]
+    moved: list[tuple[str, int, int]] = []
+    stuck: list[str] = []
+    for idx in sorted(windows):
+        start, end = windows[idx]
+        keep: list[Poi] = []
+        exile: list[Poi] = []
+        for poi in packed[idx]:
+            (exile if not _window_feasible(poi, start, end) else keep).append(poi)
+        if not exile:
+            continue
+        packed[idx] = keep
+        for poi in exile:
+            dests = [j for j in range(len(packed)) if j != idx and j not in empty_idx]
+            if not dests:
+                packed[idx].append(poi)
+                stuck.append(poi.id)
+                continue
+            dest = min(dests, key=lambda j: (_day_load_min(packed[j]), abs(j - idx)))
+            packed[dest].append(poi)
+            moved.append((poi.id, idx, dest))
+    return packed, moved, stuck
 
 
 def _isolate_full_day_pois(groups: list[list[Poi]]) -> list[list[Poi]]:
@@ -359,6 +1081,16 @@ def _select_hotels_system_multi(
     return result
 
 
+def _hours_hint(poi: Poi) -> str:
+    hours = poi.opening_hours or "hours unknown"
+    opens, closes = parse_hours(poi.opening_hours)
+    if opens == 0 and closes == 24 * 60:
+        return f"{hours}; open all day"
+    if closes is not None:
+        return f"{hours}; finish by {closes // 60:02d}:{closes % 60:02d}"
+    return hours
+
+
 def _deepseek_city_prompt(
     city: str,
     pois: list[Poi],
@@ -368,9 +1100,14 @@ def _deepseek_city_prompt(
     required_lodging_by_local_day: dict[int, Lodging] | None,
     first_mode: str | None = None,
     last_mode: str | None = None,
+    arrival_start_min: int | None = None,
+    departure_cutoff_min: int | None = None,
+    arrival_hub: TransportHub | None = None,
+    departure_hub: TransportHub | None = None,
 ) -> str:
     poi_lines = "\n".join(
-        f"- {p.id}: {p.name_en} ({p.lat:.4f},{p.lng:.4f}, {p.suggested_duration_min} min)"
+        f"- {p.id}: {p.name_en} ({p.lat:.4f},{p.lng:.4f}, "
+        f"{p.suggested_duration_min} min, {_hours_hint(p)})"
         for p in pois
     )
     if required_lodging_by_local_day:
@@ -393,7 +1130,51 @@ def _deepseek_city_prompt(
     edge_rules: list[str] = [
         "Keep geographically close spots on the SAME day. Do not even out the number of spots per day.",
         "A spot whose duration is 360 minutes or more must be the only spot that day (theme parks).",
+        (
+            "Fit each day in about 9 hours: sum of stay minutes + 60 min lunch + 90 min dinner "
+            "+ 25 min per hop between spots, and never past 22:00. If a day overflows, move "
+            "the last non-park spot to another day that is not an empty arrival/departure day."
+        ),
+        (
+            "Visit only while open. Use each spot's hours. Museums/parks must finish before they close. "
+            "Do not schedule a stop that would start after closing."
+        ),
+        (
+            "If a spot closes unusually early (for example a morning market that shuts after lunch), "
+            "make it the FIRST stop of its day."
+        ),
+        "Do not put dinner or extra sightseeing after the departure airport/station.",
     ]
+    if first_mode is not None and arrival_start_min is not None:
+        lands = _hhmm(arrival_start_min - LANDING_BUFFER_MIN)
+        edge_rules.append(
+            f"Day 1: the flight lands at {lands}; after immigration, baggage and getting into "
+            f"the city, sightseeing cannot start before {_hhmm(arrival_start_min)}. Keep day 1 "
+            f"within {DAY_END_MIN - arrival_start_min} minutes of total activity — usually just "
+            "1 nearby spot plus check-in. That evening the day's LAST spot must still be open "
+            "at the hour the traveller reaches it — put early-closing places (museums) first "
+            "and late-opening areas last."
+        )
+    if last_mode is not None and departure_cutoff_min is not None:
+        departs = _hhmm(departure_cutoff_min + TAKEOFF_BUFFER_MIN)
+        edge_rules.append(
+            f"Day {n_days}: the flight departs at {departs}; the traveller must be at the "
+            f"airport by {_hhmm(departure_cutoff_min)}, so every stop that day must FINISH by "
+            f"{_hhmm(departure_cutoff_min)} — check each spot's stay time against this deadline."
+        )
+    # T-042: edge days should anchor on what the traveller actually needs
+    # (drop bags first / be near the way out), not on model preference.
+    if first_mode is not None and arrival_hub is not None:
+        edge_rules.append(
+            f"Day 1 is the arrival day: the traveller lands at {arrival_hub.name_en or arrival_hub.name} "
+            "and checks in first — pick the arrival-day spot closest to that night's hotel."
+        )
+    if last_mode is not None and departure_hub is not None:
+        edge_rules.append(
+            f"Day {n_days} ends at {departure_hub.name_en or departure_hub.name} "
+            f"({departure_hub.lat:.4f},{departure_hub.lng:.4f}) — pick that day's spot(s) "
+            "as close to it as possible."
+        )
     both_none_two_days = first_mode == "none" and last_mode == "none" and n_days == 2
     if first_mode == "none" and not both_none_two_days:
         edge_rules.append("Day 1 is the trip arrival day: poi_ids must be [].")
@@ -423,6 +1204,8 @@ def _deepseek_city_prompt(
         "Reply with ONLY a JSON object of the exact form "
         '{"days": [{"day": 1, "city": "' + city + '", "poi_ids": ["..."], '
         '"lodging_id": "..."}, ...]}. '
+        "Copy poi_ids and lodging_id values character-for-character from the lists above — "
+        "do not abbreviate, reword or re-space them. "
         f"``day`` must run 1..{n_days}, each exactly once."
     )
 
@@ -439,6 +1222,10 @@ def _deepseek_fill_city(
     base_url: str,
     first_mode: str | None = None,
     last_mode: str | None = None,
+    arrival_start_min: int | None = None,
+    departure_cutoff_min: int | None = None,
+    arrival_hub: TransportHub | None = None,
+    departure_hub: TransportHub | None = None,
 ) -> tuple[list[list[Poi]], dict[int, Lodging]] | None:
     """One DeepSeek call for one city. Returns ``None`` on *any* problem
     (HTTP failure, malformed JSON, or a validation miss against 6.1b F) so
@@ -451,6 +1238,8 @@ def _deepseek_fill_city(
     prompt = _deepseek_city_prompt(
         city, pois, n_days, hotel_mode, candidates, required_lodging_by_local_day,
         first_mode=first_mode, last_mode=last_mode,
+        arrival_start_min=arrival_start_min, departure_cutoff_min=departure_cutoff_min,
+        arrival_hub=arrival_hub, departure_hub=departure_hub,
     )
     try:
         resp = httpx.post(
@@ -473,7 +1262,16 @@ def _deepseek_fill_city(
             payload.get("usage"),
         )
         text = _find_text_block(payload["content"])
-        parsed = _extract_json(text)
+        try:
+            parsed = _extract_json(text)
+        except Exception as parse_exc:
+            # Without the raw reply there is no fixing the prompt/parser: log
+            # its head on failure
+            logger.error(
+                "DeepSeek reply unparseable for city=%s (%s); head=%.300r",
+                city, parse_exc, text[:300],
+            )
+            return None
     except Exception as exc:  # noqa: BLE001 — per-city fallback is a requirement
         logger.error("DeepSeek fill FAILED for city=%s (%s); falling back to rule-based", city, exc)
         return None
@@ -487,6 +1285,16 @@ def _deepseek_fill_city(
     lodging_by_id = {l.id: l for l in candidates}
     if required_lodging_by_local_day:
         lodging_by_id.update({l.id: l for l in required_lodging_by_local_day.values()})
+
+    # A mis-echoed id used to kill the whole model table (2026-08-28 prod,
+    # 17-spot tokyo: "unknown or duplicate poi id" ×2). Repair near-misses
+    # first; only an unresolvable id still falls back to rule-based.
+    id_repairs = _repair_poi_ids(raw_days, by_id)
+    if id_repairs is None:
+        logger.error("DeepSeek fill FAILED for city=%s (unresolvable poi id); falling back", city)
+        return None
+    if id_repairs:
+        logger.info("DeepSeek poi-id repair city=%s %s", city, id_repairs)
 
     both_none_two_days = first_mode == "none" and last_mode == "none" and n_days == 2
     empty_ok: set[int] = set()
@@ -516,7 +1324,11 @@ def _deepseek_fill_city(
             return None
         resolved = [by_id.get(pid) for pid in poi_ids]
         if any(p is None for p in resolved) or len(set(poi_ids)) != len(poi_ids):
-            logger.error("DeepSeek fill FAILED for city=%s (unknown or duplicate poi id); falling back", city)
+            bad = [pid for pid, p in zip(poi_ids, resolved) if p is None]
+            logger.error(
+                "DeepSeek fill FAILED for city=%s (unknown or duplicate poi id: %s); falling back",
+                city, bad or poi_ids,
+            )
             return None
         lodging = lodging_by_id.get(lodging_id) if isinstance(lodging_id, str) else None
         if lodging is None:
@@ -529,9 +1341,12 @@ def _deepseek_fill_city(
     if set(groups_by_local_day) != set(range(1, n_days + 1)):
         logger.error("DeepSeek fill FAILED for city=%s (days not 1..%s); falling back", city, n_days)
         return None
-    if set(seen_ids) != set(by_id) or len(seen_ids) != len(by_id):
-        logger.error("DeepSeek fill FAILED for city=%s (poi set mismatch); falling back", city)
+    repaired_sets = _repair_poi_set(groups_by_local_day, by_id, empty_ok)
+    if repaired_sets is None:
+        logger.error("DeepSeek fill FAILED for city=%s (poi set mismatch beyond repair); falling back", city)
         return None
+    if repaired_sets:
+        logger.info("DeepSeek poi-set repair city=%s %s", city, repaired_sets)
     if hotel_mode == "system_one" and len({l.id for l in lodging_by_local_day.values()}) != 1:
         logger.error("DeepSeek fill FAILED for city=%s (system_one used multiple hotels); falling back", city)
         return None
@@ -542,8 +1357,31 @@ def _deepseek_fill_city(
                 return None
 
     groups = [groups_by_local_day[d] for d in range(1, n_days + 1)]
+    # A single misfit spot used to kill the whole model table (2026-08-28
+    # prod: "district split" ×3 on tokyo). Repair obvious placements first;
+    # only a still-broken table after repair falls back to rule-based.
+    groups, district_moves = _repair_districts(groups)
+    if district_moves:
+        logger.info(
+            "DeepSeek district repair city=%s moves=%s", city, district_moves,
+        )
+    if not _districts_ok(groups):
+        logger.error("DeepSeek fill FAILED for city=%s (district split after repair); falling back", city)
+        return None
     lodgings_by_local = {d: lodging_by_local_day[d] for d in range(1, n_days + 1)}
     return groups, lodgings_by_local
+
+
+def _comfortable_spot_budget(days: int) -> int:
+    """T-048: warning threshold = 3 x (days - 2) + 2.
+
+    Derived from the capacity math (not a guess): a middle day's 540-minute
+    budget minus 150 for lunch and dinner comfortably fits 3 spots; the
+    arrival and departure days are travel days, ~2 spots between them. The
+    old 5 x days threshold let users pick an itinerary guaranteed to overflow
+    (17 spots / 6 days, hit in practice) and only warn after the fact.
+    Still a soft warning — users may try, it never rejects."""
+    return 3 * max(days - 2, 0) + 2
 
 
 def plan_trip(
@@ -563,6 +1401,11 @@ def plan_trip(
     arrival_hub_id: str | None = None,
     departure_hub_id: str | None = None,
     hub_catalog: dict[str, list[TransportHub]] | None = None,
+    # T-034: flight landing / takeoff times in minutes-from-midnight, local
+    # to the arrival/departure hub's city. Only meaningful together with the
+    # matching hub (main.py rejects orphan times).
+    arrival_time_min: int | None = None,
+    departure_time_min: int | None = None,
 ) -> TripPlan:
     """Raises :class:`PlanningError` for every validation failure in 2.6's
     400 table. Never raises for anything else — transit routing (T-012),
@@ -593,6 +1436,20 @@ def plan_trip(
     arrival_hub = _resolve_hub(arrival_hub_id, cities[0], "arrival")
     departure_hub = _resolve_hub(departure_hub_id, cities[-1], "departure")
 
+    # T-034: turn the raw flight times into a day-1 clock start and a
+    # last-day sightseeing cutoff. Applied only when the matching hub exists;
+    # main.py already rejects orphan times, this is a second safety net.
+    arrival_start_min = (
+        arrival_time_min + LANDING_BUFFER_MIN
+        if arrival_time_min is not None and arrival_hub is not None
+        else None
+    )
+    departure_cutoff_min = (
+        departure_time_min - TAKEOFF_BUFFER_MIN
+        if departure_time_min is not None and departure_hub is not None
+        else None
+    )
+
     all_catalog_by_id: dict[str, Poi] = {
         poi.id: poi for city in cities for poi in poi_catalog.get(city, [])
     }
@@ -609,8 +1466,12 @@ def plan_trip(
         raise PlanningError("each city must have at least one selected poi")
 
     warnings: list[str] = []
-    if len(poi_ids) > days * 5:
-        warnings.append("selected a lot of POIs for the number of days — days may feel crowded")
+    if len(poi_ids) > _comfortable_spot_budget(days):
+        warnings.append(
+            f"{len(poi_ids)} spots for {days} days is above the comfortable pace "
+            f"(~{days - 2} transit-light days x 3 spots + 2 for arrival/departure) — "
+            "expect some spots to be squeezed out; add a day or drop a spot"
+        )
 
     poi_counts = {city: len(selected_by_city[city]) for city in cities}
     city_days = _split_city_days(cities, days, poi_counts)
@@ -621,6 +1482,27 @@ def plan_trip(
     # day ranges in the same order as ``cities``.
     first_day_global = city_days[cities[0]][0]
     last_day_global = city_days[cities[-1]][-1]
+
+    # T-045: every day's clock start (arrival day post-landing, intercity
+    # arrival days 16:00, plain days 09:00) — the closing-time final check
+    # replays each day against these so "on the route but closed" never
+    # survives to the response.
+    day_clock_starts: dict[int, int] = {}
+    for city, day_list in city_days.items():
+        block_start = day_list[0]
+        for i, d in enumerate(day_list):
+            if i == 0 and first_day_global in day_list and arrival_start_min is not None:
+                day_clock_starts[d] = arrival_start_min
+            elif i == 0 and block_start > 1 and day_city.get(block_start - 1) != city:
+                # T-049b: 16:00 on an intercity day is only the floor for
+                # "intercity transit done" — after arrival there is still
+                # baggage storage / transfers / the first leg into town
+                # (~60 min) before sightseeing really starts. That is how
+                # kinkaku-ji (closes 17:00) got its phantom "reachable at
+                # 16:50" slot on an intercity day (real arrival 18:15+).
+                day_clock_starts[d] = INTERCITY_MIN + _INTERCITY_ARRIVAL_BUFFER_MIN
+            else:
+                day_clock_starts[d] = DAY_START_MIN
 
     if hotel_mode == "custom":
         flat_days = [d for stay in custom_stays for d in stay.days]
@@ -650,51 +1532,128 @@ def plan_trip(
     day_groups: dict[int, list[Poi]] = {}
     use_deepseek = bool(deepseek_api_key)  # no key -> never even attempt HTTP
     city_groupers: dict[str, str] = {}
+
+    # T-037: per-city context pass so every DeepSeek fill can run in
+    # parallel — each call is a pure HTTP round-trip with no shared state.
+    city_ctx: dict[str, dict] = {}
     for city, day_list in city_days.items():
         n_days = len(day_list)
         pois = selected_by_city[city]
         candidates = lodging_catalog.get(city, [])
         if hotel_mode in ("system_one", "system_multi") and not candidates:
             raise PlanningError(f"no lodgings available for city '{city}'")
-
         required_local: dict[int, Lodging] | None = None
         if hotel_mode == "custom":
             required_local = {i + 1: lodging_by_day[d] for i, d in enumerate(day_list)}
-
         # T-016: first/last density apply only when this city owns that
         # global day. Computed before DeepSeek so the prompt can use them.
         first_mode_here = first_mode if first_day_global in day_list else None
         last_mode_here = last_mode if last_day_global in day_list else None
+        # T-034: flight-aware per-day load budgets + open-hours feasibility
+        # windows (same ownership logic; intercity arrival days get one too).
+        budgets = _flight_day_budgets(
+            n_days,
+            owns_global_first_day=first_day_global in day_list,
+            owns_global_last_day=last_day_global in day_list,
+            arrival_start_min=arrival_start_min,
+            departure_cutoff_min=departure_cutoff_min,
+        )
+        windows: dict[int, tuple[int, int]] = {}
+        if first_day_global in day_list and arrival_start_min is not None:
+            windows[0] = (arrival_start_min, DAY_END_MIN)
+        if last_day_global in day_list and departure_cutoff_min is not None:
+            windows[n_days - 1] = (DAY_START_MIN, departure_cutoff_min)
+        block_start = day_list[0]
+        if block_start > 1 and day_city.get(block_start - 1) != city:
+            windows[0] = (INTERCITY_MIN, DAY_END_MIN)
+        city_ctx[city] = {
+            "n_days": n_days,
+            "pois": pois,
+            "candidates": candidates,
+            "required_local": required_local,
+            "first_mode_here": first_mode_here,
+            "last_mode_here": last_mode_here,
+            "budgets": budgets,
+            "windows": windows,
+        }
 
-        result = None
-        if use_deepseek:
-            result = _deepseek_fill_city(
+    deepseek_results: dict[str, tuple[list[list[Poi]], dict[int, Lodging]] | None] = {}
+    if use_deepseek:
+        jobs: dict[str, dict] = {}
+        for city, ctx in city_ctx.items():
+            jobs[city] = dict(
                 city=city,
-                pois=pois,
-                n_days=n_days,
+                pois=ctx["pois"],
+                n_days=ctx["n_days"],
                 hotel_mode=hotel_mode,
-                candidates=candidates,
-                required_lodging_by_local_day=required_local,
+                candidates=ctx["candidates"],
+                required_lodging_by_local_day=ctx["required_local"],
                 api_key=deepseek_api_key,
                 base_url=deepseek_base_url,
-                first_mode=first_mode_here,
-                last_mode=last_mode_here,
+                first_mode=ctx["first_mode_here"],
+                last_mode=ctx["last_mode_here"],
+                arrival_start_min=arrival_start_min if first_day_global in city_days[city] else None,
+                departure_cutoff_min=departure_cutoff_min if last_day_global in city_days[city] else None,
+                arrival_hub=arrival_hub,
+                departure_hub=departure_hub,
             )
 
+        def _fill_with_retry(kwargs: dict) -> tuple[list[list[Poi]], dict[int, Lodging]] | None:
+            # T-046b: even at temperature 0.2 the model still occasionally
+            # emits bad JSON / near-miss validation (~1/3 of calls). Each
+            # sample differs, so one automatic retry roughly halves the
+            # fallback rate — the cost is a single extra model call.
+            result = _deepseek_fill_city(**kwargs)
+            if result is None:
+                logger.warning("DeepSeek fill failed once for city=%s; retrying", kwargs["city"])
+                result = _deepseek_fill_city(**kwargs)
+            return result
+
+        with ThreadPoolExecutor(max_workers=min(len(city_ctx), 4)) as pool:
+            futures = {city: pool.submit(_fill_with_retry, kw) for city, kw in jobs.items()}
+            deepseek_results = {city: fut.result() for city, fut in futures.items()}
+
+    # T-049b: spots stuck at the windows stage are held back, not warned yet —
+    # the final check may still rescue them; rescued ones retract the warning,
+    # the rest are reported with one consistent message.
+    window_stuck_ids: set[str] = set()
+
+    for city, day_list in city_days.items():
+        ctx = city_ctx[city]
+        n_days = ctx["n_days"]
+        pois = ctx["pois"]
+        budgets = ctx["budgets"]
+        windows = ctx["windows"]
+        first_mode_here = ctx["first_mode_here"]
+        last_mode_here = ctx["last_mode_here"]
+        result = deepseek_results.get(city) if use_deepseek else None
+        empty_idx = _empty_day_indices(n_days, first_mode_here, last_mode_here)
         if result is not None:
             groups, lodging_by_local = result
             city_groupers[city] = "deepseek"
-            # Density and geography were in the prompt. Do not count-rebalance
-            # an accepted AI table — that was why DeepSeek "had no effect".
+            # Density/geography were in the prompt. Still enforce capacity and
+            # empty none-days in Python — the model is allowed to miss.
             groups = _isolate_full_day_pois(groups)
+            # Evacuate none-days FIRST, then check open-hours windows — a spot
+            # feasibility saw on a legal day could get dumped onto a window day
+            # by the evacuation and never re-checked (kinkaku-ji 2026-08-28).
+            groups = _pack_day_capacity(groups, empty_idx=empty_idx)
+            groups, _moved, stuck = _move_infeasible_for_windows(groups, windows, empty_idx)
+            window_stuck_ids.update(stuck)  # hold back; no warning if the final check rescues it
+            groups = _pack_day_capacity(groups, empty_idx=empty_idx, budget_by_idx=budgets)
         else:
             city_groupers[city] = "rule-based"
             groups = _group_city_pois(pois, n_days)
+            groups = _pack_day_capacity(groups, empty_idx=empty_idx, budget_by_idx=budgets)
             if first_mode_here is not None or last_mode_here is not None:
                 groups = _rebalance_edge_days(
                     groups, first_mode=first_mode_here, last_mode=last_mode_here,
                 )
             groups = _isolate_full_day_pois(groups)
+            groups = _pack_day_capacity(groups, empty_idx=empty_idx)
+            groups, _moved, stuck = _move_infeasible_for_windows(groups, windows, empty_idx)
+            window_stuck_ids.update(stuck)  # hold back; no warning if the final check rescues it
+            groups = _pack_day_capacity(groups, empty_idx=empty_idx, budget_by_idx=budgets)
             if hotel_mode == "system_one":
                 chosen = _select_hotels_system_one(candidates, groups)
                 lodging_by_local = {i + 1: chosen for i in range(n_days)}
@@ -702,6 +1661,51 @@ def plan_trip(
                 lodging_by_local = _select_hotels_system_multi(candidates, list(range(1, n_days + 1)), groups)
             else:  # custom — lodging is already fixed by the user
                 lodging_by_local = required_local
+
+        # T-045: closing-time final check (runs after the two branches converge
+        # — the day's hotel is settled by then). The arrival day's first leg is
+        # folded into the clock start as "20 min check-in + 1.2 min/km rail",
+        # so the flat 25 min/hop approximation no longer blesses phantom
+        # "16:20 at Ueno" style plans.
+        if day_list and arrival_hub is not None and first_day_global in day_list:
+            hotel = lodging_by_local[1]
+            if arrival_hub.kind == "airport":
+                commute = _AIRPORT_COMMUTE_MIN
+            else:
+                commute = _COMMUTE_BASE_MIN + _COMMUTE_PER_KM_MIN * haversine_km(
+                    arrival_hub.lat, arrival_hub.lng, hotel.lat, hotel.lng,
+                )
+            day_clock_starts[day_list[0]] += int(_CHECKIN_MIN + commute)
+        starts_local = {i: day_clock_starts[d] for i, d in enumerate(day_list)}
+        ends_local: dict[int, int] = {}
+        for i, d in enumerate(day_list):
+            cap = DAY_END_MIN
+            if d == last_day_global and departure_cutoff_min is not None:
+                cap = min(cap, departure_cutoff_min)
+            ends_local[i] = cap
+        # Each day's first hop origin = that morning's hotel (6.1b E: on day 1
+        # the morning uses that night's lodging)
+        first_from_local: dict[int, tuple[float, float] | None] = {}
+        for i in range(len(day_list)):
+            morning = lodging_by_local[i] if i > 0 else lodging_by_local[1]
+            first_from_local[i] = (morning.lat, morning.lng)
+        groups, _close_moves, close_stuck = _enforce_closing(
+            groups, starts_local, empty_idx, budgets, first_from_local, ends_local,
+        )
+        # Warnings held back at the windows stage: retract the ones the final
+        # check rescued (anything outside close_stuck), report the rest with
+        # one consistent message
+        stale = {
+            f"{uid} cannot fit within opening hours on its assigned day"
+            for uid in window_stuck_ids
+            if uid not in close_stuck
+        }
+        warnings = [w for w in warnings if w not in stale]
+        for poi_id in close_stuck:
+            warnings.append(
+                f"{poi_id} doesn't fit its day (would arrive after closing or past the day's "
+                "cutoff) — the trip is packed; move it to another day on the map or drop a spot"
+            )
 
         for i, day in enumerate(day_list):
             day_groups[day] = groups[i]
@@ -720,10 +1724,22 @@ def plan_trip(
     for day in range(1, days + 1):
         night = lodging_by_day[day]
         morning = lodging_by_day[day - 1] if day > 1 else night  # 6.1b E: day 1 simplification
+        end = DAY_END_MIN
+        if day == last_day_global and departure_cutoff_min is not None:
+            end = min(end, departure_cutoff_min)
         planned_days.append(PlannedDay(
             day=day,
             city=day_city[day],
-            pois=day_groups[day],
+            # T-039 2-opt + T-036 early-closing ordering, then T-045: replay
+            # the day clock and pull spots that would arrive after closing
+            # toward the front — "on the route but closed" stays a warning
+            # of last resort, not a design outcome.
+            pois=_reorder_for_closing(
+                _order_day(day_groups[day]),
+                day_clock_starts.get(day, DAY_START_MIN),
+                (morning.lat, morning.lng),
+                end,
+            ),
             lodging=night,
             morning_lodging=morning,
         ))

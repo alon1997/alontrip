@@ -19,6 +19,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from ..config import Settings
+from .currency import DISPLAY_CURRENCY, to_usd
 from .db import get_connection
 
 logger = logging.getLogger(__name__)
@@ -37,6 +38,13 @@ class Lodging(BaseModel):
     price_currency: str | None = None
     rating: float | None = None
     name_local: str | None = None  # T-009: search matches against this too
+
+
+def _prices_in_usd(lodging: Lodging) -> Lodging:
+    usd = to_usd(lodging.price_per_night, lodging.price_currency)
+    lodging.price_per_night = usd
+    lodging.price_currency = DISPLAY_CURRENCY if usd is not None else None
+    return lodging
 
 
 class LodgingProvider(ABC):
@@ -62,12 +70,12 @@ class LocalLodgingProvider(LodgingProvider):
         except (OSError, json.JSONDecodeError) as exc:
             logger.warning("cannot read lodging seed file %s: %s", path, exc)
             return []
-        lodgings = [Lodging(**{**item, "city": city}) for item in raw]
+        lodgings = [_prices_in_usd(Lodging(**{**item, "city": city})) for item in raw]
         return [lodging for lodging in lodgings if lodging.listed]
 
 
 def _row_to_lodging(row: dict, city: str) -> Lodging:
-    return Lodging(
+    return _prices_in_usd(Lodging(
         id=row["slug"] or f"l{row['id']}",
         name=row["name"],
         city=city,
@@ -80,7 +88,7 @@ def _row_to_lodging(row: dict, city: str) -> Lodging:
         price_currency=row["price_currency"],
         rating=float(row["rating"]) if row["rating"] is not None else None,
         name_local=row["name_local"],
-    )
+    ))
 
 
 _LODGING_COLUMNS = (

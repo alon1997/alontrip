@@ -1,7 +1,7 @@
 [
   {
     "id": "forbidden-city",
-    "name": "故宫",
+    "name": "",
     "name_en": "Forbidden City",
     "lat": 39.9163,
     "lng": 116.3972,
@@ -9,14 +9,14 @@
     "suggested_duration_min": 180,
     "category": "palace",
     "area": "4 Jingshan Front St",
-    "opening_hours": "Open · Closes 4 PM",
-    "ticket_price": 60,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 4 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 8.33,
+    "ticket_currency": "USD"
   },
   {
     "id": "temple-of-heaven",
-    "name": "天坛",
+    "name": "",
     "name_en": "Temple of Heaven",
     "lat": 39.8822,
     "lng": 116.4066,
@@ -24,14 +24,14 @@
     "suggested_duration_min": 150,
     "category": "temple",
     "area": "Dongcheng",
-    "opening_hours": "Open · Closes 9 PM",
-    "ticket_price": 15,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 9 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 2.08,
+    "ticket_currency": "USD"
   },
   {
     "id": "summer-palace",
-    "name": "颐和园",
+    "name": "",
     "name_en": "Summer Palace",
     "lat": 39.9999,
     "lng": 116.2755,
@@ -39,23 +39,24 @@
     "suggested_duration_min": 180,
     "category": "garden",
     "area": "Hai Dian Qu",
-    "opening_hours": "Open · Closes 8 PM",
-    "ticket_price": 30,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 8 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 4.17,
+    "ticket_currency": "USD"
   },
   {
     "id": "badaling",
-    "name": "八达岭长城",
+    "name": "",
     "name_en": "Badaling Great Wall",
     "lat": 40.3541,
     "lng": 116.0204,
     "rating": 4.7,
     "suggested_duration_min": 300,
     "category": "landmark",
-    "ticket_price": 40,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 5.56,
+    "ticket_currency": "USD"
   },
   {
     "id": "lama-temple",
@@ -67,10 +68,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "12 Yonghegong Ave",
-    "opening_hours": "Open · Closes 5 PM",
+    "opening_hours": "Open Closes 5 PM",
     "requires_ticket": "yes",
-    "ticket_price": 25.0,
-    "ticket_currency": "CNY"
+    "ticket_price": 3.47,
+    "ticket_currency": "USD"
   },
   {
     "id": "national-museum-of-china",
@@ -82,10 +83,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "16 E Chang'an St",
-    "opening_hours": "Open · Closes 4:30 PM",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 4:30 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "yuanmingyuan-park",
@@ -97,10 +98,10 @@
     "suggested_duration_min": 180,
     "category": "Tourist attraction",
     "area": "275X+67P",
-    "opening_hours": "Open · Closes 5 PM",
-    "ticket_price": 25,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 3.47,
+    "ticket_currency": "USD"
   },
   {
     "id": "jingshan-park",
@@ -112,9 +113,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "44 Jingshan W St",
-    "ticket_price": 10,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 1.39,
+    "ticket_currency": "USD"
   },
   {
     "id": "beijing-zoo",
@@ -126,9 +128,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "137 Xizhimen Outer Ave",
-    "ticket_price": 15,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 2.08,
+    "ticket_currency": "USD"
   },
   {
     "id": "prince-gong-mansion",
@@ -140,9 +143,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "17 Qianhai W St",
-    "ticket_price": 40,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 5.56,
+    "ticket_currency": "USD"
   },
   {
     "id": "798-art-zone",
@@ -154,9 +158,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "2 Jiuxianqiao Rd",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "beihai-park",
@@ -168,10 +173,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "1 Wenjin St",
-    "opening_hours": "Closed · Opens 6:30 AM Thu",
+    "opening_hours": "Closed Opens 6:30 AM Thu",
     "requires_ticket": "yes",
-    "ticket_price": 10.0,
-    "ticket_currency": "CNY"
+    "ticket_price": 1.39,
+    "ticket_currency": "USD"
   },
   {
     "id": "beijing-ancient-observatory",
@@ -182,8 +187,11 @@
     "rating": 4.5,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "2 东裱褙胡同",
-    "opening_hours": "Open · Closes 5 PM"
+    "area": "2",
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 2.78,
+    "ticket_currency": "USD"
   },
   {
     "id": "capital-museum",
@@ -195,10 +203,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "16 Fuxingmenwai Ave",
-    "opening_hours": "Open · Closes 4 PM",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 4 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "beijing-temple-of-confucius",
@@ -209,7 +217,11 @@
     "rating": 4.5,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "15 Guozijian St"
+    "area": "15 Guozijian St",
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 4.17,
+    "ticket_currency": "USD"
   },
   {
     "id": "tiananmen-square",
@@ -220,10 +232,11 @@
     "rating": 4.4,
     "suggested_duration_min": 45,
     "category": "Plaza",
-    "area": "前门 Dongcheng",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "area": "Dongcheng",
+    "opening_hours": "Open Closes 10 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "beijing-botanical-garden",
@@ -235,9 +248,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "X6X5+MJC",
-    "ticket_price": 10,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 1.39,
+    "ticket_currency": "USD"
   },
   {
     "id": "beijing-tours",
@@ -248,18 +262,26 @@
     "rating": 4.6,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "Dongcheng"
+    "area": "Dongcheng",
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "poi",
-    "name": "北京鼓楼和钟楼",
-    "name_en": "北京鼓楼和钟楼",
+    "name": "",
+    "name_en": "",
     "lat": 39.941165,
     "lng": 116.395888,
     "rating": 4.5,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "Dongcheng"
+    "area": "Dongcheng",
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 4.17,
+    "ticket_currency": "USD"
   },
   {
     "id": "beijing-olympic-park",
@@ -271,10 +293,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "X9VV+PF8",
-    "opening_hours": "Open · Closes 9:30 PM",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 9:30 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "national-centre-for-the-performing-arts",
@@ -285,7 +307,11 @@
     "rating": 4.5,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "2 W Chang'an St"
+    "area": "2 W Chang'an St",
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "neitan",
@@ -296,7 +322,11 @@
     "rating": 4.4,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "VCG7+499"
+    "area": "VCG7+499",
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 2.78,
+    "ticket_currency": "USD"
   },
   {
     "id": "mausoleum-of-mao-zedong",
@@ -308,10 +338,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "W93X+246",
-    "opening_hours": "Open · Closes 11 AM",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 11 AM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "wulongting",
@@ -322,7 +352,11 @@
     "rating": 4.9,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "W9HP+WCM"
+    "area": "W9HP+WCM",
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "national-stadium",
@@ -333,7 +367,11 @@
     "rating": 4.5,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "1 Guojiatiyuchang S Rd"
+    "area": "1 Guojiatiyuchang S Rd",
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 6.94,
+    "ticket_currency": "USD"
   },
   {
     "id": "happy-valley-beijing",
@@ -344,10 +382,11 @@
     "rating": 4.3,
     "suggested_duration_min": 420,
     "category": "Tourist attraction",
-    "area": "北京市朝阳区东四环小武基北路",
-    "ticket_price": 320,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "area": "",
+    "opening_hours": "Open Closes 9 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 44.44,
+    "ticket_currency": "USD"
   },
   {
     "id": "underground-city",
@@ -358,7 +397,11 @@
     "rating": 3.2,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "北京市崇文区前门西打磨厂62号"
+    "area": "62",
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 2.78,
+    "ticket_currency": "USD"
   },
   {
     "id": "grand-view-garden",
@@ -370,7 +413,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "12 Nancaiyuan St",
-    "opening_hours": "Open · Closes 5 PM"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 5.56,
+    "ticket_currency": "USD"
   },
   {
     "id": "nine-dragon-screen",
@@ -381,7 +427,11 @@
     "rating": 4.7,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "W9JQ+V3C"
+    "area": "W9JQ+V3C",
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "beijing-world-park",
@@ -392,7 +442,11 @@
     "rating": 4.1,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "Feng Tai Qu"
+    "area": "Feng Tai Qu",
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 13.89,
+    "ticket_currency": "USD"
   },
   {
     "id": "fayuan-temple",
@@ -403,7 +457,11 @@
     "rating": 4.6,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "7 Fayuansi Front St"
+    "area": "7 Fayuansi Front St",
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "zhengyangmen",
@@ -414,7 +472,11 @@
     "rating": 4.3,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "W92X+64H"
+    "area": "W92X+64H",
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 2.78,
+    "ticket_currency": "USD"
   },
   {
     "id": "wangfujing-pedestrian-street",
@@ -426,9 +488,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "WC66+9GP",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "long-corridor",
@@ -439,7 +502,11 @@
     "rating": 4.5,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "X7XC+5P5"
+    "area": "X7XC+5P5",
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "beijing-aquarium",
@@ -451,9 +518,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "Hai Dian Qu",
-    "ticket_price": 160,
-    "ticket_currency": "CNY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 22.22,
+    "ticket_currency": "USD"
   },
   {
     "id": "meridian-gate",
@@ -465,10 +533,10 @@
     "suggested_duration_min": 45,
     "category": "Tourist attraction",
     "area": "4 Jingshan Front St",
-    "opening_hours": "Open · Closes 5 PM",
-    "ticket_price": 0,
-    "ticket_currency": "CNY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "beijing-ming-city-wall-ruins-park",
@@ -479,7 +547,11 @@
     "rating": 4.3,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "9 Chongwenmen E St"
+    "area": "9 Chongwenmen E St",
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 2.08,
+    "ticket_currency": "USD"
   },
   {
     "id": "temple-of-the-sun",
@@ -490,6 +562,10 @@
     "rating": 4.5,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "WC8V+8PP"
+    "area": "WC8V+8PP",
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   }
 ]

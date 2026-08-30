@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 from .currency import DISPLAY_CURRENCY, to_usd
+from .hours import clip_visit
 from .poi import Poi
 from .transit import TransitRoute
 
@@ -18,9 +19,17 @@ INTERCITY_MIN = 16 * 60
 LUNCH_WINDOW_START = 11 * 60 + 30
 LUNCH_NOON = 12 * 60
 LUNCH_WINDOW_END = 14 * 60
-DINNER_EARLIEST = 17 * 60 + 30
-DINNER_LATEST = 19 * 60 + 30
-DINNER_BEFORE_HOME = 17 * 60 + 20
+# T-040 (user rule, 2026-08-28): dinner targets 18:00. A day whose last
+# spot ends early waits until 18:00; a late finish eats right away (the old
+# 19:30 upper window is gone — late days just eat late, still under the cap).
+DINNER_EARLIEST = 18 * 60
+# Flight times (T-034, user-confirmed defaults): minutes after landing before
+# sightseeing can start (immigration + bags + into the city), and minutes
+# before takeoff by which the last day must reach the airport (check-in +
+# security). DAY_END_MIN is the hard "sightseeing over" line for every day.
+LANDING_BUFFER_MIN = 90
+TAKEOFF_BUFFER_MIN = 120
+DAY_END_MIN = 22 * 60
 
 
 def _clock(minutes: int) -> str:
@@ -52,11 +61,20 @@ def build_day_schedule(
     is_first_day: bool,
     has_arrival_hub: bool,
     node_labels: dict[tuple[str, str], str],
+    day_start_min: int | None = None,
+    day_end_cutoff_min: int | None = None,
 ) -> list[dict]:
     """``chain`` items are (kind, id, lat, lng, role, city). ``legs[i]`` is the
-    transit for chain[i] → chain[i+1] (same order as optimize-route)."""
+    transit for chain[i] → chain[i+1] (same order as optimize-route).
+
+    ``day_start_min`` (T-034): arrival-day clock start — landing time plus
+    LANDING_BUFFER_MIN; ``None`` keeps the 09:00 default. ``day_end_cutoff_min``
+    (T-034): departure-day latest sightseeing end (takeoff minus
+    TAKEOFF_BUFFER_MIN); always combined with the 22:00 hard cap.
+    """
     events: list[dict] = []
-    clock = DAY_START_MIN
+    clock = day_start_min if day_start_min is not None else DAY_START_MIN
+    cap = DAY_END_MIN if day_end_cutoff_min is None else min(DAY_END_MIN, day_end_cutoff_min)
     lunch_done = False
     dinner_done = False
     poi_count = sum(1 for item in chain if item[0] == "poi")
@@ -66,6 +84,9 @@ def build_day_schedule(
 
     def add_dinner() -> None:
         nonlocal clock, dinner_done
+        if clock + DINNER_MIN > cap:
+            dinner_done = True  # past the day's cutoff — skip, don't late-night it
+            return
         events.append({
             "kind": "dinner",
             "start": _clock(clock),
@@ -102,6 +123,7 @@ def build_day_schedule(
             "cost": cost,
             "currency": currency,
             "estimated": estimated,
+            "data_source": getattr(route, "data_source", "") if route is not None else "",
         })
         clock += dur
 
@@ -128,6 +150,15 @@ def build_day_schedule(
             ticket = to_usd(raw_ticket, poi.ticket_currency if poi is not None else None)
             tcur = DISPLAY_CURRENCY if ticket is not None else None
             visit_name = (poi.name_en or poi.name) if poi is not None else to_id
+            clock, remain = clip_visit(
+                clock, remain, poi.opening_hours if poi is not None else None
+            )
+            # Hard day cap (22:00, or the departure-day flight cutoff):
+            # never start or extend a visit past it.
+            if clock >= cap:
+                remain = 0
+            else:
+                remain = min(remain, cap - clock)
 
             more_pois = any(item[0] == "poi" for item in chain[i + 2 :])
             while remain > 0:
@@ -183,16 +214,15 @@ def build_day_schedule(
                 })
                 clock += remain
                 remain = 0
-            if (
-                not dinner_done
-                and not more_pois
-                and DINNER_BEFORE_HOME <= clock <= DINNER_LATEST
-            ):
-                add_dinner()
+            if not dinner_done and not more_pois:
+                if clock < DINNER_EARLIEST:
+                    clock = DINNER_EARLIEST
+                add_dinner()  # skipped entirely when it would run past the cap
 
-    if poi_count and not dinner_done:
+    ends_at_hub = bool(chain) and chain[-1][0] == "hub"
+    if poi_count and not dinner_done and not ends_at_hub:
         if clock < DINNER_EARLIEST:
             clock = DINNER_EARLIEST
-        add_dinner()
+        add_dinner()  # no-op when it would run past the cap
 
     return events

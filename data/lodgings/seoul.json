@@ -103,7 +103,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 4.7,
-    "area": "2층",
+    "area": "2",
     "price_per_night": 83.0,
     "price_currency": "USD"
   },
@@ -157,7 +157,7 @@
   },
   {
     "id": "poi",
-    "name": "호스텔 서울",
+    "name": "",
     "lat": 37.5784144,
     "lng": 127.0223403,
     "kind": "hostel",

@@ -1,190 +1,236 @@
 # AlonTrip API
 
-跟代码走。改路由先改 `backend/app/main.py`，再改本页。本机交互文档：`http://127.0.0.1:5003/docs`。
+This page follows the code. Change a route in `backend/app/main.py` first, then change this page. Interactive docs on a local machine: `http://127.0.0.1:5003/docs`.
 
-前缀 `/api/trip`。错误 `{"detail":"英文原因"}`。对外 id 是 slug（`senso-ji`）。
+Everything lives under the `/api/trip` prefix. Errors come back as `{"detail":"english reason"}`. External ids are slugs (`senso-ji`).
 
-密钥在仓库根目录 `.env`（见 `.env.example`），由 `backend/app/config.py` 读取。
+Secrets live in the repo-root `.env` (see `.env.example`), read by `backend/app/config.py`.
 
-**`main.py` 不是算法。** 它是前台接待：浏览器来一个地址，它决定叫谁干活、把结果拼成 JSON。路线规划（哪天去哪、住哪）在 `backend/app/services/planner.py` 的 `plan_trip()`。
+**`main.py` is not the algorithm.** It is the front desk: the browser hits a URL, and `main.py` decides who does the work and assembles the result into JSON. Route planning (which day goes to which city, where to sleep) lives in `plan_trip()` in `backend/app/services/planner.py`.
 
 ---
 
-## SerpApi / DeepSeek 谁打
+## Who gets called: SerpApi / DeepSeek
 
-| 外部服务 | 环境变量 | 干什么 |
+| External service | Environment variable | What it does |
 |----------|----------|--------|
-| SerpApi | `SERPAPI_KEY` | 日韩港公交；目录搜不到时搜景点/酒店。金额折成 USD |
-| 高德 | `AMAP_KEY` | 大陆公交。空钥匙则大陆只出打车估价 |
-| DeepSeek | `DEEPSEEK_API_KEY` | 把景点分到各天。不查车。型号 `deepseek-v4-flash`，请求关闭 thinking（常量在 `grouping.py`，`planner.py` 共用） |
+| SerpApi | `SERPAPI_KEY` | Japan / Korea / Hong Kong public transit; POI and lodging search when the catalog misses. Amounts converted to USD |
+| AMap | `AMAP_KEY` | Mainland China public transit. Without a key, mainland legs only get a taxi estimate |
+| DeepSeek | `DEEPSEEK_API_KEY` | Splits POIs across days. Never queries transit. Model `deepseek-v4-flash`, thinking disabled on the request (constants live in `grouping.py`, shared with `planner.py`) |
 
-没有 key 也能跑：公交用缓存/估算，分组用规则。浏览器打的是**你们自己的** `/api/trip/...`，不是白嫖 SerpApi。钥匙缺了，进程不要崩（D-010）：没有 SerpApi 就读 `data/transit_cache/` 或直线估算；没有 DeepSeek 就规则分组。没有钥匙时**不会去打** `serpapi.com` 或 `api.deepseek.com`。
+The app also runs with no keys at all: transit uses cache/estimates, grouping uses rules. The browser calls **our own** `/api/trip/...`, never serpapi.com directly. A missing key must not crash the process (D-010): without SerpApi it reads `data/transit_cache/` or estimates straight-line; without DeepSeek it groups by rules. With no keys the process **never calls** `serpapi.com` or `api.deepseek.com`.
 
-| 接口 | SerpApi | DeepSeek |
+| Endpoint | SerpApi | DeepSeek |
 |------|:-------:|:--------:|
-| `GET /health` `/cities` `/pois` `/lodgings` `/transport-hubs` | 否 | 否 |
-| `GET /pois/search` `/lodgings/search` | 目录未命中才打 | 否 |
-| `POST /optimize-route` | 每段公交（命中 `data/transit_cache/` 则不打） | 有 key 就分组，失败退回规则 |
-| `POST /transit-legs` | 未缓存的段 | 否 |
+| `GET /health` `/cities` `/pois` `/lodgings` `/transport-hubs` | no | no |
+| `GET /pois/search` `/lodgings/search` | only on a catalog miss | no |
+| `POST /optimize-route` | one call per leg (skipped on a `data/transit_cache/` hit) | groups when a key exists; falls back to rules on failure |
+| `POST /transit-legs` | uncached legs only | no |
 
-勾选已有景点、系统选酒店：都不打 SerpApi。
+Ticking catalog POIs or letting the system pick hotels never calls SerpApi.
+
+Every transit leg carries `route.data_source`: `serpapi_live` (called serpapi.com this time) / `serpapi_cache` (replaying a stored SerpApi response) / `walk` / `taxi` / `estimate` / `amap`. Old cache files without the field are read as `serpapi_cache`.
 
 ---
 
-## 接口一览
+## Endpoint overview
 
-**`GET /health`** — 探活。`transit_provider` / `grouper` 是进程选了哪套实现，不是「上次一定打通了」。
+**`GET /health`** — liveness. `transit_provider` / `grouper` are the implementations the process picked at startup, not proof that the last call succeeded. `serpapi_configured` / `deepseek_configured` only mean the environment variables are non-empty; secrets are **never returned**.
 
-**`GET /cities`** — 九城 + `countries`（Japan / China / Korea）。
+**`GET /cities`** — the nine cities plus `countries` (Japan / China / Korea).
 
-**`GET /pois?city=`** · **`GET /lodgings?city=`** · **`GET /transport-hubs?city=`** — 目录，不打外部 API。未知 city → 400。
+**`GET /pois?city=`** · **`GET /lodgings?city=`** · **`GET /transport-hubs?city=`** — catalogs, no external API. Unknown city → 400. POIs carry `requires_ticket`, `ticket_price`, `ticket_currency` (**USD**), `opening_hours`, `suggested_duration_min`.
 
-**`GET /pois/search?city=&q=`** · **`GET /lodgings/search`** — `q` ≥ 2 字。`source`：`db` | `local-json` | `serpapi`。
+**`GET /pois/search?city=&q=`** · **`GET /lodgings/search`** — `q` must be at least 2 characters. `source`: `db` | `local-json` | `serpapi`.
 
-**`POST /optimize-route`** — 规划页 Generate。同 IP 10 秒冷却。
+**`POST /optimize-route`** — the planner page's Generate. 10-second cooldown per IP.
 
-| 字段 | 说明 |
+| Field | Meaning |
 |------|------|
-| `cities[]` | 1–4 座，顺序即行程 |
-| `days` | ≥ 城市数 |
-| `poi_ids[]` | 每城至少一个 |
+| `cities[]` | 1–4 cities, in travel order |
+| `days` | ≥ number of cities |
+| `poi_ids[]` | at least one per city |
 | `hotel_mode` | `system_one` / `system_multi` / `custom` |
-| `arrival_hub_id` / `departure_hub_id` | 首城到达 / 末城离开 |
-| `first_day_density` / `last_day_density` | 各 `none`（能空则 0 个点）或 `few`（尽量少，**不是**硬卡 1 个）。四组合都合法，默认 few / none |
-| `edge_density` | 旧打包字段；两个开关都没传时才用。含 `first_none_last_none` |
+| `arrival_hub_id` / `departure_hub_id` | arrival hub of the first city / departure hub of the last city |
+| `arrival_time` / `departure_time` (T-034) | `HH:MM`, 24-hour, interpreted in the hub city's local time; optional; must be submitted together with the matching hub — an orphan time is a 400 (`arrival_time requires arrival_hub_id`), a malformed value is a 400 (`arrival_time must be HH:MM (24h)`). Landing buffer 90 minutes, takeoff buffer 120 minutes (see docs/ALGORITHM.md for the buffers) |
+| `first_day_density` / `last_day_density` | each `none` (zero spots if possible) or `few` (as few as possible, **not** a hard cap of 1). All four combinations are valid; defaults are few / none |
+| `edge_density` | legacy packing field; used only when neither of the two switches above is sent. Includes `first_none_last_none` |
 
-只传旧字段 `city` 仍可用（当成单城 + `system_one`）。
+The legacy singular `city` field still works (treated as one city + `system_one`).
 
-**`POST /transit-legs`** — 结果页微调。最多 30 段。不跑 DeepSeek。
+**`POST /transit-legs`** — result-page fine-tuning. At most 30 pairs. Never runs DeepSeek.
 
 ---
 
-## `main.py` 逐段（当接线员读）
+## Frozen error strings
 
-路径：`backend/app/main.py`。行号随文件改动会变，按**名字**找，不要死记行号。
+Validation failures return these exact English strings. The frontend matches them verbatim, so the wording must not be rephrased. `PlanningError` raised inside `planner.py` is re-raised by `main.py` as a 400 with the same `detail`.
 
-### 这个文件干什么、不干什么
+### 400 from `main.py`
 
-干：认城市、挡非法请求、10 秒冷却、把目录装进内存、调用 `plan_trip`、对相邻两点查车、把一天拼成 JSON。
+| `detail` | Raised when |
+|------|------|
+| `unknown city` | city is not one of the nine |
+| `query too short` | search term is shorter than 2 characters after trimming |
+| `at least one city is required` | `cities[]` is empty |
+| `arrival_time requires arrival_hub_id` | orphan arrival time (no matching hub) |
+| `departure_time requires departure_hub_id` | orphan departure time (no matching hub) |
+| `arrival_time must be HH:MM (24h)` / `departure_time must be HH:MM (24h)` | malformed time (`{field} must be HH:MM (24h)`) |
+| `pairs must not be empty` | `/transit-legs` with no pairs |
+| `too many pairs` | `/transit-legs` with more than 30 pairs |
+| `unknown kind: {kind}` | pair node kind is not `poi` / `lodging` / `hub` |
+| `lat and lng are required` | pair node missing coordinates |
 
-不干：不决定「浅草和涩谷哪天去」（那是 `planner.py`）；不把坐标变成地铁线路名（那是 `transit.py`）；不搜新店名（那是 `search.py`）。
+### 400 from `planner.py` (`PlanningError`)
 
-本地启动（在 `backend/` 目录）：
+| `detail` | Raised when |
+|------|------|
+| `at most 4 cities` | more than 4 cities |
+| `at least one city is required` | no city |
+| `days must be >= number of cities` | fewer days than cities |
+| `days must be between 2 and 14` | `days` out of range |
+| `hotel_mode must be one of system_multi, system_one, custom` | bad hotel mode |
+| `first_day_density and last_day_density must be none or few` | bad edge density switch |
+| `edge_density must be one of [...]` | legacy field outside the allowed set (includes `first_none_last_none`) |
+| `unknown arrival_hub_id: {id}` / `unknown departure_hub_id: {id}` | hub not in that city's catalog (`unknown {role}_hub_id: {hub_id}`) |
+| `unknown poi_ids: {ids}` | a selected POI is not in the catalog |
+| `each city must have at least one selected poi` | a city with zero selected spots |
+| `custom_stays must cover every day` | custom lodging missing a day |
+| `unknown lodging_id: {id}` | custom stay points at a lodging outside the city |
+| `no lodgings available for city '{city}'` | city has no catalog lodging |
+
+The only non-400 guard is the Generate cooldown: `429` with `detail: "slow down"` when the same IP calls `/optimize-route` twice within 10 seconds.
+
+Warnings are frozen strings too (not errors): `"{poi_id} cannot fit within opening hours on its assigned day"` and `"{poi_id} is on the route but the day runs out before it — try moving it to another day on the map"` (see docs/ALGORITHM.md).
+
+---
+
+## `main.py` walkthrough (read it like an operator)
+
+Path: `backend/app/main.py`. Line numbers drift as the file changes; find things by **name**, do not memorize line numbers.
+
+### What this file does and does not do
+
+Does: recognize cities, block invalid requests, enforce the 10-second cooldown, load catalogs into memory, call `plan_trip`, query transit for adjacent pairs, and stitch each day into JSON.
+
+Does not: decide "Asakusa or Shibuya on which day" (that is `planner.py`); turn coordinates into subway line names (that is `transit.py`); search for new place names (that is `search.py`).
+
+Run locally (from `backend/`):
 
 ```bash
 uvicorn app.main:app --reload --port 5003
-python -m app.main          # 读 APP_PORT，默认 5003
+python -m app.main          # reads APP_PORT, defaults to 5003
 ```
 
-文件末尾 `if __name__ == "__main__"`：只绑 `127.0.0.1`。生产由 Nginx 反代过来，端口不暴露公网。
+The `if __name__ == "__main__"` block at the end binds `127.0.0.1` only. In production Nginx reverse-proxies to it and the port is not exposed.
 
-### 开头常量
+### Top-of-file constants
 
-| 名字 | 干什么 |
+| Name | Purpose |
 |------|--------|
-| `CITIES` | 九座城的身份证：`id`（`tokyo`）、中文名、英文名、`country`（japan/china/korea）。前端城市列表的权威来源之一。 |
-| `CITY_IDS` | 上面九个 id 的集合。请求里出现巴黎 → 400 `unknown city`。 |
-| `COUNTRY_NAMES` | `japan` → `Japan` 等。给前端分组标签，用英文。 |
-| `CITY_TIMEZONES` | 每座城用哪个时区查车。避免用上海服务器的钟去问东京地铁。 |
-| `INTRA_CITY_HOUR = 9` | 城内段：当地上午 9 点出发。 |
-| `INTERCITY_HOUR = 16` | 换城段：当地下午 4 点出发（上午留给游览）。 |
+| `CITIES` | Identity cards for the nine cities: `id` (`tokyo`), Chinese name, English name, `country` (japan/china/korea). One authoritative source for the frontend city list. |
+| `CITY_IDS` | Set of the nine ids above. A request for Paris → 400 `unknown city`. |
+| `COUNTRY_NAMES` | `japan` → `Japan`, etc. Grouping labels for the frontend, in English. |
+| `CITY_TIMEZONES` | Which timezone each city's transit queries run in. Keeps a Shanghai-hosted clock from asking the Tokyo subway. |
+| `INTRA_CITY_HOUR = 9` | Intra-city legs: depart 9 a.m. local. |
+| `INTERCITY_HOUR = 16` | City-change legs: depart 4 p.m. local (mornings stay free for sightseeing). |
 
-产品还没收集真实出发日。查车用「从明天起算第 N 天」的日期，只为了让 SerpApi 拿到一个未来时刻；缓存键只按小时桶（`09` / `16`），不含具体日历日。
+The product does not collect real departure dates yet. Transit queries use "Nth day from tomorrow" as the date purely so SerpApi receives a future moment; the cache key buckets by hour only (`09` / `16`), with no calendar day in it.
 
-### 小工具（下划线开头 = 只给本文件用）
+### Small helpers (leading underscore = file-private)
 
-**`_depart_at(时区, 第几天, 几点)`**  
-把「第几天 + 几点 + 时区」变成 Unix 时间戳，塞给 SerpApi 的 `depart_at`。
+**`_depart_at(timezone, day, hour)`**
+Turns "day N + hour + timezone" into a Unix timestamp for SerpApi's `depart_at`.
 
-**`_timezone_for_lng(经度)`**  
-结果页微调只给了经纬度、没有城市名。经度 &lt; 124 → 中国/香港（UTC+8）；否则日本/韩国（UTC+9）。
+**`_timezone_for_lng(lng)`**
+Result-page fine-tuning supplies coordinates only, no city name. Longitude &lt; 124 → China/Hong Kong (UTC+8); otherwise Japan/Korea (UTC+9).
 
-**`_query_leg(...)`**  
-查**一段**路。`optimize-route` 和 `transit-legs` 共用。城内用 9 点、换城用 16 点，再问公交层（有 key 走 SerpApi + 缓存；直线 &lt; 800m 当步行）。失败不整单崩：打一行 warning，改走 `estimate_route`（直线距离装成地铁：约 20 km/h、每公里 30 日元、最低 180）。页面标 `estimated=true`。诚实「没查到公交 + 打车估价」是方案 T-020，代码还没改。
+**`_query_leg(...)`**
+Queries **one** leg, shared by `optimize-route` and `transit-legs`. Intra-city uses 9 a.m., city-change uses 4 p.m., then asks the transit layer (with a key: SerpApi + cache; straight-line under 800 m counts as walking). A failure never sinks the whole request: it logs one warning line and falls back to the estimate route (road-ish distance at taxi speed, USD fare from a flag plus a per-km rate), and the page marks the leg `estimated=true`.
 
-**`_check_cooldown`**  
-同一 IP 10 秒内不能连点两次 Generate。`_last_optimize_call` 存在**进程内存**里，重启清空。微调接口不限，靠缓存省额度。
+**`_check_cooldown`**
+The same IP cannot hit Generate twice within 10 seconds. `_last_optimize_call` lives in **process memory** and resets on restart. The fine-tuning endpoint is not throttled; it stays cheap through the cache.
 
-**`_require_known_city` / `_require_query`**  
-城市必须在九座里；搜索词去掉空格后至少 2 个字。
+**`_require_known_city` / `_require_query`**
+The city must be one of the nine; the search term must be at least 2 characters after trimming whitespace.
 
-### 开机 `lifespan`
+### Startup `lifespan`
 
-进程起来时先调用工厂：景点、住宿、公交、分组各选一套实现，并打日志。终端里能看到 `Transit provider: serpapi` 或 `local-json`。选完缓存在进程里（`lru_cache`），不是每次请求再选。
+When the process boots it first calls the factory: one implementation each for POIs, lodgings, transit, and grouping, each logged. The terminal shows `Transit provider: serpapi` or `local-json`. Choices are cached in the process (`lru_cache`), not re-picked per request.
 
-然后 `FastAPI(...)` + CORS：默认允许本机 Vite `5173` / preview `4173`，可用环境变量 `CORS_ORIGINS` 改。
+Then `FastAPI(...)` + CORS: by default the local Vite `5173` and preview `4173` ports are allowed, overridable with `CORS_ORIGINS`.
 
-### 中间的 `class xxx(BaseModel)` = 快递箱规格
+### The `class xxx(BaseModel)` blocks = parcel specifications
 
-Pydantic 模型：前端 JSON 必须长这样，后端才能拆。字段约束故意放宽，好让拒绝走 `PlanningError` 的固定英文 `detail`，而不是 FastAPI 默认的 422。
+Pydantic models: the JSON the frontend sends must look like this, or the backend cannot unpack it. Field constraints are deliberately loose so rejection goes through `PlanningError`'s fixed English `detail` instead of FastAPI's default 422.
 
-| 类 | 谁用 |
+| Class | Used by |
 |----|------|
-| `CustomStayBody` | custom 住法：哪家酒店、占用哪几天 |
-| `OptimizeRequest` | Generate 的整箱。`city`（单数）是旧字段：只传它时当成 `cities=[city]` + `hotel_mode=system_one` |
-| `Node` / `Leg` | 返回给前端的点和段 |
-| `LegNode` / `LegPairRequest` / `TransitLegsRequest` | 微调：最多 30 对；`kind` 只能是 `poi` / `lodging` / `hub`；坐标缺了走我们自己的 400，不是 422 |
+| `CustomStayBody` | custom lodging: which hotel, which days it covers |
+| `OptimizeRequest` | the whole Generate parcel. `city` (singular) is the legacy field: sending only it means `cities=[city]` + `hotel_mode=system_one` |
+| `Node` / `Leg` | nodes and legs returned to the frontend |
+| `LegNode` / `LegPairRequest` / `TransitLegsRequest` | fine-tuning: at most 30 pairs; `kind` must be `poi` / `lodging` / `hub`; missing coordinates get our own 400, not a 422 |
 
-### 每个 `@app.get` / `@app.post` 是一个接口
+### Each `@app.get` / `@app.post` is one endpoint
 
-装饰器里的路径就是浏览器要打的地址（已含前缀 `/api/trip`）。
+The path in the decorator is the URL the browser calls (the `/api/trip` prefix is already included).
 
-**`GET /health`**  
-还活着吗？返回当前选了哪套：`poi_provider`、`lodging_provider`、`transit_provider`、`grouper`。有 DeepSeek key 时 `grouper` 开机可能显示 deepseek，**不等于**上一次 Generate 真打通了。真用没用看 `optimize-route` 返回的 `grouper`。
+**`GET /health`**
+Still alive? Returns the currently selected implementations: `poi_provider`, `lodging_provider`, `transit_provider`, `grouper`, plus `serpapi_configured` / `deepseek_configured` (non-empty environment variables, no secrets). With a DeepSeek key present, `grouper` may say deepseek at boot — that does **not** mean the last Generate actually reached the model. Whether it was really used shows in the `grouper` field of the `optimize-route` response.
 
-**`GET /cities`**  
-九城 + 每城目录景点数量 + `countries`。不打外部 API。
+**`GET /cities`**
+The nine cities + per-city catalog POI counts + `countries`. No external API.
 
-**`GET /pois` · `/lodgings` · `/transport-hubs`**  
-按 `?city=` 拿出清单。未知城 400。不搜网、不算行程。勾目录里的点不花 SerpApi 额度。
+**`GET /pois` · `/lodgings` · `/transport-hubs`**
+Returns the list for `?city=`. Unknown city → 400. No web search, no itinerary. Ticking catalog spots costs no SerpApi quota.
 
-**`GET /pois/search` · `/lodgings/search`**  
-`?city=&q=`。先目录（MySQL 或 JSON），命中则 `source` 为 `db` / `local-json`。未命中且有 `SERPAPI_KEY` 才打 SerpApi `google_maps`（这是 SerpApi 的引擎名，不是 Google 官方 API）。没命中又没钥匙：200 + 空列表。搜到且连着库：写入 `source=search`，下次走目录。
+**`GET /pois/search` · `/lodgings/search`**
+`?city=&q=`. Catalog first (MySQL or JSON); on a hit `source` is `db` / `local-json`. Only on a miss, and only with `SERPAPI_KEY` set, does it call SerpApi `google_maps` (that is SerpApi's engine name, not Google's official API). No hit and no key: 200 with an empty list. A found result that has a database connection is written back with `source=search`, so the next lookup hits the catalog.
 
-**`POST /optimize-route`（Generate）**
+**`POST /optimize-route` (Generate)**
 
-1. `_check_cooldown`。
-2. `_resolve_cities_and_hotel_mode`：认城市列表和住法。
-3. 把这些城的景点、青旅、车站从目录装进内存。
-4. 调用 **`plan_trip(...)`**（`planner.py`）：排「哪天去哪、住哪」。有 `DEEPSEEK_API_KEY` 就按城填表，失败只这座城退回规则。校验失败 → 400，`detail` 为冻结英文句。
-5. `_build_day_chain`：每天一条链。默认「早上酒店 → 景点… → 当晚酒店」。第 1 天若选了到达枢纽且当天有景点：`枢纽 → 酒店(checkin) → 景点… → 当晚酒店`（T-024）；没有景点则枢纽→酒店。最后一天若选了离开枢纽，终点换成车站/机场。
-6. 相邻两点 `_query_leg`（SerpApi / 缓存 / 步行 / 估算）。只查相邻对，不是景点两两全矩阵。城际也是其中一段；日本国内 Google 若把新干线算进公交，会出现在结果里，没有另接 JR 接口。
-7. `build_day_schedule`（`schedule.py`）：按链和查车结果累加钟点。09:00 起；城际若还在上午则跳到 16:00；午饭 60 分钟、晚饭 90 分钟；第一天入住约 20 分钟。停留用 `suggested_duration_min`。这是展示层，不改 `plan_trip` 的分点。
-8. 离开日若终点是枢纽，当晚酒店按「早上那家」报，因为那天并不真入住链尾那家。
-9. 返回 `itinerary`（每天含 `schedule`）+ `totals` + `first_day_density` / `last_day_density`。`grouper`：`deepseek` / `rule-based` / `mixed`。`all_real_data`：是否每一段都不是估算。
+1. `_check_cooldown`.
+2. `_resolve_cities_and_hotel_mode`: read the city list and lodging mode.
+3. Load those cities' POIs, hostels, and stations from the catalog into memory.
+4. Call **`plan_trip(...)`** (`planner.py`): decide "which day goes to which city, where to sleep". With `DEEPSEEK_API_KEY` set it fills each city with the model; a failure falls back to rules for that city only. Validation failure → 400 with a frozen English `detail`.
+5. `_build_day_chain`: one chain per day. Default is "morning hotel → POIs… → that night's hotel". On day 1 with an arrival hub and at least one POI: `hub → hotel(checkin) → POIs… → that night's hotel` (T-024); with no POIs, hub → hotel. On the last day with a departure hub, the chain ends at the station/airport.
+6. `_query_leg` for each adjacent pair (SerpApi / cache / walk / estimate). Only adjacent pairs are queried, not the full POI-by-POI matrix. Intercity is just one of these legs; if Google folds a Shinkansen ride into Japan's domestic transit results, it shows up as-is — there is no separate JR integration.
+7. `build_day_schedule` (`schedule.py`): accumulate clock times from the chain and the transit results. Starts 09:00; an intercity leg still in the morning jumps to 16:00; lunch 60 minutes, dinner 90 minutes; day-1 check-in about 20 minutes. Stays use `suggested_duration_min`. This is the display layer; it never changes `plan_trip`'s day assignment.
+8. On the departure day, when the chain ends at a hub, that night's hotel is reported as the morning one, because the chain's tail hotel is not really checked into that day.
+9. Returns `itinerary` (each day with `schedule`) + `totals` + `first_day_density` / `last_day_density`. `grouper`: `deepseek` / `rule-based` / `mixed`. `all_real_data`: whether every leg avoided estimates. T-034: also returns `arrival_start_min` / `departure_cutoff_min` (minute-of-day values, nullable; the frontend's schedule mirror uses them). When a POI cannot open inside its window and cannot be moved, `warnings` gets `"<poi_id> cannot fit within opening hours on its assigned day"`. T-040: `totals` carries `transit_cost` + `ticket_cost` (only visits that really happen) + `lodging_cost` (nights actually spent; the last night is not counted on the departure-hub day) + `grand_total` + `unknown_prices` (count of priceless items, billed as $0); each day's `itinerary[].ticket_cost` is returned alongside.
 
-**`POST /transit-legs`（结果页微调）**
+**`POST /transit-legs` (result-page fine-tuning)**
 
-只重查变化了的相邻对。同一套 `_query_leg`。不跑 `plan_trip`、不打 DeepSeek、没有 10 秒冷却。`pairs` 空或超过 30 → 400。
+Re-queries only the adjacent pairs that changed. Same `_query_leg`. No `plan_trip`, no DeepSeek, no 10-second cooldown. Empty `pairs` or more than 30 → 400.
 
 ---
 
-## 路线规划算法在哪
+## Where the planning algorithm lives
 
-商量算法用文字版 [算法.md](算法.md)（跟 `planner.py`），不要对着源码抠。
+Discuss the algorithm through the prose version [ALGORITHM.md](ALGORITHM.md) (it tracks `planner.py`); do not reverse-engineer it from source.
 
-| 文件 | 干什么 |
+| File | Purpose |
 |------|--------|
-| **`backend/app/services/planner.py`** | **主算法。** `plan_trip()`：天数切给各城、每城分点、选酒店、拼每天节点。有钥匙时 `_deepseek_fill_city()` 按城打 DeepSeek。 |
-| `backend/app/services/grouping.py` | DeepSeek 失败时的规则兜底（地理聚类 + 每天点数尽量均匀 + 最近邻排序）。`DEEPSEEK_MODEL` 写在这里。 |
-| `backend/app/services/schedule.py` | 结果页钟点日程（午饭/晚饭/入住）。不改分点。 |
-| `backend/app/services/transit.py` | 不排日程。两点怎么坐车（SerpApi / 缓存 / 步行 / 直线估算）。 |
-| `backend/app/main.py` | 接线员。见上一节。 |
+| **`backend/app/services/planner.py`** | **The main algorithm.** `plan_trip()`: split days across cities, assign POIs per city, pick hotels, assemble each day's nodes. With a key, `_deepseek_fill_city()` calls DeepSeek per city. |
+| `backend/app/services/grouping.py` | Rule-based fallback when DeepSeek fails (geographic clustering + roughly even spots per day + nearest-neighbor ordering). `DEEPSEEK_MODEL` is defined here. |
+| `backend/app/services/schedule.py` | The result page's clock-time schedule (lunch/dinner/check-in). Never changes the day assignment. |
+| `backend/app/services/transit.py` | Does no scheduling. How to get between two points (SerpApi / cache / walk / straight-line estimate). |
+| `backend/app/main.py` | The operator. See the previous section. |
 
-`GET /health` 里的 `grouper` 来自 `factory.py` 的 `LLMGrouper`；**真正填行程表**走的是 `planner.py`，不是开机那套 `get_grouper().group()`。
+The `grouper` in `GET /health` comes from `factory.py`'s `LLMGrouper`; **the itinerary is actually filled** by `planner.py`, not by the boot-time `get_grouper().group()`.
 
-游玩时长 `suggested_duration_min` 已核对进目录 JSON，用于结果页时间轴；**还没有**用来限制「这一天还塞不塞得下」。营业时间仍未进算法（T-019）。
+Visit durations (`suggested_duration_min`) are audited into the catalog JSON. They drive both the result-page timeline and day capacity: `_pack_day_capacity` packs a day from stays + lunch + dinner + a per-hop transit estimate. Opening hours are in the algorithm too — `parse_hours` feeds window feasibility (`_move_infeasible_for_windows`), early-closing ordering, and the closing-time terminal check (`_enforce_closing`). See docs/ALGORITHM.md.
 
 ---
 
-## 改接口时动这些文件
+## Files to touch when changing an endpoint
 
-| 层 | 文件 |
+| Layer | File |
 |----|------|
-| 路由 / 接线 | `backend/app/main.py` |
-| 读环境变量 | `backend/app/config.py` |
-| 有无 key 选实现 | `backend/app/services/factory.py` |
-| 行程 / DeepSeek | `backend/app/services/planner.py`、`grouping.py` |
-| 钟点日程 | `backend/app/services/schedule.py` |
-| SerpApi 公交 | `backend/app/services/transit.py` |
-| SerpApi 搜索 | `backend/app/services/search.py` |
+| Routes / wiring | `backend/app/main.py` |
+| Environment variables | `backend/app/config.py` |
+| Key-dependent implementation choice | `backend/app/services/factory.py` |
+| Itinerary / DeepSeek | `backend/app/services/planner.py`, `grouping.py` |
+| Clock-time schedule | `backend/app/services/schedule.py` |
+| SerpApi transit | `backend/app/services/transit.py` |
+| SerpApi search | `backend/app/services/search.py` |

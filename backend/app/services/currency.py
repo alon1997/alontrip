@@ -1,5 +1,5 @@
 """Display money as USD (D-019). Catalog and SerpApi/Amap still store local
-currency; convert at the door so the UI never mixes ¥ / 元 / ₩.
+currency; convert at the door so the UI never mixes ¥ / yuan / ₩.
 """
 
 from __future__ import annotations

@@ -22,6 +22,7 @@ import httpx
 from pydantic import BaseModel
 
 from ..config import Settings
+from .currency import DISPLAY_CURRENCY, to_usd
 from .db import get_connection
 
 logger = logging.getLogger(__name__)
@@ -36,6 +37,7 @@ CITY_QUERIES = {
     "beijing": "top attractions Beijing China",
     "hongkong": "top attractions Hong Kong",
     "busan": "top attractions Busan South Korea",
+    "jeju": "top attractions Jeju South Korea",
 }
 
 
@@ -53,6 +55,16 @@ class Poi(BaseModel):
     name_local: str | None = None  # T-009: search matches against this too
     ticket_price: float | None = None
     ticket_currency: str | None = None
+    requires_ticket: str | None = None  # yes / no
+    opening_hours: str | None = None
+
+
+def _tickets_in_usd(poi: Poi) -> Poi:
+    """Catalog may still hold JPY/CNY/KRW/HKD until the next MySQL sync."""
+    usd = to_usd(poi.ticket_price, poi.ticket_currency)
+    poi.ticket_price = usd
+    poi.ticket_currency = DISPLAY_CURRENCY if usd is not None else None
+    return poi
 
 
 class PoiProvider(ABC):
@@ -80,7 +92,7 @@ class LocalPoiProvider(PoiProvider):
             return []
         # Seed files predate the `city` field (T-008): the filename is the
         # source of truth, so it always wins over anything in the JSON.
-        return [Poi(**{**item, "city": city}) for item in raw]
+        return [_tickets_in_usd(Poi(**{**item, "city": city})) for item in raw]
 
 
 class MysqlPoiProvider(PoiProvider):
@@ -98,7 +110,9 @@ class MysqlPoiProvider(PoiProvider):
             with conn.cursor() as cur:
                 cur.execute(
                     "SELECT id, slug, name, name_local, area, lat, lng, rating, "
-                    "suggested_duration_min, category FROM pois WHERE city=%s",
+                    "suggested_duration_min, category, ticket_price, ticket_currency, "
+                    "requires_ticket, opening_hours "
+                    "FROM pois WHERE city=%s",
                     (city,),
                 )
                 rows = cur.fetchall()
@@ -118,8 +132,12 @@ class MysqlPoiProvider(PoiProvider):
                 category=row["category"] or "attraction",
                 area=row["area"],
                 name_local=row["name_local"],
+                ticket_price=float(row["ticket_price"]) if row["ticket_price"] is not None else None,
+                ticket_currency=row["ticket_currency"] or None,
+                requires_ticket=row["requires_ticket"] or None,
+                opening_hours=row["opening_hours"] or None,
             ))
-        return pois
+        return [_tickets_in_usd(p) for p in pois]
 
 
 class SerpApiPoiProvider(PoiProvider):
@@ -137,7 +155,7 @@ class SerpApiPoiProvider(PoiProvider):
         if cache_file.exists():
             try:
                 raw = json.loads(cache_file.read_text(encoding="utf-8"))
-                return [Poi(**{**item, "city": city}) for item in raw]
+                return [_tickets_in_usd(Poi(**{**item, "city": city})) for item in raw]
             except Exception as exc:
                 logger.warning("ignoring corrupt POI cache %s: %s", cache_file, exc)
         pois = self._fetch(city)
@@ -171,7 +189,7 @@ class SerpApiPoiProvider(PoiProvider):
             title = str(raw.get("title") or "").strip()
             if not title:
                 continue
-            pois.append(Poi(
+            pois.append(_tickets_in_usd(Poi(
                 id=_unique_id(_slugify(title), seen),
                 name=title,
                 name_en=title,
@@ -181,7 +199,7 @@ class SerpApiPoiProvider(PoiProvider):
                 rating=float(raw.get("rating") or 0.0),
                 suggested_duration_min=90,
                 category=str(raw.get("type") or "attraction"),
-            ))
+            )))
         return pois
 
 

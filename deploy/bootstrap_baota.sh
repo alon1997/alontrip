@@ -1,5 +1,6 @@
 #!/bin/bash
-# 在服务器上执行：按宝塔 Python 项目管理器登记 trip_api（和染迷/学习时钟同一套可见）。
+# Run on the server: registers trip_api with the BaoTa (aaPanel) Python project
+# manager, so it shows up alongside the other hosted projects.
 set -euo pipefail
 
 API=/www/wwwroot/trip_api
@@ -95,4 +96,4 @@ chown -R www:www "$API" /www/wwwroot/trip
 sleep 2
 curl -fsS http://127.0.0.1:5003/api/trip/health
 echo
-echo "宝塔：网站 → Python项目 应出现 trip_api"
+echo "BaoTa panel: Websites -> Python projects should now list trip_api"

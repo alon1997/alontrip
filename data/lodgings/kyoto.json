@@ -43,19 +43,19 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 4.4,
-    "area": "京都／宇多野ユースホステル",
+    "area": "",
     "price_per_night": 38.0,
     "price_currency": "USD"
   },
   {
     "id": "webase",
-    "name": "WeBase 京都",
+    "name": "WeBase",
     "lat": 35.0003297,
     "lng": 135.7566092,
     "kind": "hostel",
     "listed": 1,
     "rating": 4.6,
-    "area": "〒600-8445 Kyoto",
+    "area": "600-8445 Kyoto",
     "price_per_night": 22.0,
     "price_currency": "USD"
   },
@@ -73,7 +73,7 @@
   },
   {
     "id": "first-cabin-ky-to-nij-j",
-    "name": "First Cabin Kyōto Nijōjō",
+    "name": "First Cabin Ky to Nij j",
     "lat": 35.0169538,
     "lng": 135.7522956,
     "kind": "capsule",
@@ -103,7 +103,7 @@
     "kind": "capsule",
     "listed": 1,
     "rating": 4.8,
-    "area": "〒605-0829 Kyoto",
+    "area": "605-0829 Kyoto",
     "price_per_night": 12.0,
     "price_currency": "USD"
   },
@@ -127,7 +127,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 4.7,
-    "area": "〒605-0981 Kyoto",
+    "area": "605-0981 Kyoto",
     "price_per_night": 33.0,
     "price_currency": "USD"
   },
@@ -151,7 +151,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 4.2,
-    "area": "〒600-8099 Kyoto",
+    "area": "600-8099 Kyoto",
     "price_per_night": 26.0,
     "price_currency": "USD"
   },
@@ -175,7 +175,7 @@
     "kind": "capsule",
     "listed": 1,
     "rating": 4.2,
-    "area": "〒604-8026 Kyoto",
+    "area": "604-8026 Kyoto",
     "price_per_night": 41.0,
     "price_currency": "USD"
   },
@@ -199,7 +199,7 @@
     "kind": "capsule",
     "listed": 1,
     "rating": 4.2,
-    "area": "１階"
+    "area": ""
   },
   {
     "id": "kyoto-house",

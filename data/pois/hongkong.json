@@ -1,46 +1,49 @@
 [
   {
     "id": "victoria-peak",
-    "name": "太平山顶",
+    "name": "",
     "name_en": "Victoria Peak",
     "lat": 22.2757,
     "lng": 114.1456,
     "rating": 4.6,
     "suggested_duration_min": 90,
     "category": "viewpoint",
-    "ticket_price": 0,
-    "ticket_currency": "HKD",
-    "requires_ticket": "no"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tsim-sha-tsui",
-    "name": "尖沙咀海滨",
+    "name": "",
     "name_en": "Tsim Sha Tsui Promenade",
     "lat": 22.2953,
     "lng": 114.1692,
     "rating": 4.5,
     "suggested_duration_min": 90,
     "category": "waterfront",
-    "ticket_price": 0,
-    "ticket_currency": "HKD",
-    "requires_ticket": "no"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "temple-street",
-    "name": "庙街夜市",
+    "name": "",
     "name_en": "Temple Street Night Market",
     "lat": 22.3065,
     "lng": 114.1704,
     "rating": 4.2,
     "suggested_duration_min": 120,
     "category": "market",
-    "ticket_price": 0,
-    "ticket_currency": "HKD",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 11 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tian-tan-buddha",
-    "name": "天坛大佛",
+    "name": "",
     "name_en": "Tian Tan Buddha (Lantau)",
     "lat": 22.2541,
     "lng": 113.9051,
@@ -48,10 +51,10 @@
     "suggested_duration_min": 150,
     "category": "landmark",
     "area": "Ngong Ping Rd",
-    "opening_hours": "Closed · Opens 10 AM",
-    "ticket_price": 0,
-    "ticket_currency": "HKD",
-    "requires_ticket": "no"
+    "opening_hours": "Closed Opens 10 AM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "hong-kong-disneyland",
@@ -63,10 +66,10 @@
     "suggested_duration_min": 540,
     "category": "Tourist attraction",
     "area": "Lantau Island",
-    "opening_hours": "Closed · Opens 10:30 AM",
-    "ticket_price": 639,
-    "ticket_currency": "HKD",
-    "requires_ticket": "yes"
+    "opening_hours": "Closed Opens 10:30 AM",
+    "requires_ticket": "yes",
+    "ticket_price": 81.92,
+    "ticket_currency": "USD"
   },
   {
     "id": "ocean-park",
@@ -78,10 +81,10 @@
     "suggested_duration_min": 420,
     "category": "Tourist attraction",
     "area": "Aberdeen",
-    "opening_hours": "Closed · Opens 10 AM",
-    "ticket_price": 498,
-    "ticket_currency": "HKD",
-    "requires_ticket": "yes"
+    "opening_hours": "Closed Opens 10 AM",
+    "requires_ticket": "yes",
+    "ticket_price": 63.85,
+    "ticket_currency": "USD"
   },
   {
     "id": "hong-kong-observation-wheel",
@@ -93,10 +96,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "33 Man Kwong St",
-    "opening_hours": "Closed · Opens 12 PM",
-    "ticket_price": 80,
-    "ticket_currency": "HKD",
-    "requires_ticket": "yes"
+    "opening_hours": "Closed Opens 12 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 10.26,
+    "ticket_currency": "USD"
   },
   {
     "id": "victoria-harbour",
@@ -110,8 +113,8 @@
     "area": "Admiralty",
     "opening_hours": "Open 24 hours",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "HKD"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "golden-bauhinia-square",
@@ -124,9 +127,9 @@
     "category": "Tourist attraction",
     "area": "1 Expo Dr",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "HKD",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "ngong-ping-360",
@@ -138,9 +141,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "Lantau Island",
-    "ticket_price": 215,
-    "ticket_currency": "HKD",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 27.56,
+    "ticket_currency": "USD"
   },
   {
     "id": "lovers-rock",
@@ -152,7 +156,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "Bowen Rd Fitness Trail",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "unesco-global-geopark",
@@ -164,7 +171,10 @@
     "suggested_duration_min": 300,
     "category": "Tourist attraction",
     "area": "Sai Kung",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "central-mid-levels-escalators",
@@ -176,10 +186,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "Jubilee St",
-    "opening_hours": "Open · Closes 12 AM",
-    "ticket_price": 0,
-    "ticket_currency": "HKD",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 12 AM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "ocean-terminal-deck",
@@ -191,7 +201,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "Harbour City",
-    "opening_hours": "Open · Closes 12 AM"
+    "opening_hours": "Open Closes 12 AM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "hong-kong-avenue-of-comic-stars",
@@ -203,10 +216,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "Kowloon Park Dr",
-    "opening_hours": "Open · Closes 6:45 PM",
-    "ticket_price": 0,
-    "ticket_currency": "HKD",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6:45 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "the-victoria-peak",
@@ -219,7 +232,9 @@
     "category": "Tourist attraction",
     "area": "118 Peak Rd",
     "opening_hours": "Open 24 hours",
-    "requires_ticket": "yes"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "kowloon-public-pier",
@@ -232,9 +247,9 @@
     "category": "Tourist attraction",
     "area": "10 Salisbury Rd",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "HKD",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "the-garden-of-stars",
@@ -246,7 +261,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "Tsim Sha Tsui",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tsim-sha-tsui-waterfront-park",
@@ -259,9 +277,9 @@
     "category": "Tourist attraction",
     "area": "Tsim Sha Tsui East",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "HKD",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "victoria-peak-pavillion",
@@ -273,7 +291,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "The Peak",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tai-kwun",
@@ -285,7 +306,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "10 Hollywood Rd",
-    "opening_hours": "Open · Closes 11 PM"
+    "opening_hours": "Open Closes 11 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "yaumatei-tin-hau-temple",
@@ -297,7 +321,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "56-58 Temple Street",
-    "opening_hours": "Open · Closes 5 PM"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "stanley-promenade",
@@ -310,9 +337,9 @@
     "category": "Tourist attraction",
     "area": "13 Stanley Main St",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "HKD",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "edward-youde-aviary",
@@ -324,10 +351,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "7 Kennedy Rd",
-    "opening_hours": "Open · Closes 5 PM",
+    "opening_hours": "Open Closes 5 PM",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "HKD"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "ancient-kiln-park-and-hong-kong-international-airport-historical-garden",
@@ -339,7 +366,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "8 Scenic Rd",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "sha-tin-che-kung-temple",
@@ -351,19 +381,25 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "7 Che Kung Miu Rd",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "hong-kong-fisherman-s-wharf-sightseeing-boat-tour-aberdeen-1773-1773",
-    "name": "Hong Kong Fisherman's Wharf: Sightseeing Boat Tour (Aberdeen 1773) 香港漁人碼頭: 觀光船旅遊 (浪遊漁港1773)",
-    "name_en": "Hong Kong Fisherman's Wharf: Sightseeing Boat Tour (Aberdeen 1773) 香港漁人碼頭: 觀光船旅遊 (浪遊漁港1773)",
+    "name": "Hong Kong Fisherman's Wharf: Sightseeing Boat Tour (Aberdeen 1773) : ( 1773)",
+    "name_en": "Hong Kong Fisherman's Wharf: Sightseeing Boat Tour (Aberdeen 1773) : ( 1773)",
     "lat": 22.2472755,
     "lng": 114.1539061,
     "rating": 4.9,
     "suggested_duration_min": 45,
     "category": "Tourist attraction",
     "area": "Boat B30253A",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 19.23,
+    "ticket_currency": "USD"
   },
   {
     "id": "wan-chai-park",
@@ -375,7 +411,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "Bullock Ln",
-    "opening_hours": "Open · Closes 11 PM"
+    "opening_hours": "Open Closes 11 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "hk-city-sightseeing",
@@ -387,7 +426,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "Man Kwong St",
-    "opening_hours": "Closed · Opens 10:30 AM"
+    "opening_hours": "Closed Opens 10:30 AM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tamar-park",
@@ -400,9 +442,9 @@
     "category": "Park",
     "area": "Harcourt Rd",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "HKD",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "the-peak-tram",
@@ -414,9 +456,10 @@
     "suggested_duration_min": 90,
     "category": "Inclined railway station",
     "area": "St. John's Building",
-    "ticket_price": 52,
-    "ticket_currency": "HKD",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 12 AM",
+    "requires_ticket": "yes",
+    "ticket_price": 6.67,
+    "ticket_currency": "USD"
   },
   {
     "id": "adventureland",
@@ -425,8 +468,12 @@
     "lat": 22.3112911,
     "lng": 114.0418289,
     "rating": 4.4,
-    "suggested_duration_min": 300,
+    "suggested_duration_min": 540,
     "category": "Tourist attraction",
-    "area": "Hong Kong Disneyland Resort"
+    "area": "Hong Kong Disneyland Resort",
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 79.0,
+    "ticket_currency": "USD"
   }
 ]

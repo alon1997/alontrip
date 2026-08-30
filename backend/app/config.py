@@ -15,7 +15,7 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# CORS 白名单默认值：Vite dev (5173) + preview (4173)
+# CORS allowlist defaults: Vite dev (5173) + preview (4173)
 DEFAULT_CORS_ORIGINS = "http://localhost:5173,http://localhost:4173"
 
 # Local layout: 04app/.env (parents[2]). Server layout: trip_api/backend/.env
@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=_ENV_FILE, extra="ignore")
 
     serpapi_key: str = ""
-    amap_key: str = ""  # 高德 Web 服务；大陆公交。空则大陆走打车估价，不打 Google
+    amap_key: str = ""  # Amap (Gaode) web service; mainland-China transit. Empty = mainland legs fall back to the taxi estimate, never Google
     deepseek_api_key: str = ""
     deepseek_base_url: str = "https://api.deepseek.com/anthropic"
     app_port: int = 5003

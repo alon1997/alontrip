@@ -107,7 +107,7 @@
   },
   {
     "id": "poi",
-    "name": "金师旅馆",
+    "name": "",
     "lat": 39.913697,
     "lng": 116.428981,
     "kind": "hostel",
@@ -145,7 +145,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 4.6,
-    "area": "1 文慧园路志强北园"
+    "area": "1"
   },
   {
     "id": "yue-xuan-courtyard-garden-international-youth-hostel",
@@ -155,7 +155,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 3.7,
-    "area": "东四二条1号"
+    "area": "1"
   },
   {
     "id": "leo-hostel",
@@ -175,7 +175,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 0.0,
-    "area": "北京西城区什刹海街道百花深处胡同27号"
+    "area": "27"
   },
   {
     "id": "beijing-sunrise-youth-hostel-beihai-branch",

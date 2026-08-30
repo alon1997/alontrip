@@ -17,8 +17,8 @@ export function haversineKm(a, b) {
 
 // Initial compass bearing from a -> b, in degrees clockwise from north —
 // used to rotate the little self-drawn arrowheads along each route segment
-// (方案 6.1c: "Leaflet polyline decorator / 自绘箭头", we picked the latter
-// to avoid pulling in a whole decorator plugin for one arrow shape).
+// (plan 6.1c: "Leaflet polyline decorator vs. self-drawn arrows" — we picked
+// the latter to avoid pulling in a whole decorator plugin for one arrow shape).
 export function bearingDeg(a, b) {
   const toRad = (d) => (d * Math.PI) / 180
   const toDeg = (r) => (r * 180) / Math.PI

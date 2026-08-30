@@ -1,4 +1,5 @@
-# 宝塔 Python 项目用。监听回环，公网走 Nginx /api/trip/。
+# For the BaoTa (aaPanel) Python project. Binds loopback; the public internet
+# reaches it through Nginx /api/trip/.
 bind = "127.0.0.1:5003"
 user = "www"
 workers = 1

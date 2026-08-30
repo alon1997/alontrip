@@ -1,20 +1,21 @@
 [
   {
     "id": "fushimi-inari",
-    "name": "伏见稻荷大社",
+    "name": "",
     "name_en": "Fushimi Inari Taisha",
     "lat": 34.9671,
     "lng": 135.7727,
     "rating": 4.7,
     "suggested_duration_min": 120,
     "category": "shrine",
+    "opening_hours": "Open 24 hours",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "JPY"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "kiyomizu-dera",
-    "name": "清水寺",
+    "name": "",
     "name_en": "Kiyomizu-dera",
     "lat": 34.9949,
     "lng": 135.785,
@@ -22,27 +23,28 @@
     "suggested_duration_min": 90,
     "category": "temple",
     "area": "1 Chome-294 Kiyomizu",
-    "opening_hours": "Open · Closes 6 PM",
+    "opening_hours": "Open Closes 6 PM",
     "requires_ticket": "yes",
-    "ticket_price": 500.0,
-    "ticket_currency": "JPY"
+    "ticket_price": 3.33,
+    "ticket_currency": "USD"
   },
   {
     "id": "gion",
-    "name": "祇园",
+    "name": "",
     "name_en": "Gion",
     "lat": 35.0036,
     "lng": 135.7752,
     "rating": 4.5,
     "suggested_duration_min": 120,
     "category": "district",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "kinkaku-ji",
-    "name": "金阁寺",
+    "name": "",
     "name_en": "Kinkaku-ji",
     "lat": 35.0394,
     "lng": 135.7292,
@@ -50,14 +52,14 @@
     "suggested_duration_min": 90,
     "category": "temple",
     "area": "1 Kinkakujicho",
-    "opening_hours": "Open · Closes 5 PM",
+    "opening_hours": "Open Closes 5 PM",
     "requires_ticket": "yes",
-    "ticket_price": 500.0,
-    "ticket_currency": "JPY"
+    "ticket_price": 3.33,
+    "ticket_currency": "USD"
   },
   {
     "id": "arashiyama",
-    "name": "岚山竹林",
+    "name": "",
     "name_en": "Arashiyama Bamboo Grove",
     "lat": 35.017,
     "lng": 135.6717,
@@ -67,12 +69,12 @@
     "area": "Sagaogurayama Tabuchiyamacho",
     "opening_hours": "Open 24 hours",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "JPY"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "nishiki-market",
-    "name": "锦市场",
+    "name": "",
     "name_en": "Nishiki Market",
     "lat": 35.005,
     "lng": 135.7648,
@@ -80,9 +82,10 @@
     "suggested_duration_min": 120,
     "category": "market",
     "area": "Nakagyo Ward",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "fushimi-inari-taisha",
@@ -96,8 +99,8 @@
     "area": "68 Fukakusa Yabunouchicho",
     "opening_hours": "Open 24 hours",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "JPY"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "ginkaku-ji",
@@ -109,25 +112,25 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "2 Ginkakujicho",
-    "opening_hours": "Open · Closes 5 PM",
-    "ticket_price": 500,
-    "ticket_currency": "JPY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 3.33,
+    "ticket_currency": "USD"
   },
   {
     "id": "nij-castle",
-    "name": "Nijō Castle",
-    "name_en": "Nijō Castle",
+    "name": "Nij Castle",
+    "name_en": "Nij Castle",
     "lat": 35.0140379,
     "lng": 135.7484258,
     "rating": 4.4,
     "suggested_duration_min": 180,
     "category": "Tourist attraction",
     "area": "541 Nijojocho",
-    "opening_hours": "Open · Closes 5 PM",
-    "ticket_price": 1300,
-    "ticket_currency": "JPY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 8.67,
+    "ticket_currency": "USD"
   },
   {
     "id": "arashiyama-2",
@@ -138,7 +141,11 @@
     "rating": 4.5,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "Ukyo Ward"
+    "area": "Ukyo Ward",
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "to-ji-temple",
@@ -150,10 +157,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "1 Kujocho",
-    "opening_hours": "Open · Closes 5 PM",
+    "opening_hours": "Open Closes 5 PM",
     "requires_ticket": "yes",
-    "ticket_price": 800,
-    "ticket_currency": "JPY"
+    "ticket_price": 5.33,
+    "ticket_currency": "USD"
   },
   {
     "id": "kyoto-sento-imperial-palace",
@@ -165,8 +172,10 @@
     "suggested_duration_min": 180,
     "category": "Tourist attraction",
     "area": "Kyotogyoen",
-    "opening_hours": "Open · Closes 4 PM",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 4 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "nidec-kyoto-tower",
@@ -178,25 +187,25 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "721-1 Higashishiokojicho",
-    "opening_hours": "Open · Closes 9 PM",
+    "opening_hours": "Open Closes 9 PM",
     "requires_ticket": "yes",
-    "ticket_price": 800,
-    "ticket_currency": "JPY"
+    "ticket_price": 5.33,
+    "ticket_currency": "USD"
   },
   {
     "id": "heian-jing-shrine",
-    "name": "Heian-jingū Shrine",
-    "name_en": "Heian-jingū Shrine",
+    "name": "Heian-jing Shrine",
+    "name_en": "Heian-jing Shrine",
     "lat": 35.0159823,
     "lng": 135.7824263,
     "rating": 4.4,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "97 Okazaki Nishitennocho",
-    "opening_hours": "Open · Closes 5 PM",
+    "opening_hours": "Open Closes 5 PM",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "JPY"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "kyoto-international-manga-museum",
@@ -208,10 +217,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "452 Kinbukicho",
-    "opening_hours": "Open · Closes 5 PM",
+    "opening_hours": "Open Closes 5 PM",
     "requires_ticket": "yes",
-    "ticket_price": 1200.0,
-    "ticket_currency": "JPY"
+    "ticket_price": 8.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "arashiyama-monkey-park-iwatayama",
@@ -222,11 +231,11 @@
     "rating": 4.5,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "６１-61 Arashiyama Nakaoshitacho",
-    "opening_hours": "Open · Closes 4 PM",
+    "area": "61 Arashiyama Nakaoshitacho",
+    "opening_hours": "Open Closes 4 PM",
     "requires_ticket": "yes",
-    "ticket_price": 600.0,
-    "ticket_currency": "JPY"
+    "ticket_price": 4.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "sannenzaka",
@@ -240,8 +249,8 @@
     "area": "2 Chome-211 Kiyomizu",
     "opening_hours": "Open 24 hours",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "JPY"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "shirakawa-canal",
@@ -252,11 +261,11 @@
     "rating": 4.7,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "白川筋",
+    "area": "",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "kenninji-temple",
@@ -267,11 +276,11 @@
     "rating": 4.5,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "５８４番地 Komatsucho",
-    "opening_hours": "Open · Closes 4:30 PM",
-    "ticket_price": 800,
-    "ticket_currency": "JPY",
-    "requires_ticket": "yes"
+    "area": "Komatsucho",
+    "opening_hours": "Open Closes 4:30 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 5.33,
+    "ticket_currency": "USD"
   },
   {
     "id": "katsura-imperial-villa",
@@ -283,25 +292,25 @@
     "suggested_duration_min": 180,
     "category": "Tourist attraction",
     "area": "Katsuramisono",
-    "opening_hours": "Open · Closes 5 PM",
+    "opening_hours": "Open Closes 5 PM",
     "requires_ticket": "yes",
-    "ticket_price": 1000.0,
-    "ticket_currency": "JPY"
+    "ticket_price": 6.67,
+    "ticket_currency": "USD"
   },
   {
     "id": "eikan-d-temple",
-    "name": "Eikan-dō Temple",
-    "name_en": "Eikan-dō Temple",
+    "name": "Eikan-d Temple",
+    "name_en": "Eikan-d Temple",
     "lat": 35.0148543,
     "lng": 135.7941588,
     "rating": 4.6,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "48 Eikandocho",
-    "opening_hours": "Open · Closes 4 PM",
+    "opening_hours": "Open Closes 4 PM",
     "requires_ticket": "yes",
-    "ticket_price": 600.0,
-    "ticket_currency": "JPY"
+    "ticket_price": 4.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "kiyamachi-dori",
@@ -313,7 +322,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "Nakagyo Ward",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "samurai-ninja-museum-kyoto",
@@ -325,10 +337,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "109 Horinouecho",
-    "opening_hours": "Open · Closes 7:30 PM",
+    "opening_hours": "Open Closes 7:30 PM",
     "requires_ticket": "yes",
-    "ticket_price": 3000,
-    "ticket_currency": "JPY"
+    "ticket_price": 20.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "ichinenzaka-hill",
@@ -341,9 +353,9 @@
     "category": "Tourist attraction",
     "area": "Masuyacho",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "daikaku-ji-temple",
@@ -355,7 +367,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "4 Sagaosawacho",
-    "opening_hours": "Open · Closes 4:30 PM"
+    "opening_hours": "Open Closes 4:30 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 3.33,
+    "ticket_currency": "USD"
   },
   {
     "id": "the-flower-corridor",
@@ -367,7 +382,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "Ohashicho",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "kyoto-shinkyogoku-shopping-street",
@@ -379,10 +397,10 @@
     "suggested_duration_min": 90,
     "category": "Business park",
     "area": "3F",
-    "opening_hours": "Open · Closes 10 PM",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 10 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "uzumasa-kyoto-village",
@@ -394,7 +412,10 @@
     "suggested_duration_min": 240,
     "category": "Tourist attraction",
     "area": "10 Uzumasa Higashihachiokacho",
-    "opening_hours": "Open · Closes 9 PM"
+    "opening_hours": "Open Closes 9 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 16.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "kyoto-samurai-experience-waraku",
@@ -406,22 +427,25 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "111 Inabacho",
-    "opening_hours": "Open · Closes 12 PM · Reopens 1 PM"
+    "opening_hours": "Open Closes 12 PM Reopens 1 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 40.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "sanj-sangen-d-temple",
-    "name": "Sanjūsangen-dō Temple",
-    "name_en": "Sanjūsangen-dō Temple",
+    "name": "Sanj sangen-d Temple",
+    "name_en": "Sanj sangen-d Temple",
     "lat": 34.9878845,
     "lng": 135.7717126,
     "rating": 4.7,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "657 Sanjusangendomawari",
-    "opening_hours": "Open · Closes 5 PM",
+    "opening_hours": "Open Closes 5 PM",
     "requires_ticket": "yes",
-    "ticket_price": 600,
-    "ticket_currency": "JPY"
+    "ticket_price": 4.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "muromachi-koji-square",
@@ -432,22 +456,26 @@
     "rating": 4.3,
     "suggested_duration_min": 45,
     "category": "Tourist attraction",
-    "area": "Higashishiokōjichō",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "area": "Higashishiok jich",
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "kyoto-ry-zen-gokoku-jinja-shrine",
-    "name": "Kyoto Ryōzen Gokoku-jinja Shrine",
-    "name_en": "Kyoto Ryōzen Gokoku-jinja Shrine",
+    "name": "Kyoto Ry zen Gokoku-jinja Shrine",
+    "name_en": "Kyoto Ry zen Gokoku-jinja Shrine",
     "lat": 34.9999349,
     "lng": 135.7829385,
     "rating": 4.2,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "１ Seikanji Ryozancho",
-    "opening_hours": "Open · Closes 5 PM"
+    "area": "Seikanji Ryozancho",
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "garden-of-fine-arts-kyoto",
@@ -459,10 +487,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "Shimogamo Hangicho",
-    "opening_hours": "Open · Closes 5 PM",
+    "opening_hours": "Open Closes 5 PM",
     "requires_ticket": "yes",
-    "ticket_price": 100.0,
-    "ticket_currency": "JPY"
+    "ticket_price": 0.67,
+    "ticket_currency": "USD"
   },
   {
     "id": "taishogun-shopping-street-ichijo-yokai-street",
@@ -473,10 +501,10 @@
     "rating": 3.2,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "一条通",
-    "opening_hours": "Open · Closes 5 PM",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "area": "",
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   }
 ]

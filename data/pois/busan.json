@@ -1,20 +1,21 @@
 [
   {
     "id": "haeundae",
-    "name": "海云台海水浴场",
+    "name": "",
     "name_en": "Haeundae Beach",
     "lat": 35.1587,
     "lng": 129.1604,
     "rating": 4.4,
     "suggested_duration_min": 90,
     "category": "beach",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "gamcheon",
-    "name": "甘川文化村",
+    "name": "",
     "name_en": "Gamcheon Culture Village",
     "lat": 35.0974,
     "lng": 129.0103,
@@ -22,14 +23,14 @@
     "suggested_duration_min": 90,
     "category": "village",
     "area": "203 Gamnae 2-ro",
-    "opening_hours": "Open · Closes 6 PM",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "jagalchi",
-    "name": "札嘎其市场",
+    "name": "",
     "name_en": "Jagalchi Fish Market",
     "lat": 35.0965,
     "lng": 129.0303,
@@ -37,14 +38,14 @@
     "suggested_duration_min": 120,
     "category": "market",
     "area": "52 Jagalchihaean-ro",
-    "opening_hours": "Open · Closes 9 PM",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 9 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "haedong-yonggungsa",
-    "name": "海东龙宫寺",
+    "name": "",
     "name_en": "Haedong Yonggungsa Temple",
     "lat": 35.1884,
     "lng": 129.2232,
@@ -52,7 +53,10 @@
     "suggested_duration_min": 90,
     "category": "temple",
     "area": "86 Yonggung-gil",
-    "opening_hours": "Open · Closes 8 PM"
+    "opening_hours": "Open Closes 8 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "yongdusan-park",
@@ -64,7 +68,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "37-55 Yongdusan-gil",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "biff-square",
@@ -77,9 +84,9 @@
     "category": "Tourist attraction",
     "area": "58-1 Gudeok-ro",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "taejongdae",
@@ -91,10 +98,10 @@
     "suggested_duration_min": 90,
     "category": "Park",
     "area": "24 Jeonmang-ro",
-    "opening_hours": "Open · Closes 12 AM",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 12 AM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "oryukdo-skywalk",
@@ -106,7 +113,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "137 Oryukdo-ro",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "songdo-bay-station-songdo-cable-car",
@@ -118,7 +128,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "171 Songdohaebyeon-ro",
-    "opening_hours": "Open · Closes 10 PM"
+    "opening_hours": "Open Closes 10 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 11.11,
+    "ticket_currency": "USD"
   },
   {
     "id": "busan-citizens-park",
@@ -130,7 +143,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "73 Simingongwon-ro",
-    "opening_hours": "Open · Closes 12 AM"
+    "opening_hours": "Open Closes 12 AM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "busan-x-the-sky",
@@ -142,8 +158,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "30 Dalmaji-gil",
-    "opening_hours": "Open · Closes 9 PM",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 9 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 20.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "beomeosa-temple",
@@ -155,7 +173,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "250 Beomeosa-ro",
-    "opening_hours": "Open · Closes 5:30 PM"
+    "opening_hours": "Open Closes 5:30 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "choryang-ibagu-gil-alley",
@@ -167,7 +188,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "49 Choryangsang-ro",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "huinnyeoul-culture-village",
@@ -179,7 +203,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "1043 Yeongseon-dong 4(sa)-ga",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "songdo-sky-park",
@@ -191,7 +218,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "181 Amnamgongwon-ro",
-    "opening_hours": "Open · Closes 8 PM"
+    "opening_hours": "Open Closes 8 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "democracy-park",
@@ -203,7 +233,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "19 Minjugongwon-gil",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "busan-modern-and-contemporary-history-museum",
@@ -215,7 +248,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "104 Daecheong-ro",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "gukje-market",
@@ -226,7 +262,11 @@
     "rating": 4.1,
     "suggested_duration_min": 120,
     "category": "Tourist attraction",
-    "area": "55 Gukjesijang 2-gil"
+    "area": "55 Gukjesijang 2-gil",
+    "opening_hours": "Open Closes 8 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "biff-street",
@@ -239,9 +279,9 @@
     "category": "Tourist attraction",
     "area": "Jung-gu",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "songdo-cloud-trails",
@@ -252,11 +292,11 @@
     "rating": 4.4,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "129-4 암남동",
-    "opening_hours": "Open · Closes 11 PM",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "area": "129-4",
+    "opening_hours": "Open Closes 11 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "40-stair-culture-tourist-theme-street",
@@ -269,9 +309,9 @@
     "category": "Tourist attraction",
     "area": "83 Jungang-daero",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "national-maritime-museum-of-korea",
@@ -283,7 +323,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "45 Haeyang-ro 301beon-gil",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 2.22,
+    "ticket_currency": "USD"
   },
   {
     "id": "samnak-ecological-park",
@@ -295,7 +338,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "686 Samnak-dong",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "cheongsapo",
@@ -307,7 +353,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "591-7 Jung-dong",
-    "opening_hours": "Open · Closes 7:30 PM"
+    "opening_hours": "Open Closes 7:30 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "peace-park",
@@ -319,7 +368,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "677-3 Daeyeon-dong",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "song-sanghyeon-square",
@@ -332,9 +384,9 @@
     "category": "Tourist attraction",
     "area": "818 Jungang-daero",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "geumgang-park",
@@ -346,7 +398,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "155 Ujangchun-ro",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "gwangan-bridge",
@@ -357,9 +412,10 @@
     "rating": 4.6,
     "suggested_duration_min": 45,
     "category": "Bridge",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "f1963",
@@ -371,7 +427,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "20 Gurak-ro 123beon-gil",
-    "opening_hours": "Open · Closes 8 PM"
+    "opening_hours": "Open Closes 8 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "apec-naru-park",
@@ -383,7 +442,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "93 Suyeonggangbyeon-daero",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "busan-chinatown",
@@ -394,7 +456,11 @@
     "rating": 4.1,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "1209-13 초량제1동"
+    "area": "1209-13 1",
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "oryukdo-islets",
@@ -405,7 +471,11 @@
     "rating": 4.5,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "936 Yongho-dong"
+    "area": "936 Yongho-dong",
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "arte-museum-busan",
@@ -417,7 +487,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "29 Haeyang-ro 247beon-gil",
-    "opening_hours": "Open · Closes 8 PM"
+    "opening_hours": "Open Closes 8 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 13.33,
+    "ticket_currency": "USD"
   },
   {
     "id": "cheongsapo-daritdol-skywalk",
@@ -428,8 +501,11 @@
     "rating": 4.4,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "산3-9 Jung-dong",
-    "opening_hours": "Open · Closes 10 PM"
+    "area": "3-9 Jung-dong",
+    "opening_hours": "Open Closes 10 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "texas-street",
@@ -442,9 +518,9 @@
     "category": "Tourist attraction",
     "area": "207 Jungang-daero",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "igidae-coastal-trail",
@@ -455,11 +531,11 @@
     "rating": 4.6,
     "suggested_duration_min": 300,
     "category": "Tourist attraction",
-    "area": "산 129-1 Yongho-dong",
+    "area": "129-1 Yongho-dong",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "skyline-luge-busan",
@@ -471,7 +547,10 @@
     "suggested_duration_min": 180,
     "category": "Tourist attraction",
     "area": "205 Gijanghaean-ro",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 16.3,
+    "ticket_currency": "USD"
   },
   {
     "id": "busan-science-center",
@@ -483,6 +562,9 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "11 Jungang-daero 260beon-gil",
-    "opening_hours": "Open · Closes 12 PM · Reopens 2 PM"
+    "opening_hours": "Open Closes 12 PM Reopens 2 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 3.7,
+    "ticket_currency": "USD"
   }
 ]

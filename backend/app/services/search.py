@@ -1,6 +1,6 @@
 """POI / lodging search (T-009).
 
-Search-before-SerpApi discipline (实现批次.md 2.5): always check the current
+Search-before-SerpApi discipline (implementation batches doc 2.5): always check the current
 catalog provider (mysql or local-json) first, case-insensitively, against
 id/name/name_en/name_local. Only call SerpApi's `google_maps` engine on a
 genuine miss, and only if `SERPAPI_KEY` is configured — a miss with no key

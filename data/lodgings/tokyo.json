@@ -7,13 +7,13 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 4.5,
-    "area": "〒111-0051 Tokyo",
+    "area": "111-0051 Tokyo",
     "price_per_night": 23.0,
     "price_currency": "USD"
   },
   {
     "id": "and-hostel-akihabara",
-    "name": "＆AND HOSTEL AKIHABARA",
+    "name": "AND HOSTEL AKIHABARA",
     "lat": 35.6974109,
     "lng": 139.7774562,
     "kind": "hostel",
@@ -55,7 +55,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 4.3,
-    "area": "〒111-0052 Tokyo",
+    "area": "111-0052 Tokyo",
     "price_per_night": 25.0,
     "price_currency": "USD"
   },
@@ -67,7 +67,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 4.5,
-    "area": "1F−7F",
+    "area": "1F 7F",
     "price_per_night": 38.0,
     "price_currency": "USD"
   },
@@ -115,7 +115,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 4.4,
-    "area": "１Ｆ"
+    "area": ""
   },
   {
     "id": "capsule-hotel-glansit-akihabara",
@@ -173,7 +173,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 4.3,
-    "area": "〒144-0043 Tokyo",
+    "area": "144-0043 Tokyo",
     "price_per_night": 37.0,
     "price_currency": "USD"
   },
@@ -203,7 +203,7 @@
   },
   {
     "id": "bay-hotel",
-    "name": "東京有明BAY HOTEL",
+    "name": "BAY HOTEL",
     "lat": 35.6393281,
     "lng": 139.8051118,
     "kind": "capsule",
@@ -213,13 +213,13 @@
   },
   {
     "id": "1-night-1980-hotel",
-    "name": "1 Night ¥1980 Hotel",
+    "name": "1 Night 1980 Hotel",
     "lat": 35.724384,
     "lng": 139.7869499,
     "kind": "capsule",
     "listed": 1,
     "rating": 3.9,
-    "area": "SN入谷ビル"
+    "area": "SN"
   },
   {
     "id": "stay-tomariya",

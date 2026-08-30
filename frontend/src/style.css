@@ -23,7 +23,7 @@ body {
 
 .layout { display: flex; height: 100vh; overflow: hidden; }
 
-/* ---------- 侧边栏 35% ---------- */
+/* ---------- Sidebar 35% ---------- */
 .sidebar {
   width: 35%;
   min-width: 320px;
@@ -256,13 +256,15 @@ select.select:focus, input.search:focus { border-color: var(--accent); }
 }
 .trip-total-value { font-family: ui-monospace, Menlo, monospace; font-size: 16px; color: var(--gold); }
 .trip-total-note { color: var(--muted); font-size: 11px; margin-top: 4px; }
+/* T-040: whole-trip budget row under the transit total */
+.trip-total-row.budget-row { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
 
 .badge-real { color: var(--accent-green); }
 .badge-est { color: var(--gold); }
 
 .muted { color: var(--muted); }
 
-/* ---------- 城市多选 + 顺序 ---------- */
+/* ---------- City multi-select + order ---------- */
 .city-grid { display: flex; flex-wrap: wrap; gap: 6px; }
 .city-chip {
   background: var(--bg);
@@ -307,7 +309,7 @@ select.select:focus, input.search:focus { border-color: var(--accent); }
 }
 .city-order-controls button:disabled { opacity: 0.3; cursor: default; }
 
-/* ---------- 城市按国家分组 (T-016) ---------- */
+/* ---------- Cities grouped by country (T-016) ---------- */
 .country-group { display: flex; flex-direction: column; gap: 4px; }
 .country-label {
   font-size: 11px;
@@ -317,7 +319,7 @@ select.select:focus, input.search:focus { border-color: var(--accent); }
   text-transform: uppercase;
 }
 
-/* ---------- 到达/离开机场车站选择 (T-016) ---------- */
+/* ---------- Arrival/departure airport & station pickers (T-016) ---------- */
 .hub-picker-group {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -325,7 +327,19 @@ select.select:focus, input.search:focus { border-color: var(--accent); }
 }
 .hub-picker { display: flex; flex-direction: column; gap: 4px; }
 
-/* ---------- First / Last day：同一行两个 radio（T-022） ---------- */
+/* ---------- Landing/takeoff time inputs (T-034) ---------- */
+.field-label.sub-label { margin-top: 6px; font-size: 10px; opacity: 0.75; }
+input.time-input {
+  width: 100%;
+  height: 30px;
+  padding: 0 8px;
+  color-scheme: dark;
+  cursor: pointer;
+  text-align: center;
+}
+input.time-input:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ---------- First / Last day: two radios on one row (T-022) ---------- */
 .density-row {
   display: flex;
   align-items: center;
@@ -347,7 +361,7 @@ select.select:focus, input.search:focus { border-color: var(--accent); }
   padding: 6px 10px;
 }
 
-/* ---------- 软上限 / 警告横幅 ---------- */
+/* ---------- Soft limit / warning banner ---------- */
 .warning-banner {
   background: rgba(255, 209, 102, 0.1);
   border: 1px solid var(--gold);
@@ -357,7 +371,7 @@ select.select:focus, input.search:focus { border-color: var(--accent); }
   font-size: 12px;
 }
 
-/* ---------- 住法三选一 ---------- */
+/* ---------- Hotel mode: three choices ---------- */
 .hotel-mode-group { display: flex; flex-direction: column; gap: 6px; }
 .hotel-mode-option {
   display: flex;
@@ -398,18 +412,6 @@ select.select:focus, input.search:focus { border-color: var(--accent); }
   text-align: center;
 }
 
-.sample-btn {
-  background: none;
-  border: 1px dashed var(--border);
-  color: var(--muted);
-  border-radius: 6px;
-  padding: 10px;
-  font-size: 13px;
-  cursor: pointer;
-  font-family: ui-monospace, Menlo, monospace;
-}
-.sample-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
-.sample-btn:disabled { opacity: 0.5; cursor: default; }
 
 .health-footer {
   color: var(--muted);
@@ -421,17 +423,17 @@ select.select:focus, input.search:focus { border-color: var(--accent); }
 
 .poi-dot { cursor: pointer; }
 
-/* ---------- 结果页（T-014 简版；T-015 会加地图） ---------- */
+/* ---------- Result page (T-014 minimal; T-015 adds the map) ---------- */
 .empty-result { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
 .back-btn { background: var(--accent); color: #04121f; }
 .result-map-placeholder { display: flex; align-items: center; justify-content: center; }
 .placeholder-note { color: var(--muted); font-size: 13px; font-family: ui-monospace, Menlo, monospace; }
 
-/* ---------- 地图 65% ---------- */
+/* ---------- Map 65% ---------- */
 .map-wrap { flex: 1; position: relative; }
 #map { position: absolute; inset: 0; background: #0b0f14; }
 
-/* Leaflet 暗色化 */
+/* Leaflet dark theming */
 .leaflet-tooltip {
   background: var(--panel);
   color: var(--text);
@@ -466,39 +468,36 @@ select.select:focus, input.search:focus { border-color: var(--accent); }
   align-items: center;
   gap: 4px;
 }
-/* The on-map hotel/hub icons are `display:flex` divs so their glyph centers
-   inside the pin shape; inside the legend they're plain inline <span>s, so
-   without re-declaring the flex display here the glyph falls back to
-   normal inline flow and drifts off-center. `inline-flex` keeps them
-   inline with the label text while still centering the glyph, and
-   `border-radius: 50%` turns the (normally teardrop-shaped, rotated)
-   hotel pin into a plain round swatch here since it's shown unrotated. */
 .map-legend .legend-icon {
   position: static;
-  transform: none;
   display: inline-flex;
-  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  margin: 0;
 }
+.map-legend .hotel-pin .hotel-pin-glyph { width: 8px; height: 8px; }
 
-/* ---------- 结果页地图：酒店图标 / 箭头 ---------- */
+/* ---------- Result map: hotel icon / arrows ---------- */
 .hotel-pin-icon { background: none; border: none; }
 .hotel-pin {
-  width: 20px;
-  height: 20px;
-  border-radius: 50% 50% 50% 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
   background: var(--gold);
   color: #221a00;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  transform: rotate(-45deg);
-  border: 1px solid #04121f;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  border: 2px solid #04121f;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.65);
+}
+.hotel-pin-glyph {
+  display: block;
+  width: 12px;
+  height: 12px;
 }
 
-/* ---------- 结果页地图：到达/离开机场车站图标 (T-016) ---------- */
+/* ---------- Result map: arrival/departure hub icons (T-016) ---------- */
 .hub-pin-icon { background: none; border: none; }
 .hub-pin {
   width: 24px;
@@ -514,9 +513,10 @@ select.select:focus, input.search:focus { border-color: var(--accent); }
   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.65);
 }
 
-/* ---------- 结果页地图：常驻高亮文字标签 (T-016) ----------
-   permanent tooltip 默认是浅色气泡带小三角，这里换成跟整体暗色 UI 一致的
-   徽章样式，并去掉箭头——点的颜色已经区分了天数，标签只需要清楚易读。 */
+/* ---------- Result map: permanent text labels (T-016) ----------
+   A permanent tooltip is by default a light bubble with a little arrow; restyle
+   it as a badge matching the overall dark UI and drop the arrow — the dot's
+   color already encodes the day, the label just needs to be readable. */
 .leaflet-tooltip.map-label {
   background: rgba(13, 17, 23, 0.88);
   color: var(--text);
@@ -533,6 +533,12 @@ select.select:focus, input.search:focus { border-color: var(--accent); }
 .leaflet-tooltip.map-label::before { display: none; }
 .leaflet-tooltip.map-label-hub { border-color: var(--accent-green); color: var(--accent-green); }
 .leaflet-tooltip.map-label-hotel { border-color: var(--gold); color: var(--gold); }
+/* Label collision avoidance: losers of the overlap check are hidden entirely,
+   and --peek temporarily reveals them while their dot is hovered.
+   --peek must come after --hidden (equal specificity, later wins) so an
+   element carrying both classes can be revealed. */
+.leaflet-tooltip.map-label--hidden { opacity: 0 !important; visibility: hidden !important; }
+.leaflet-tooltip.map-label--peek { opacity: 1 !important; visibility: visible !important; z-index: 1000; }
 /* Centered via flex so the triangle's own box (and thus its rotation
    origin) lines up with the icon's anchor point — a border-triangle with
    asymmetric width/height sitting at the wrapper's default top-left made
@@ -572,7 +578,7 @@ select.select:focus, input.search:focus { border-color: var(--accent); }
 .sched-lunch .sched-title, .sched-dinner .sched-title { color: var(--accent); }
 .sched-checkin .sched-title { color: var(--gold); }
 
-/* ---------- 灰点 / 彩点弹窗（加点 / 删点） ---------- */
+/* ---------- Gray / colored dot popups (add / remove points) ---------- */
 .poi-popup { font-family: ui-monospace, Menlo, monospace; }
 .poi-popup-hint { color: var(--muted); font-size: 11px; margin: 4px 0; }
 .poi-popup-btn {
@@ -591,13 +597,13 @@ select.select:focus, input.search:focus { border-color: var(--accent); }
 }
 .poi-popup-btn-danger { background: var(--danger); color: #2a0505; }
 
-/* ---------- 结果页侧栏：更新交通 / 导出 / 待处理提示 ---------- */
+/* ---------- Result sidebar: update transit / export / pending notice ---------- */
 .update-btn { background: var(--gold); color: #221a00; }
 .update-btn:disabled { opacity: 0.4; cursor: default; }
 .pending-banner { border-color: var(--danger); color: var(--danger); background: rgba(255, 92, 92, 0.08); }
 .result-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
 
-/* ---------- 路线详情弹窗（点击动线） ---------- */
+/* ---------- Route detail popup (click a leg) ---------- */
 .route-popup .leaflet-popup-content-wrapper {
   background: var(--panel);
   color: var(--text);
@@ -657,3 +663,443 @@ select.select:focus, input.search:focus { border-color: var(--accent); }
 .rp-alt-delta { color: var(--muted); font-family: ui-monospace, Menlo, monospace; white-space: nowrap; }
 .rp-alt-delta.is-cheaper { color: var(--accent-green); }
 .rp-alt-delta.is-pricier { color: var(--gold); }
+
+/* ---------- T-043 rich export cards (offscreen stage, html-to-image capture) ----------
+   Same dark tokens as the site; the stage is fixed-positioned offscreen
+   (Leaflet needs real layout, display:none won't do) and the whole node is
+   removed after capture. 1600×1000 @2x = 3200×2000 PNG. */
+.export-stage { position: fixed; left: -99999px; top: 0; z-index: -1; }
+.export-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+}
+.export-card-head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  height: 64px;
+  padding: 0 28px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+.export-brand {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--gold);
+}
+.export-route {
+  flex: 1;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 14px;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.export-url { font-family: ui-monospace, Menlo, monospace; font-size: 13px; color: var(--muted); }
+.export-card-body { flex: 1; display: flex; min-height: 0; }
+.export-itin {
+  width: 45%;
+  flex-shrink: 0;
+  padding: 26px 26px 20px;
+  border-right: 1px solid var(--border);
+  overflow: hidden; /* clip overly long schedules: fits ~30+ rows at 13px line height, fine for the hackathon */
+  display: flex;
+  flex-direction: column;
+}
+.export-day-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.export-day-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; border: 2px solid #04121f; }
+.export-schedule {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  flex: 1;
+  min-height: 0;
+}
+.export-row {
+  display: grid;
+  grid-template-columns: 52px 26px 1fr;
+  gap: 10px;
+  align-items: start;
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+.export-row-time {
+  font-family: ui-monospace, Menlo, monospace;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  padding-top: 2px;
+}
+.export-row-body { min-width: 0; }
+.export-row-body b { display: block; color: var(--text); font-weight: 600; }
+.export-row-body i { display: block; font-style: normal; color: var(--muted); font-size: 11.5px; margin-top: 1px; }
+.export-row--lunch .export-row-body b, .export-row--dinner .export-row-body b { color: var(--accent); }
+.export-row--checkin .export-row-body b { color: var(--gold); }
+.export-row--transit .export-row-body b { color: var(--text); font-weight: 500; }
+.export-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #04121f;
+  border: 2px solid #04121f;
+}
+.export-num--blank { visibility: hidden; }
+.export-day-stats {
+  flex-shrink: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.export-map { flex: 1; position: relative; background: #0b0f14; }
+.export-map--full { position: relative; }
+.export-map-inner { position: absolute; inset: 0; }
+.export-map .leaflet-container { background: #0b0f14; }
+.export-legend {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 500;
+  background: rgba(13, 17, 23, 0.92);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.export-legend-row { display: flex; align-items: center; gap: 8px; font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; }
+.export-pin-icon { background: none; border: none; }
+.export-pin {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #04121f;
+  border: 2px solid #04121f;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.65);
+}
+.export-watermark {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 44px;
+  padding: 0 28px;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ============================================================
+   V2 VISUAL PASS · T-047 "departure board" polish layer (additive only,
+   overriding earlier rules)
+   Motif: East Asian station departure board — amber accent (replacing
+   GitHub blue), monospace uppercase signage, round line badges, schedule
+   station connector. Zero behavior change, purely visual.
+   ============================================================ */
+
+:root {
+  /* Departure-board amber: the main accent. --gold(#ffd166) stays for time
+     highlights; amber leads. */
+  --amber: #ffb454;
+  --amber-dim: rgba(255, 180, 84, 0.14);
+  --amber-line: rgba(255, 180, 84, 0.45);
+  --bg-v2: #0c0f14;
+  --panel-v2: #141922;
+}
+
+/* ---------- Global: slightly warm background + unified focus ring ---------- */
+body { background: var(--bg-v2); }
+.sidebar { background: var(--panel-v2); }
+:focus-visible { outline: 2px solid var(--amber-line); outline-offset: 1px; border-radius: 4px; }
+
+/* Slimmer scrollbars (WebKit) */
+.sidebar::-webkit-scrollbar, .day-schedule::-webkit-scrollbar { width: 8px; }
+.sidebar::-webkit-scrollbar-thumb { background: #232a35; border-radius: 4px; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: #2e3744; }
+
+/* ---------- Brand header: departure-board plaque ---------- */
+.brand-block {
+  padding: 14px 0 12px;
+  border-bottom: 1px solid var(--amber-line);
+  position: relative;
+}
+.brand-block::after {
+  /* Amber hairline + a touch of glow to close off the plaque */
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--amber) 0%, rgba(255,180,84,0.15) 60%, transparent 100%);
+  opacity: 0.9;
+}
+.brand h1 {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 21px;
+  letter-spacing: 0.10em;
+  color: var(--text);
+}
+.brand .tagline { color: var(--muted); font-size: 11.5px; margin-top: 3px; letter-spacing: 0.02em; }
+
+/* ---------- "BUILD ITINERARY" as a departure-board kicker ---------- */
+.plan-heading {
+  color: var(--amber);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  padding: 14px 0 2px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.plan-heading::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255,180,84,0.35), transparent);
+}
+
+/* ---------- Step badges: metro line roundels ---------- */
+.plan-step {
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: 2px solid var(--amber);
+  color: var(--amber);
+  font-size: 12.5px;
+  box-shadow: 0 0 0 3px rgba(255, 180, 84, 0.08);
+}
+
+/* ---------- Inputs: unified dark base + amber focus ---------- */
+.select, .search, .time-input, input[type="text"], input[type="time"] {
+  background: #0e1218;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.select:hover, .search:hover, .time-input:hover { border-color: #3a4453; }
+.select:focus, .search:focus, .time-input:focus {
+  border-color: var(--amber-line);
+  box-shadow: 0 0 0 3px rgba(255, 180, 84, 0.10);
+  outline: none;
+}
+
+/* ---------- City chips: unified pill, selected = amber ---------- */
+.city-chip {
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 12.5px;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.city-chip:hover { border-color: #3a4453; color: var(--text); }
+.city-chip.active {
+  background: var(--amber-dim);
+  border-color: var(--amber-line);
+  color: var(--amber);
+}
+
+/* ---------- Day buttons: square ticket stubs ---------- */
+.day-btn {
+  border-radius: 7px;
+  font-family: ui-monospace, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.day-btn:hover { border-color: #3a4453; }
+.day-btn.active {
+  background: var(--amber-dim);
+  border-color: var(--amber);
+  color: var(--amber);
+  box-shadow: 0 0 0 3px rgba(255, 180, 84, 0.08);
+}
+
+/* ---------- City order rows: departure-board rows ---------- */
+.city-order {
+  background: #0e1218;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: border-color 0.15s ease;
+}
+.city-order:hover { border-color: #3a4453; }
+.city-order-num {
+  font-family: ui-monospace, Menlo, monospace;
+  color: var(--amber);
+  font-weight: 700;
+}
+
+/* ---------- Spot rows: hover lift + amber when selected ---------- */
+.poi-item {
+  border-radius: 7px;
+  padding: 7px 9px;
+  transition: background 0.12s ease;
+}
+.poi-item:hover { background: rgba(255, 255, 255, 0.03); }
+.poi-item:has(input:checked) {
+  background: var(--amber-dim);
+}
+.poi-item:has(input:checked) .poi-name { color: var(--amber); }
+.poi-item input[type="checkbox"] { accent-color: var(--amber); cursor: pointer; }
+.poi-name { transition: color 0.12s ease; }
+.poi-rating { color: var(--gold); font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; }
+.poi-duration { color: var(--muted); font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; }
+
+/* ---------- spot-tab / hotel-mode / density: unified pill system ---------- */
+.spot-tab.active, .hotel-mode-option.active, .density-choice.active {
+  background: var(--amber-dim);
+  border-color: var(--amber-line);
+  color: var(--amber);
+}
+.hotel-mode-option, .density-choice {
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  cursor: pointer;
+}
+.hotel-mode-option:hover, .density-choice:hover { border-color: #3a4453; }
+.hotel-mode-option input, .density-choice input { accent-color: var(--amber); }
+
+/* ---------- Primary CTA: the departure button (persistent sticky) ---------- */
+.sidebar-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  background: linear-gradient(180deg, rgba(20, 25, 34, 0) 0%, var(--panel-v2) 22%);
+  padding: 18px 0 14px;
+  margin-top: auto;
+}
+.generate-cta {
+  width: 100%;
+  background: var(--amber);
+  color: #241a00;
+  font-size: 14.5px;
+  font-weight: 800;
+  font-family: ui-monospace, Menlo, monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 13px 16px;
+  border-radius: 9px;
+  border: none;
+  box-shadow: 0 4px 18px rgba(255, 180, 84, 0.22);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+}
+.generate-cta:hover:not(:disabled) {
+  filter: brightness(1.06);
+  box-shadow: 0 6px 24px rgba(255, 180, 84, 0.32);
+  transform: translateY(-1px);
+}
+.generate-cta:active:not(:disabled) { transform: translateY(0); }
+.generate-cta:disabled {
+  background: #2a3140;
+  color: #6b7686;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+.health-footer { font-size: 10.5px; opacity: 0.55; }
+
+/* ============================================================
+   Result page: schedule = transit diagram (station connector),
+   totals = departure-board numerals
+   ============================================================ */
+
+/* Schedule: vertical dashed line + station dots (transit-diagram motif) —
+   rows become a three-column grid: time | 16px dot rail | body; the line
+   runs through the rail's center and never crowds the text. */
+.day-schedule { position: relative; }
+.day-schedule::before {
+  content: '';
+  position: absolute;
+  left: 59.5px;
+  top: 10px;
+  bottom: 10px;
+  border-left: 1px dashed rgba(139, 148, 158, 0.35);
+}
+.sched-row {
+  position: relative;
+  grid-template-columns: 44px 16px 1fr;
+}
+.sched-row .sched-body { grid-column: 3; }
+.sched-row::before {
+  content: '';
+  position: absolute;
+  left: 54.5px;
+  top: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 2px solid var(--panel);
+  box-sizing: content-box;
+  z-index: 1;
+}
+.sched-row.sched-transit::before { background: #56606e; width: 5px; height: 5px; left: 55.5px; top: 5px; }
+.sched-row.sched-lunch::before, .sched-row.sched-dinner::before { background: var(--accent); }
+.sched-row.sched-checkin::before { background: var(--gold); }
+
+/* Totals board: departure-board numerals */
+.trip-total { border-left: 2px solid var(--amber-line); padding-left: 12px; }
+.trip-total-value {
+  font-family: ui-monospace, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+.trip-total-row.budget-row .trip-total-value { font-size: 17px; color: var(--amber); }
+
+/* Result-page primary buttons (Export/Back share .optimize) stay subdued and
+   don't steal Generate's spotlight */
+.result-actions .optimize { font-weight: 600; }
+
+/* ---------- Warning banner: departure-board "service info" tone ---------- */
+.warning-banner {
+  border-left: 2px solid var(--gold);
+  border-radius: 0 6px 6px 0;
+}
+.pending-banner { border-left: 2px solid var(--danger); }
+
+/* T-048: live comfortable-pace counter */
+.pace-hint {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11.5px;
+  color: var(--muted);
+  margin: 8px 0 0;
+  letter-spacing: 0.02em;
+}
+.pace-hint.over {
+  color: var(--amber);
+  background: var(--amber-dim);
+  border-left: 2px solid var(--amber);
+  padding: 5px 8px;
+  border-radius: 0 5px 5px 0;
+}

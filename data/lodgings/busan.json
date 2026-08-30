@@ -1,7 +1,7 @@
 [
   {
     "id": "poi",
-    "name": "블루백팩커스호스텔",
+    "name": "",
     "lat": 35.1525,
     "lng": 129.0552778,
     "kind": "hostel",
@@ -31,7 +31,7 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 4.6,
-    "area": "7층",
+    "area": "7",
     "price_per_night": 42.0,
     "price_currency": "USD"
   },
@@ -65,13 +65,13 @@
     "kind": "hostel",
     "listed": 1,
     "rating": 4.7,
-    "area": "11층",
+    "area": "11",
     "price_per_night": 33.0,
     "price_currency": "USD"
   },
   {
     "id": "busan",
-    "name": "캔버스호스텔 블랙, Busan",
+    "name": "Busan",
     "lat": 35.1593654,
     "lng": 129.1529934,
     "kind": "hostel",
@@ -129,7 +129,7 @@
   },
   {
     "id": "poi-2",
-    "name": "모찌호스텔",
+    "name": "",
     "lat": 35.113196,
     "lng": 129.040544,
     "kind": "hostel",

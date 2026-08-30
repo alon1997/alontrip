@@ -1,7 +1,7 @@
 [
   {
     "id": "gyeongbokgung",
-    "name": "景福宫",
+    "name": "",
     "name_en": "Gyeongbokgung Palace",
     "lat": 37.5796,
     "lng": 126.977,
@@ -9,14 +9,14 @@
     "suggested_duration_min": 180,
     "category": "palace",
     "area": "161 Sajik-ro",
-    "opening_hours": "Open · Closes 6:30 PM",
+    "opening_hours": "Open Closes 6:30 PM",
     "requires_ticket": "yes",
-    "ticket_price": 3000,
-    "ticket_currency": "KRW"
+    "ticket_price": 2.22,
+    "ticket_currency": "USD"
   },
   {
     "id": "bukchon",
-    "name": "北村韩屋村",
+    "name": "",
     "name_en": "Bukchon Hanok Village",
     "lat": 37.5815,
     "lng": 126.9849,
@@ -24,27 +24,28 @@
     "suggested_duration_min": 90,
     "category": "village",
     "area": "Gyedong-gil",
-    "opening_hours": "Open · Closes 5 PM",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "insadong",
-    "name": "仁寺洞",
+    "name": "",
     "name_en": "Insadong",
     "lat": 37.5744,
     "lng": 126.9862,
     "rating": 4.4,
     "suggested_duration_min": 120,
     "category": "district",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "myeongdong",
-    "name": "明洞",
+    "name": "",
     "name_en": "Myeongdong",
     "lat": 37.5636,
     "lng": 126.983,
@@ -52,26 +53,28 @@
     "suggested_duration_min": 120,
     "category": "district",
     "area": "Myeong-dong 2(i)-ga",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "hongdae",
-    "name": "弘大",
+    "name": "",
     "name_en": "Hongdae",
     "lat": 37.5573,
     "lng": 126.926,
     "rating": 4.4,
     "suggested_duration_min": 120,
     "category": "district",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "n-seoul-tower",
-    "name": "南山塔",
+    "name": "",
     "name_en": "N Seoul Tower",
     "lat": 37.5512,
     "lng": 126.9882,
@@ -79,10 +82,10 @@
     "suggested_duration_min": 90,
     "category": "landmark",
     "area": "105 Namsangongwon-gil",
-    "opening_hours": "Open · Closes 10:30 PM",
-    "ticket_price": 16000,
-    "ticket_currency": "KRW",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 10:30 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 11.85,
+    "ticket_currency": "USD"
   },
   {
     "id": "cheonggyecheon",
@@ -94,7 +97,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "Jongno District",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "national-museum-of-korea",
@@ -106,10 +112,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "137 Seobinggo-ro",
-    "opening_hours": "Open · Closes 9 PM",
+    "opening_hours": "Open Closes 9 PM",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "KRW"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "namsangol-hanok-village",
@@ -121,10 +127,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "28 Toegye-ro 34-gil",
-    "opening_hours": "Open · Closes 9 PM",
+    "opening_hours": "Open Closes 9 PM",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "KRW"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "changdeokgung",
@@ -136,10 +142,10 @@
     "suggested_duration_min": 180,
     "category": "Tourist attraction",
     "area": "99 Yulgok-ro",
-    "opening_hours": "Open · Closes 6:30 PM",
-    "ticket_price": 3000,
-    "ticket_currency": "KRW",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 6:30 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 2.22,
+    "ticket_currency": "USD"
   },
   {
     "id": "lotte-world",
@@ -151,10 +157,10 @@
     "suggested_duration_min": 420,
     "category": "Tourist attraction",
     "area": "240 Olympic-ro",
-    "opening_hours": "Open · Closes 10 PM",
-    "ticket_price": 62000,
-    "ticket_currency": "KRW",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 10 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 45.93,
+    "ticket_currency": "USD"
   },
   {
     "id": "war-memorial-of-korea",
@@ -166,10 +172,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "29 Itaewon-ro",
-    "opening_hours": "Open · Closes 6 PM",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "gwanghwamun-square",
@@ -181,10 +187,10 @@
     "suggested_duration_min": 45,
     "category": "Tourist attraction",
     "area": "172 Sejong-daero",
-    "opening_hours": "Open · Closes 5 PM",
+    "opening_hours": "Open Closes 5 PM",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "KRW"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "insa-dong-culture-street",
@@ -196,10 +202,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "Insa-dong",
-    "opening_hours": "Open · Closes 10:30 PM",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 10:30 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "gwangjang-market",
@@ -211,7 +217,10 @@
     "suggested_duration_min": 120,
     "category": "Tourist attraction",
     "area": "88 Cheonggyecheon-ro",
-    "opening_hours": "Open · Closes 10:30 PM"
+    "opening_hours": "Open Closes 11 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "seoullo-7017",
@@ -223,7 +232,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "432 Cheongpa-ro",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "seoulland",
@@ -235,10 +247,10 @@
     "suggested_duration_min": 300,
     "category": "Tourist attraction",
     "area": "181 Gwangmyeong-ro",
-    "opening_hours": "Open · Closes 9 PM",
-    "ticket_price": 32000,
-    "ticket_currency": "KRW",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 9 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 23.7,
+    "ticket_currency": "USD"
   },
   {
     "id": "changdeokgung-secret-garden",
@@ -249,11 +261,11 @@
     "rating": 4.7,
     "suggested_duration_min": 180,
     "category": "Tourist attraction",
-    "area": "99번지 율곡로",
-    "opening_hours": "Open · Closes 4 PM",
-    "ticket_price": 5000,
-    "ticket_currency": "KRW",
-    "requires_ticket": "yes"
+    "area": "99",
+    "opening_hours": "Open Closes 4 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 3.7,
+    "ticket_currency": "USD"
   },
   {
     "id": "ihwa-dong-mural-village",
@@ -266,9 +278,9 @@
     "category": "Tourist attraction",
     "area": "49 Naksan 4-gil",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "national-palace-museum-of-korea",
@@ -280,7 +292,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "12 Hyoja-ro",
-    "opening_hours": "Open · Closes 5:30 PM"
+    "opening_hours": "Open Closes 5:30 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "bukhansan-national-park",
@@ -292,7 +307,10 @@
     "suggested_duration_min": 300,
     "category": "Tourist attraction",
     "area": "262 Bogungmun-ro",
-    "opening_hours": "Open · Closes 5 PM"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "seoul-children-s-grand-park",
@@ -304,7 +322,10 @@
     "suggested_duration_min": 300,
     "category": "Tourist attraction",
     "area": "216 Neungdong-ro",
-    "opening_hours": "Open · Closes 10 PM"
+    "opening_hours": "Open Closes 10 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "yeouido-hangang-park",
@@ -317,9 +338,9 @@
     "category": "Tourist attraction",
     "area": "330 Yeouidong-ro",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "seoul-forest-park",
@@ -332,9 +353,9 @@
     "category": "Tourist attraction",
     "area": "273 Ttukseom-ro",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "seoul-museum-of-history",
@@ -346,7 +367,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "55 Saemunan-ro",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "namsan-mountain-park",
@@ -358,7 +382,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "231 Samil-daero",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "yongsan-family-park",
@@ -370,7 +397,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "185 Seobinggo-ro",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "jongmyo-shrine",
@@ -382,10 +412,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "Jongno District",
-    "opening_hours": "Open · Closes 5:40 PM",
+    "opening_hours": "Open Closes 5:40 PM",
     "requires_ticket": "yes",
-    "ticket_price": 1000,
-    "ticket_currency": "KRW"
+    "ticket_price": 0.74,
+    "ticket_currency": "USD"
   },
   {
     "id": "central-asia-road",
@@ -397,7 +427,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "Eulji-ro 42-gil",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "seoul-grand-park",
@@ -409,7 +442,10 @@
     "suggested_duration_min": 300,
     "category": "Tourist attraction",
     "area": "102 Daegongwongwangjang-ro",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 3.7,
+    "ticket_currency": "USD"
   },
   {
     "id": "seoul-grand-park-skylift",
@@ -421,7 +457,10 @@
     "suggested_duration_min": 300,
     "category": "Tourist attraction",
     "area": "Gwacheon-si",
-    "opening_hours": "Open · Closes 6 PM"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 5.93,
+    "ticket_currency": "USD"
   },
   {
     "id": "lotte-world-tower",
@@ -433,9 +472,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "300 Olympic-ro",
-    "ticket_price": 27000,
-    "ticket_currency": "KRW",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 10 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 20.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "k-star-road",
@@ -447,7 +487,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "517 Apgujeong-dong",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "yongsan-haebangchon-village",
@@ -459,7 +502,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "yongsan-dong 2(i)-ga",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "namsan-baekbeom-square",
@@ -472,9 +518,9 @@
     "category": "Tourist attraction",
     "area": "231 Samil-daero",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "seochon-hanok-village",
@@ -486,9 +532,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "28-1 Tongui-dong",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "naksan-fortress-wall-trail",
@@ -501,9 +548,9 @@
     "category": "Tourist attraction",
     "area": "23-3 Changsin 7-gil",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "jogyesa-temple",
@@ -515,10 +562,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "55 Ujeongguk-ro",
-    "opening_hours": "Open · Closes 11 PM",
-    "ticket_price": 0,
-    "ticket_currency": "KRW",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 11 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "naksan-park",
@@ -530,6 +577,9 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "41 Naksan-gil",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   }
 ]

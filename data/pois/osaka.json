@@ -1,7 +1,7 @@
 [
   {
     "id": "osaka-castle",
-    "name": "大阪城",
+    "name": "",
     "name_en": "Osaka Castle",
     "lat": 34.6873,
     "lng": 135.5262,
@@ -9,14 +9,14 @@
     "suggested_duration_min": 150,
     "category": "castle",
     "area": "1-1 Osakajo",
-    "opening_hours": "Open · Closes 6 PM",
+    "opening_hours": "Open Closes 6 PM",
     "requires_ticket": "yes",
-    "ticket_price": 700.0,
-    "ticket_currency": "JPY"
+    "ticket_price": 4.67,
+    "ticket_currency": "USD"
   },
   {
     "id": "dotonbori",
-    "name": "道顿堀",
+    "name": "",
     "name_en": "Dotonbori",
     "lat": 34.6687,
     "lng": 135.5013,
@@ -25,26 +25,27 @@
     "category": "district",
     "area": "1 Chome Dotonbori",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "shinsaibashi",
-    "name": "心斋桥",
+    "name": "",
     "name_en": "Shinsaibashi",
     "lat": 34.6726,
     "lng": 135.5011,
     "rating": 4.3,
     "suggested_duration_min": 120,
     "category": "district",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "kuromon-market",
-    "name": "黑门市场",
+    "name": "",
     "name_en": "Kuromon Ichiba Market",
     "lat": 34.6647,
     "lng": 135.5056,
@@ -52,14 +53,14 @@
     "suggested_duration_min": 120,
     "category": "market",
     "area": "2 Chome-4-1 Nipponbashi",
-    "opening_hours": "Open · Closes 6 PM",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 6 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tsutenkaku",
-    "name": "通天阁",
+    "name": "",
     "name_en": "Tsutenkaku Tower",
     "lat": 34.6525,
     "lng": 135.5063,
@@ -67,14 +68,14 @@
     "suggested_duration_min": 90,
     "category": "landmark",
     "area": "1 Chome-18-6 Ebisuhigashi",
-    "opening_hours": "Open · Closes 9:45 PM",
+    "opening_hours": "Open Closes 9:45 PM",
     "requires_ticket": "yes",
-    "ticket_price": 800,
-    "ticket_currency": "JPY"
+    "ticket_price": 5.33,
+    "ticket_currency": "USD"
   },
   {
     "id": "umeda-sky",
-    "name": "梅田蓝天大厦",
+    "name": "",
     "name_en": "Umeda Sky Building",
     "lat": 34.7054,
     "lng": 135.4902,
@@ -82,10 +83,10 @@
     "suggested_duration_min": 90,
     "category": "landmark",
     "area": "1 Chome-1-88 Oyodonaka",
-    "opening_hours": "Open · Closes 10 PM",
+    "opening_hours": "Open Closes 10 PM",
     "requires_ticket": "yes",
-    "ticket_price": 2000.0,
-    "ticket_currency": "JPY"
+    "ticket_price": 13.33,
+    "ticket_currency": "USD"
   },
   {
     "id": "osaka-aquarium-kaiyukan",
@@ -97,10 +98,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "1 Chome-1-10 Kaigandori",
-    "opening_hours": "Open · Closes 8 PM",
-    "ticket_price": 2700,
-    "ticket_currency": "JPY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 8 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 18.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "universal-studios-japan",
@@ -112,9 +113,10 @@
     "suggested_duration_min": 480,
     "category": "Tourist attraction",
     "area": "2 Chome-1-33 Sakurajima",
-    "ticket_price": 8900,
-    "ticket_currency": "JPY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 9 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 59.33,
+    "ticket_currency": "USD"
   },
   {
     "id": "sumiyoshi-taisha",
@@ -126,10 +128,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "2 Chome-9-89 Sumiyoshi",
-    "opening_hours": "Open · Closes 5 PM",
+    "opening_hours": "Open Closes 5 PM",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "JPY"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "osaka-museum-of-history",
@@ -141,10 +143,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "4 Chome-1-32 Otemae",
-    "opening_hours": "Open · Closes 5 PM",
+    "opening_hours": "Open Closes 5 PM",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "JPY"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "osaka-monument",
@@ -155,11 +157,11 @@
     "rating": 4.5,
     "suggested_duration_min": 45,
     "category": "Tourist attraction",
-    "area": "〒543-0063 Osaka",
-    "opening_hours": "Open · Closes 10 PM",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "area": "543-0063 Osaka",
+    "opening_hours": "Open Closes 10 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tempozan-ferris-wheel",
@@ -171,10 +173,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "1 Chome-1-10 Kaigandori",
-    "opening_hours": "Open · Closes 9 PM",
-    "ticket_price": 800,
-    "ticket_currency": "JPY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 9 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 5.33,
+    "ticket_currency": "USD"
   },
   {
     "id": "gokuraku-bashi-bridge",
@@ -187,9 +189,9 @@
     "category": "Bridge",
     "area": "1 Osakajo",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "abeno-harukas",
@@ -201,10 +203,10 @@
     "suggested_duration_min": 90,
     "category": "Business park",
     "area": "1 Chome-1-43 Abenosuji",
-    "opening_hours": "Open · Closes 8 PM",
-    "ticket_price": 1800,
-    "ticket_currency": "JPY",
-    "requires_ticket": "yes"
+    "opening_hours": "Open Closes 8 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 12.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "osaka-station-city-square-of-space-time",
@@ -215,11 +217,11 @@
     "rating": 4.3,
     "suggested_duration_min": 45,
     "category": "Tourist attraction",
-    "area": "〒530-0001 Osaka",
-    "opening_hours": "Open · Closes 11:30 PM",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "area": "530-0001 Osaka",
+    "opening_hours": "Open Closes 11:30 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "shinsaibashi-2",
@@ -232,9 +234,9 @@
     "category": "Tourist attraction",
     "area": "3 Chome-5 Minamisenba",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "nishinomaru-garden",
@@ -246,7 +248,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "2-2 Osakajo",
-    "opening_hours": "Open · Closes 4:30 PM"
+    "opening_hours": "Open Closes 4:30 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 1.33,
+    "ticket_currency": "USD"
   },
   {
     "id": "kema-sakuranomiya-park",
@@ -260,8 +265,8 @@
     "area": "12 Nakanocho",
     "opening_hours": "Open 24 hours",
     "requires_ticket": "no",
-    "ticket_price": 0,
-    "ticket_currency": "JPY"
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "the-national-museum-of-art-osaka",
@@ -273,12 +278,15 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "4 Chome-2-55 Nakanoshima",
-    "opening_hours": "Open · Closes 5 PM"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 2.87,
+    "ticket_currency": "USD"
   },
   {
     "id": "te-mon-gate",
-    "name": "Ōte-mon Gate",
-    "name_en": "Ōte-mon Gate",
+    "name": "te-mon Gate",
+    "name_en": "te-mon Gate",
     "lat": 34.6850912,
     "lng": 135.5230378,
     "rating": 4.4,
@@ -286,9 +294,9 @@
     "category": "Tourist attraction",
     "area": "2-2 Osakajo",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "forest-of-memorial-trees",
@@ -301,9 +309,9 @@
     "category": "Tourist attraction",
     "area": "3-4 Osakajo",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "horie-park",
@@ -315,7 +323,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "1 Chome-13-23 Minamihorie",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "dojima-park",
@@ -327,7 +338,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "1 Chome-2 Dojimahama",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tengachaya-park",
@@ -339,7 +353,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "1 Chome-15-18 Kishinosatohigashi",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "osaka-museum-of-natural-history",
@@ -351,7 +368,10 @@
     "suggested_duration_min": 150,
     "category": "Tourist attraction",
     "area": "1-23 Nagaikoen",
-    "opening_hours": "Open · Closes 5 PM"
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "yes",
+    "ticket_price": 2.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "tennoji-park",
@@ -363,10 +383,10 @@
     "suggested_duration_min": 90,
     "category": "Park",
     "area": "5-55 Chausuyamacho",
-    "opening_hours": "Open · Closes 10 PM",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "opening_hours": "Open Closes 10 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "kuchinawazaka",
@@ -378,7 +398,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "5-3 Yuhigaokacho",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "peace-osaka-international-peace-center",
@@ -389,8 +412,11 @@
     "rating": 4.2,
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
-    "area": "大阪国際平和センター（ピースおおさか）",
-    "opening_hours": "Open · Closes 5 PM"
+    "area": "",
+    "opening_hours": "Open Closes 5 PM",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "nishi-umeda-park",
@@ -402,7 +428,10 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "2 Chome-6 Umeda",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "bandai-pond-park",
@@ -415,9 +444,9 @@
     "category": "Tourist attraction",
     "area": "3 Chome-7 Bandai",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "osaka-castle-park-fountain",
@@ -430,9 +459,9 @@
     "category": "Tourist attraction",
     "area": "3-9 Osakajo",
     "opening_hours": "Open 24 hours",
-    "ticket_price": 0,
-    "ticket_currency": "JPY",
-    "requires_ticket": "no"
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   },
   {
     "id": "kozu-park",
@@ -444,6 +473,9 @@
     "suggested_duration_min": 90,
     "category": "Tourist attraction",
     "area": "1 Chome-1-61 Kozu",
-    "opening_hours": "Open 24 hours"
+    "opening_hours": "Open 24 hours",
+    "requires_ticket": "no",
+    "ticket_price": 0.0,
+    "ticket_currency": "USD"
   }
 ]
