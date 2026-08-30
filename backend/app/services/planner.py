@@ -92,6 +92,9 @@ _COMMUTE_PER_KM_MIN = 1.2
 # takes 99 min. Airports always use a flat conservative 90 min; stations use
 # the straight-line formula.
 _AIRPORT_COMMUTE_MIN = 90.0
+# T-051: 到达日地理锚定——落地晚酒店 5km 内的点才算「顺路」，
+# 更远的点挪去地理上归属的其他天（换乘当晚跨城跑 8 公里 = 差评来源）。
+_ARRIVAL_PROXIMITY_KM = 5.0
 # Fixed overhead on an intercity day after the 16:00 station arrival, before
 # sightseeing really starts (baggage storage / transfers / first leg into town)
 _INTERCITY_ARRIVAL_BUFFER_MIN = 60
@@ -806,6 +809,86 @@ def _reorder_for_closing(
     return order
 
 
+def _enforce_arrival_proximity(
+    groups: list[list[Poi]],
+    starts: dict[int, int],
+    ends: dict[int, int],
+    first_from_by_day: dict[int, tuple[float, float] | None] | None,
+    hotel: tuple[float, float],
+) -> tuple[list[list[Poi]], list[tuple[str, int, int]]]:
+    """T-051: 到达日地理锚定（只作用于到达日所在的城块）。
+
+    落地 + 入住 + 长途飞行之后，把旅客拽到 8 公里外的区再折返，
+    是本产品收到过最激烈的差评来源。规则：
+    1. 到达日（本地 day 0）上、距酒店超过 ``_ARRIVAL_PROXIMITY_KM`` 的点
+       → 挪到「地理上离它最近、且塞入后不踩闭馆线」的其他天；
+    2. 全部挪走、到达日空了 → 从其他天里拉一个酒店 5km 内的点进来
+       （『few』的『有余量就塞一个』在地理正确的前提下兑现）。
+    只在城块内挪动；跨城是行程结构，不允许。"""
+    groups = [list(g) for g in groups]
+    moved: list[tuple[str, int, int]] = []
+    i = 0  # 到达日必为本块第一天
+
+    def start_of(j: int) -> int:
+        return starts.get(j, DAY_START_MIN)
+
+    def end_of(j: int) -> int | None:
+        return (ends or {}).get(j)
+
+    def origin_of(j: int) -> tuple[float, float] | None:
+        return (first_from_by_day or {}).get(j)
+
+    def km_from_hotel(p: Poi) -> float:
+        return haversine_km(hotel[0], hotel[1], p.lat, p.lng)
+
+    # 1) 远点放逐：每次挑最远的挪走，直到没有 >5km 的点
+    for _ in range(len(groups[i]) + 1):
+        far = [
+            (km_from_hotel(p), k)
+            for k, p in enumerate(groups[i])
+            if km_from_hotel(p) > _ARRIVAL_PROXIMITY_KM
+        ]
+        if not far:
+            break
+        _, k = max(far)
+        spot = groups[i].pop(k)
+        dests: list[tuple[float, int, list[Poi]]] = []
+        for j in range(len(groups)):
+            if j == i or not groups[j]:
+                continue
+            trial = _reorder_for_closing(
+                groups[j] + [spot], start_of(j), origin_of(j), end_of(j)
+            )
+            if _closed_at_arrival(trial, start_of(j), origin_of(j), end_of(j)):
+                continue  # 塞进去会让那天踩闭馆线 → 不要
+            c = _centroid(groups[j] or [spot])
+            dist = haversine_km(spot.lat, spot.lng, c[0], c[1])
+            dests.append((dist, j, trial))
+        if not dests:
+            groups[i].insert(k, spot)  # 无处可去 → 原位保留，警告由上层兜底
+            break
+        _, j, trial = min(dests)
+        groups[j] = trial
+        moved.append((spot.id, i + 1, j + 1))
+
+    # 2) 到达日空了 → 从其他天拉一个酒店 5km 内的点进来（就近原则）
+    if not groups[i]:
+        cands: list[tuple[float, int, Poi]] = []
+        for j in range(len(groups)):
+            if j == i:
+                continue
+            for p in groups[j]:
+                d = km_from_hotel(p)
+                if d <= _ARRIVAL_PROXIMITY_KM:
+                    cands.append((d, j, p))
+        if cands:
+            _, j, p = min(cands)
+            groups[j] = [q for q in groups[j] if q.id != p.id]
+            groups[i] = [p]
+            moved.append((p.id, j + 1, i + 1))
+    return groups, moved
+
+
 def _enforce_closing(
     groups: list[list[Poi]],
     starts: dict[int, int],
@@ -1153,7 +1236,9 @@ def _deepseek_city_prompt(
             f"within {DAY_END_MIN - arrival_start_min} minutes of total activity — usually just "
             "1 nearby spot plus check-in. That evening the day's LAST spot must still be open "
             "at the hour the traveller reaches it — put early-closing places (museums) first "
-            "and late-opening areas last."
+            "and late-opening areas last. And every arrival-day spot must sit within about "
+            "5 km of that night's hotel — never cross the city on arrival evening; leave far "
+            "districts for full days."
         )
     if last_mode is not None and departure_cutoff_min is not None:
         departs = _hhmm(departure_cutoff_min + TAKEOFF_BUFFER_MIN)
@@ -1706,6 +1791,15 @@ def plan_trip(
                 f"{poi_id} doesn't fit its day (would arrive after closing or past the day's "
                 "cutoff) — the trip is packed; move it to another day on the map or drop a spot"
             )
+        # T-051: 到达日地理锚定——落地当晚只在酒店 5km 内活动，
+        # 远点交还地理归属天；到达日全空则就近拉一个点进来。
+        if first_day_global in day_list and arrival_hub is not None:
+            groups, prox_moved = _enforce_arrival_proximity(
+                groups, starts_local, ends_local, first_from_local,
+                (lodging_by_local[1].lat, lodging_by_local[1].lng),
+            )
+            if prox_moved:
+                logger.info("Arrival-day proximity moves: %s", prox_moved)
 
         for i, day in enumerate(day_list):
             day_groups[day] = groups[i]
