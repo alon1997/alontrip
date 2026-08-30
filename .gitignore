@@ -27,3 +27,4 @@ docs-zh/
 db/seed_pois.sql
 db/seed_lodgings.sql
 db/create_lodgings.sql
+scripts/deploy.sh
