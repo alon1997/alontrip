@@ -95,6 +95,9 @@ _AIRPORT_COMMUTE_MIN = 90.0
 # T-051: 到达日地理锚定——落地晚酒店 5km 内的点才算「顺路」，
 # 更远的点挪去地理上归属的其他天（换乘当晚跨城跑 8 公里 = 差评来源）。
 _ARRIVAL_PROXIMITY_KM = 5.0
+# T-052: 补点锚定——漏掉的景点跟随地理最近的已排景点（≤8km）同天，
+# 远郊景点（大公园+缆车）自动抱团，不再被质心运算撒进市区日。
+_REPAIR_ANCHOR_KM = 8.0
 # Fixed overhead on an intercity day after the 16:00 station arrival, before
 # sightseeing really starts (baggage storage / transfers / first leg into town)
 _INTERCITY_ARRIVAL_BUFFER_MIN = 60
@@ -220,22 +223,35 @@ def _split_city_days(cities: list[str], days: int, poi_counts: dict[str, int]) -
 
 
 def _group_city_pois(pois: list[Poi], n_days: int) -> list[list[Poi]]:
-    """Wraps :class:`RuleBasedGrouper`, which caps its group count at
-    ``len(pois)``. When this city has fewer selected spots than days
-    assigned to it (a demo edge case, not the common path), each spot gets
-    its own day, spread evenly across the block, and the remaining days are
-    left with no poi (pure hotel/transit) — an earlier version cycled back
-    through the same spots to avoid empty days, but that meant re-visiting
-    a spot on a later day, which is worse than a quiet transit day (bug
-    report 2026-08-21: "Senso-ji Temple" showed up on both day 1 and day 4).
-    """
-    if n_days <= len(pois):
-        return RuleBasedGrouper().group(pois, n_days)
-    ordered = [group[0] for group in RuleBasedGrouper().group(pois, len(pois))]
-    groups: list[list[Poi]] = [[] for _ in range(n_days)]
-    for i, poi in enumerate(ordered):
-        slot = min(round((i + 0.5) * n_days / len(ordered)), n_days - 1)
-        groups[slot] = [poi]
+    """Group this city's spots into ``n_days`` day-lists via a greedy
+    nearest-neighbour chain (T-052): repeatedly walk to the nearest
+    unassigned spot from the current chain end — geography stays contiguous
+    by construction, so a day never holds two far-apart districts.
+
+    Fewer spots than days (a demo edge case): each spot gets its own day,
+    spread across the block, remaining days stay empty (pure hotel/transit) —
+    an earlier version cycled back through the same spots, which meant
+    re-visiting a spot on a later day (bug report 2026-08-21)."""
+    # T-052 核心：贪心最近邻链——从距质心最近的点出发，反复走向最近的
+    # 未分组景点，形成地理连续的链，再均分切成 n_days 段。
+    # 无论景点比天多还是少，都用链式分组（地理连贯保证）。
+    if not pois:
+        return [[] for _ in range(n_days)]
+    c = _centroid(pois)
+    cur = min(pois, key=lambda p: haversine_km(c[0], c[1], p.lat, p.lng))
+    chain: list[Poi] = [cur]
+    remaining = [p for p in pois if p.id != cur.id]
+    while remaining:
+        nxt = min(remaining, key=lambda p: haversine_km(chain[-1].lat, chain[-1].lng, p.lat, p.lng))
+        chain.append(nxt)
+        remaining.remove(nxt)
+    groups: list[list[Poi]] = []
+    base, extra = divmod(len(chain), n_days)
+    idx = 0
+    for _ in range(n_days):
+        size = base + (1 if _ < extra else 0)
+        groups.append(chain[idx:idx + size])
+        idx += size
     return groups
 
 
@@ -502,12 +518,30 @@ def _repair_poi_set(
                 groups_by_local_day[d] = [p for p in groups_by_local_day[d] if p.id != pid]
                 notes.append(f"dropped duplicate {pid} on day {d}")
     for pid in missing:
+        poi = by_id[pid]
+        # T-052: anchor-follow — a missing spot joins the day holding the
+        # geographically closest already-placed spot (≤ 8 km), so far-suburb
+        # siblings (grand park + skylift) cluster together instead of being
+        # scattered by centroid arithmetic.
+        anchor = None
+        for day, group in sorted(groups_by_local_day.items()):
+            if day in empty_ok or not group:
+                continue
+            for q in group:
+                d = haversine_km(poi.lat, poi.lng, q.lat, q.lng)
+                if d <= _REPAIR_ANCHOR_KM and (anchor is None or d < anchor[0]):
+                    anchor = (d, day, q)
+        if anchor is not None:
+            _, day, q = anchor
+            day_list = groups_by_local_day[day]
+            day_list.insert(day_list.index(q) + 1, poi)
+            notes.append(f"added missing {pid} next to {q.id} on day {day}")
+            continue
         candidates = [
             d for d, g in groups_by_local_day.items() if g and d not in empty_ok
         ] or [d for d, g in groups_by_local_day.items() if g]
         if not candidates:
             return None
-        poi = by_id[pid]
         dest = min(candidates, key=lambda d: haversine_km(poi.lat, poi.lng, *_centroid(groups_by_local_day[d])))
         _insert_best_position(groups_by_local_day[dest], poi)
         notes.append(f"added missing {pid} to day {dest}")
@@ -936,12 +970,12 @@ def _enforce_closing(
             if not bad:
                 break
             spot = order[bad[-1]]
-            # — Rescue 1: move across days (target day has room and stays feasible) —
+            # — Rescue 1: move across days (target day stays closing-feasible) —
+            # T-053: 预算守卫移除——闭馆违规的救援优先于容量管理，
+            # 目标天挤一点但有景点被救活，远好于原天留警告。
             dests: list[tuple[int, int, list[Poi]]] = []
             for j in range(len(groups)):
                 if j == i or j in empty_idx or not groups[j]:
-                    continue
-                if _day_load_min(groups[j] + [spot]) > budget_of(j):
                     continue
                 trial = _reorder_for_closing(groups[j] + [spot], start_of(j), origin_of(j), end_of(j))
                 if not _closed_at_arrival(trial, start_of(j), origin_of(j), end_of(j)):
@@ -952,11 +986,9 @@ def _enforce_closing(
                 order.pop(bad[-1])
                 moved.append((spot.id, i + 1, j + 1))
                 continue
-            # — Rescue 2: swap across days (last resort once the trip is
-            # saturated) — trade for a spot from another day that still fits
-            # this evening; budgets must not get worse (the arrival day is
-            # already over its target budget, and a hard 365 cap would make
-            # every swap fail).
+            # — Rescue 2: swap across days — trade for a spot from another
+            # day that still fits this evening; budget guards removed (T-053):
+            # closing-feasibility is the only hard constraint.
             swapped = False
             for j in range(len(groups)):
                 if j == i or j in empty_idx or not groups[j]:
@@ -973,10 +1005,6 @@ def _enforce_closing(
                         [p for p in groups[j] if p.id != s.id] + [spot], start_of(j), origin_of(j), end_of(j),
                     )
                     if _closed_at_arrival(trial_j, start_of(j), origin_of(j), end_of(j)):
-                        continue
-                    if _day_load_min(trial_i) > max(budget_of(i), _day_load_min(groups[i])):
-                        continue
-                    if _day_load_min(trial_j) > max(budget_of(j), _day_load_min(groups[j])):
                         continue
                     groups[i], groups[j] = trial_i, trial_j
                     order = trial_i
@@ -995,8 +1023,6 @@ def _enforce_closing(
                 empty_dests: list[tuple[int, int, list[Poi]]] = []
                 for j in sorted(empty_idx):
                     if j == i:
-                        continue
-                    if _day_load_min(groups[j] + [spot]) > budget_of(j):
                         continue
                     trial = _reorder_for_closing(groups[j] + [spot], start_of(j), origin_of(j), end_of(j))
                     if not _closed_at_arrival(trial, start_of(j), origin_of(j), end_of(j)):

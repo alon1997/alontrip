@@ -563,6 +563,14 @@ def optimize_route(req: OptimizeRequest, request: Request) -> dict[str, object]:
                     f"{p.id} is on the route but the day runs out before it — "
                     "try moving it to another day on the map"
                 )
+        # T-053: 终检警告的假阳性撤销——schedule.py 用真实交通时长重放后，
+        # 凡是实际拿到了游览行的景点，关于它的终检/规划层警告全部撤销
+        # （用户看到「景点 X 来不及」+ 日程里 X 有游览行 = 自相矛盾）。
+        visited_ids = {p.id for p in planned_day.pois if (p.name_en or p.name) in visit_titles}
+        plan.warnings[:] = [
+            w for w in plan.warnings
+            if not any(uid in w for uid in visited_ids)
+        ]
         itinerary.append({
             "day": planned_day.day,
             "city": planned_day.city,
