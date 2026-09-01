@@ -16,7 +16,7 @@ From clicking Generate on the planner page to the result page rendering, six ste
 |----|-----|--------|
 | 1 | Frontend `Planner.vue` → `POST /api/trip/optimize-route` | Sends the city list, day count, spot ids, hotel mode, first/last-day density, arrival/departure hubs, and flight times |
 | 2 | `main.py` validation | Cities legal, days ≥ city count and within 2–14, at least 1 spot per city, hubs in the right city, no orphan times, no malformed formats → every failure returns a frozen 400 message |
-| 3 | `planner.py plan_trip()` day assignment | (a) split days across cities proportionally to spot counts; (b) build per-city context (opening windows, daily budget, clock start); (c) **DeepSeek draft** (one `deepseek-v4-flash` call per city, temperature 0.2, thinking disabled, 45 s timeout, one automatic retry on a failed draft; two cities run in parallel) — it must return JSON of "which spots each day + which hotel each night"; (d) validate the table and apply three repair layers (**id repair** → **spot-set repair** → **district repair**); a city that still fails falls back to rules (cluster into districts → capacity packing → edge-day density), and one city's fallback never affects the others; (e) shared post-processing: parks ≥ 6 h take a whole day → capacity packing → opening-window relocation → capacity packing → **closing-time terminal check** (below); (f) within-day ordering: 2-opt to compress distance + earliest-closing-first + pull spots that would hit closing forward |
+| 3 | `planner.py plan_trip()` day assignment | (a) split days across cities proportionally to spot counts; (b) build per-city context (opening windows, daily budget, clock start); (c) **DeepSeek draft** (one `deepseek-v4-flash` call per city, temperature 0.2, thinking disabled, 45 s timeout, one automatic retry on a failed draft; two cities run in parallel) — it must return JSON of "which spots each day + which hotel each night"; (d) validate the table and apply three repair layers (**id repair** → **spot-set repair** → **district repair**); a city that still fails falls back to **greedy NN-chain grouping** (see step 3 note), and one city's fallback never affects the others; (e) shared post-processing: parks ≥ 6 h take a whole day → capacity packing → opening-window relocation → capacity packing → **closing-time terminal check** (below); (f) within-day ordering: the NN-chain order itself is the route order (no 2-opt needed — the chain is already geographically contiguous) + earliest-closing-first + pull spots that would hit closing forward |
 | 4 | `main.py` per-leg transit | For each adjacent pair on each day's chain: Japan/Korea/Hong Kong use **SerpApi** `google_maps_directions` (after checking `data/transit_cache/` — a hit costs nothing); mainland China uses AMap or a taxi estimate; straight-line under 800 m counts as walking. Every result lands in the leg cache |
 | 5 | `schedule.py` clock schedule | Accumulates clock times from **real** transit durations (arrival-day start = landing + 90, departure cutoff = takeoff − 120, global 22:00 cap); lunch around 12:00 (1 h), dinner 18:00 (1.5 h); visits are clipped by opening hours — arriving early waits for opening, arriving after closing writes no visit row and raises an unvisited warning |
 | 6 | Response → frontend | `itinerary` (per-day nodes/legs/clock schedule/costs) + `totals` (transit/tickets/lodging/grand total; unvisited spots are not billed) + `warnings` (unmovable and unvisited spots, reported honestly) + `grouper` (`deepseek` / `rule-based` / `mixed`, reported honestly) → `Result.vue` sidebar + `ResultMap.vue` map |
@@ -198,6 +198,23 @@ The response's `totals` adds `ticket_cost` (visits that actually happen; a spot 
 - **Arrival-day hotel-proximity anchoring (T-051b)**: arrival-day spots more than 5 km from that night's hotel are exiled to the geographically-nearest feasible day (an emptied arrival day pulls the nearest within-5km spot back in). DeepSeek's prompt carries the same constraint. Rationale: after landing + check-in, sending the traveller 8 km across the city twice is the single worst-reviewed behaviour this product produced.
 - **Conservative arrival-day first leg:** at planner time the real legs do not exist yet (they are queried in step 4), so 25 minutes per hop let a "phantom 16:20 arrival at Ueno Park" through when reality was 18:40. The terminal check's start clock became landing + 90 + 20 min check-in + rail at 1.2 minutes per kilometre (Narita, 60 km ≈ 92 min; measured 99 — close). Better to move a spot to another day (harmless) than to leave a would-be-closed spot on the arrival day.
 - **DeepSeek prompt synced:** the arrival-day rule adds "the night's last stop must still be open — earlier-closing museums first, nightlife districts last".
+
+### Greedy NN-chain geographic grouping (T-052/T-053, shipped)
+
+Replaces `RuleBasedGrouper` for the rule path and as the DeepSeek fallback:
+
+- From the city centroid, repeatedly walk to the nearest unassigned spot —
+  producing a single geographically contiguous chain.
+- Cut the chain into `n_days` contiguous segments (equal spot count, ±1).
+  Each segment = one day; days are geographically contiguous by construction
+  (no cross-district zigzag possible).
+- **Anchor-follow repair**: if DeepSeek's table omits spots, each missing
+  spot joins the day holding its geographically closest placed spot (≤ 8 km),
+  keeping far-suburb siblings together instead of scattering them.
+
+Replaces the previous approach where `RuleBasedGrouper` clustered by district
+then DeepSeek could scatter them randomly. The NN chain is deterministic —
+the same spots always produce the same grouping.
 
 ### Group spots by district, never by count alone (shipped)
 
