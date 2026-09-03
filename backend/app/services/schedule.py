@@ -84,8 +84,8 @@ def build_day_schedule(
 
     def add_dinner() -> None:
         nonlocal clock, dinner_done
-        if clock + DINNER_MIN > cap:
-            dinner_done = True  # past the day's cutoff — skip, don't late-night it
+        if clock >= cap:
+            dinner_done = True  # past the day's cutoff — genuinely no time
             return
         events.append({
             "kind": "dinner",
