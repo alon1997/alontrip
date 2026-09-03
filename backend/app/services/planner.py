@@ -101,8 +101,23 @@ _REPAIR_ANCHOR_KM = 8.0
 # Fixed overhead on an intercity day after the 16:00 station arrival, before
 # sightseeing really starts (baggage storage / transfers / first leg into town)
 _INTERCITY_ARRIVAL_BUFFER_MIN = 60
-DISTRICT_OUTLIER_KM = 8.0
+# T-054: tightened from 8 km — on a 3-spot day a far spot drags its own day's
+# centroid toward itself (monkey park on a day with Sannenzaka + Kiyomizu-dera
+# sat only ~7 km from its own centroid and escaped the old gate). The real
+# guard is still the 2 km margin below: a move fires only when another day is
+# *dominantly* closer, so boundary spots on contiguous chains don't churn.
+DISTRICT_OUTLIER_KM = 4.0
 DISTRICT_CLOSER_OTHER_KM = 2.0
+
+
+def _day_geo_key(group: list[Poi], mover: Poi) -> tuple[float, int]:
+    """Sort key for choosing a destination day: distance from the mover to
+    the day's centroid first, load as tie-break. Empty days sort last —
+    they are a last resort, never an attractive "0 load" dump site."""
+    if not group:
+        return (float("inf"), 0)
+    clat, clng = _centroid(group)
+    return (haversine_km(mover.lat, mover.lng, clat, clng), _day_load_min(group))
 
 
 def resolve_edge_modes(
@@ -345,7 +360,10 @@ def _pack_day_capacity(
         if not dests:
             blocked.add(src)
             continue
-        dest = min(dests, key=lambda j: _day_load_min(packed[j]))
+        # T-054: nearest day wins, not lightest day — the lightest choice kept
+        # scattering spots across town (Daikaku-ji next to Sento Palace) after
+        # the NN chain had built geographically contiguous days.
+        dest = min(dests, key=lambda j: _day_geo_key(packed[j], mover))
         src_load = _day_load_min(packed[src])
         dest_load_after = _day_load_min(packed[dest] + [mover])
         if dest_load_after >= src_load:
@@ -973,15 +991,18 @@ def _enforce_closing(
             # — Rescue 1: move across days (target day stays closing-feasible) —
             # T-053: 预算守卫移除——闭馆违规的救援优先于容量管理，
             # 目标天挤一点但有景点被救活，远好于原天留警告。
-            dests: list[tuple[int, int, list[Poi]]] = []
+            dests: list[tuple[float, int, int, list[Poi]]] = []
             for j in range(len(groups)):
                 if j == i or j in empty_idx or not groups[j]:
                     continue
                 trial = _reorder_for_closing(groups[j] + [spot], start_of(j), origin_of(j), end_of(j))
                 if not _closed_at_arrival(trial, start_of(j), origin_of(j), end_of(j)):
-                    dests.append((_day_load_min(groups[j]), j, trial))
+                    # T-054: nearest feasible day, not lightest — a closing
+                    # rescue that hops the city (Arashiyama -> the far east)
+                    # trades one warning for a worse itinerary
+                    dests.append(_day_geo_key(groups[j], spot) + (j, trial))
             if dests:
-                _, j, trial = min(dests)
+                _, _, j, trial = min(dests)
                 groups[j] = trial
                 order.pop(bad[-1])
                 moved.append((spot.id, i + 1, j + 1))
@@ -990,9 +1011,11 @@ def _enforce_closing(
             # day that still fits this evening; budget guards removed (T-053):
             # closing-feasibility is the only hard constraint.
             swapped = False
-            for j in range(len(groups)):
-                if j == i or j in empty_idx or not groups[j]:
-                    continue
+            geo_order = sorted(
+                (j for j in range(len(groups)) if j != i and j not in empty_idx and groups[j]),
+                key=lambda j: _day_geo_key(groups[j], spot),
+            )
+            for j in geo_order:
                 for s in list(groups[j]):
                     if s.id == spot.id:
                         continue
@@ -1020,15 +1043,15 @@ def _enforce_closing(
                 # missing the line, using the empty day beats dropping a spot
                 # the user selected (2026-08-29 prod: kinkaku-ji on an
                 # intercity day had nowhere to go).
-                empty_dests: list[tuple[int, int, list[Poi]]] = []
+                empty_dests: list[tuple[float, int, int, list[Poi]]] = []
                 for j in sorted(empty_idx):
                     if j == i:
                         continue
                     trial = _reorder_for_closing(groups[j] + [spot], start_of(j), origin_of(j), end_of(j))
                     if not _closed_at_arrival(trial, start_of(j), origin_of(j), end_of(j)):
-                        empty_dests.append((_day_load_min(groups[j]), j, trial))
+                        empty_dests.append(_day_geo_key(groups[j], spot) + (j, trial))
                 if empty_dests:
-                    _, j, trial = min(empty_dests)
+                    _, _, j, trial = min(empty_dests)
                     groups[j] = trial
                     order.pop(bad[-1])
                     moved.append((spot.id, i + 1, j + 1))
@@ -1094,7 +1117,8 @@ def _move_infeasible_for_windows(
                 packed[idx].append(poi)
                 stuck.append(poi.id)
                 continue
-            dest = min(dests, key=lambda j: (_day_load_min(packed[j]), abs(j - idx)))
+            # T-054: geography first here too (see _pack_day_capacity)
+            dest = min(dests, key=lambda j: _day_geo_key(packed[j], poi))
             packed[dest].append(poi)
             moved.append((poi.id, idx, dest))
     return packed, moved, stuck
@@ -1800,9 +1824,23 @@ def plan_trip(
         for i in range(len(day_list)):
             morning = lodging_by_local[i] if i > 0 else lodging_by_local[1]
             first_from_local[i] = (morning.lat, morning.lng)
-        groups, _close_moves, close_stuck = _enforce_closing(
+        groups, close_moves, close_stuck = _enforce_closing(
             groups, starts_local, empty_idx, budgets, first_from_local, ends_local,
         )
+        if close_moves:  # T-054: these used to be silent — undiagnosable in prod
+            logger.info("Closing-check moves city=%s %s", city, close_moves)
+        # T-054 final-state police: packing/closing rescues can scatter a spot
+        # across town AFTER the model table passed the district check (the
+        # destination days they pick may be the only budget-feasible ones).
+        # Repair the final grouping, then re-run the closing check so the
+        # repaired state is verified against the same bar — its stuck list
+        # replaces the first pass's.
+        groups, post_moves = _repair_districts(groups)
+        if post_moves:
+            logger.info("Post-closing district repair city=%s %s", city, post_moves)
+            groups, _m2, close_stuck = _enforce_closing(
+                groups, starts_local, empty_idx, budgets, first_from_local, ends_local,
+            )
         # Warnings held back at the windows stage: retract the ones the final
         # check rescued (anything outside close_stuck), report the rest with
         # one consistent message
