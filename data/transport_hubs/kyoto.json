@@ -1,5 +1,13 @@
 [
   {
+    "id": "kansai-airport",
+    "name": "",
+    "name_en": "Kansai International Airport",
+    "kind": "airport",
+    "lat": 34.4347,
+    "lng": 135.2441
+  },
+  {
     "id": "kyoto-station",
     "name": "",
     "name_en": "Kyoto Station",
