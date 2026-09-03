@@ -216,6 +216,36 @@ Replaces the previous approach where `RuleBasedGrouper` clustered by district
 then DeepSeek could scatter them randomly. The NN chain is deterministic —
 the same spots always produce the same grouping.
 
+### Geography-first destination days (T-054, shipped)
+
+The NN chain builds contiguous days, but three downstream stages move spots
+across days — capacity packing, opening-window relocation, and the closing-time
+rescues — and all three used to pick the destination by **minimum load alone**,
+quietly scattering spots across town after the grouping layers had done their
+job (prod 2026-09-03: Arashiyama Monkey Park on a Sannenzaka day while the
+rest of Arashiyama sat on another). Fixes:
+
+- Every destination choice now prefers the **geographically nearest day**
+  (distance from the spot to the day's centroid), with load as tie-break.
+  Closing feasibility and budget remain hard filters — geography only breaks
+  ties among days that are actually allowed.
+- **Final-state district police**: after the closing-time check, the grouping
+  is re-checked for district splits (`_repair_districts` + `_districts_ok`);
+  residuals are repaired and the closing check re-runs so the repaired state
+  meets the same feasibility bar. This catches evictions where the only
+  budget-feasible day was across town.
+- The district-outlier gate tightens from 8 km to **4 km**: on a 3-spot day a
+  far spot drags its own centroid toward itself (monkey park sat ~7 km from
+  its own day's centroid and escaped the old gate). The 2 km closer-other-day
+  margin is unchanged, so boundary spots on contiguous chains don't churn.
+- Closing-check moves are now logged (they used to be silent and
+  undiagnosable in production).
+
+Verified: the Kyoto scenario (5 days, 11 spots, KIX arrival) run 5× puts the
+whole Arashiyama cluster on one day with the monkey park first (it closes at
+16:00), east-side spots (Sannenzaka + Kiyomizu-dera) on another, zero
+warnings every run; Osaka/Tokyo rule-path and two-city regressions unchanged.
+
 ### Group spots by district, never by count alone (shipped)
 
 A sensible Shanghai split, for example: day 1 the Bund + Lujiazui + Shanghai Tower (one riverside district); day 2 Disney alone; day 3 Yu Garden + Xintiandi (old town / Huaihai) — not Shanghai Tower crammed back into day 3.
