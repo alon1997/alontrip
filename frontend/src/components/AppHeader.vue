@@ -45,12 +45,18 @@ const isHow = computed(() => route.name === 'how')
   align-items: center;
   gap: 12px;
   width: 100%;
+  /* the bar sits on its own surface: a shade above the page background so
+     the two zones read as chrome vs content */
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 14px;
 }
 /* left: mode capsule */
 .mode-switch {
   justify-self: start;
   display: inline-flex;
-  background: var(--panel);
+  background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 3px;
@@ -112,7 +118,7 @@ const isHow = computed(() => route.name === 'how')
   color: var(--muted);
   text-decoration: none;
   white-space: nowrap;
-  background: transparent;
+  background: var(--bg);
   transition: border-color 0.15s, color 0.15s;
 }
 .how-btn:hover {

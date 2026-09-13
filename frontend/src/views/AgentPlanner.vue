@@ -293,7 +293,9 @@ const MAP_VIEW_KEY = 'alontrip.mapView'
 onMounted(async () => {
   // restore the traveller's last map view (saved on every move/zoom) — the
   // app opens where they left it, not on a hardcoded city
-  let center = [35.0, 135.76], zoom = 12
+  // default frame = all of Japan; a saved view (the traveller panned
+  // before) always wins
+  let center = [37.5, 138.5], zoom = 5
   try {
     const saved = JSON.parse(localStorage.getItem(MAP_VIEW_KEY) || 'null')
     if (saved && Array.isArray(saved.center)) ({ center, zoom } = saved)
