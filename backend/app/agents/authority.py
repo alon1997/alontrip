@@ -51,13 +51,20 @@ def rebuild_from_engine(plan: dict) -> dict:
                 notes[s["id"]] = s["note"]
 
     warnings: list[str] = list(draft.get("warnings", []))
+    arrival_hub = draft.get("arrival_hub")
+    departure_hub = draft.get("departure_hub")
+    n_days = len(draft["days"])
     new_days = []
     for dd in draft["days"]:
         day_no = dd["day"]
         pois = [catalog[i] for i in dd["spot_ids"] if i in catalog]
         day_start = starts.get(day_no, "09:00")
+        day_arrival = arrival_hub if day_no == 1 else None
+        day_departure = departure_hub if day_no == n_days else None
         events, times = replay_day_events(
-            city, pois, _hhmm_to_min(day_start), hotel_name=dd["hotel"]["name"]
+            city, pois, _hhmm_to_min(day_start),
+            hotel_name=dd["hotel"]["name"],
+            arrival_hub=day_arrival, departure_hub=day_departure,
         )
         spots = []
         unvisitable = []

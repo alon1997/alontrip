@@ -748,6 +748,7 @@ def _rerun_engine_draft(city: str, args: dict):
             deepseek_api_key="",  # engine rule path — deterministic, no LLM
             deepseek_base_url="",
             arrival_hub_id=args.get("arrival_hub_id"),
+            departure_hub_id=args.get("departure_hub_id"),
             hub_catalog={city: _gh().get_hubs(city)},
             arrival_time_min=arrival_time_min,
             first_day_density=args.get("first_day_density"),

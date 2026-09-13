@@ -197,6 +197,7 @@ def draft_day_plan(
     poi_ids: list[str],
     arrival_hub_id: str | None = None,
     arrival_time: str | None = None,
+    departure_hub_id: str | None = None,
     first_day_density: str | None = None,
     last_day_density: str | None = None,
 ) -> dict:
@@ -212,6 +213,8 @@ def draft_day_plan(
         poi_ids: spot ids the traveller picked (each used exactly once).
         arrival_hub_id: optional airport/station id for day 1.
         arrival_time: optional "HH:MM" landing time (24h) with arrival_hub_id.
+        departure_hub_id: optional airport/station id for the last day —
+          the final leg goes last spot -> this hub, not the hotel.
         first_day_density / last_day_density: "few" (light) or "none" (empty)
           for the arrival/departure day.
     """
@@ -237,6 +240,7 @@ def draft_day_plan(
             poi_catalog={city: poi.get_pois(city)},
             lodging_catalog={city: lodging_provider().get_lodgings(city)},
             arrival_hub_id=arrival_hub_id,
+            departure_hub_id=departure_hub_id,
             hub_catalog={city: get_transport_hub_provider().get_hubs(city)},
             arrival_time_min=arrival_time_min,
             first_day_density=first_day_density,
@@ -252,6 +256,8 @@ def draft_day_plan(
 
     _stash = {
         "city": city,
+        "arrival_hub": None,
+        "departure_hub": None,
         "days": [
             {
                 "day": d.day,
@@ -264,6 +270,15 @@ def draft_day_plan(
         ],
         "warnings": list(plan.warnings),
     }
+    from ..services.factory import get_transport_hub_provider as _gh
+
+    _hubs = _gh().get_hubs(city)
+    for _key, _hid in (("arrival_hub", arrival_hub_id), ("departure_hub", departure_hub_id)):
+        if _hid:
+            _hub = next((h for h in _hubs if h.id == _hid), None)
+            if _hub:
+                _stash[_key] = {"id": _hub.id, "name": _hub.name_en or _hub.name,
+                                "lat": _hub.lat, "lng": _hub.lng}
     try:  # file-backed: immune to module reloads / executor copies
         _STASH_PATH.write_text(_json.dumps(_stash), encoding="utf-8")
     except OSError as exc:
@@ -322,30 +337,59 @@ def replay_clock(city: str, day_plan: dict, day_start: str = "") -> dict:
     return {"events": events, "engine_times": engine_times, "day_start": day_start or "09:00"}
 
 
-def replay_day_events(city: str, ordered: list, day_start_min: int = 540, hotel_name: str = ""):
+def replay_day_events(city: str, ordered: list, day_start_min: int = 540,
+                      hotel_name: str = "", arrival_hub=None, departure_hub=None,
+                      checkin_stop=None):
     """Engine-authoritative clock replay for one ordered day (no LLM involved).
     Returns (events, times) where times maps spot id -> (start, end) — the
     only visit times the product is allowed to display. ``hotel_name``
-    selects the engine-chosen lodging as the day's origin/return anchor."""
+    selects the engine-chosen lodging as the day's origin/return anchor.
+
+    Hub handling mirrors classic's _build_day_chain: an arrival hub opens
+    the chain (hub -> hotel check-in -> spots…), a departure hub closes it
+    (…spots -> hub, no hotel return, no dinner after)."""
     lodgings = lodging_provider().get_lodgings(city)
     lodging = next((l for l in lodgings if hotel_name and l.name == hotel_name), None) \
         or lodgings[0]
-    labels = {
-        ("poi", p.id): p.name_en or p.name for p in ordered
-    }
+    labels = {("poi", p.id): p.name_en or p.name for p in ordered}
     labels[("lodging", lodging.id)] = lodging.name  # hotel shows by name
-    chain = [("lodging", lodging.id, lodging.lat, lodging.lng, "start", city)] + [
-        ("poi", p.id, p.lat, p.lng, None, city) for p in ordered
-    ] + [("lodging", lodging.id, lodging.lat, lodging.lng, "end", city)]
+
+    def _hub_label(h):
+        return h["name"] if isinstance(h, dict) else (h.name_en or h.name)
+
+    def _hub_xy(h):
+        return (h["lat"], h["lng"]) if isinstance(h, dict) else (h.lat, h.lng)
+
+    chain = []
+    if arrival_hub is not None:
+        hy, hx = _hub_xy(arrival_hub)
+        chain.append(("hub", _hub_label(arrival_hub), hy, hx, "start", city))
+    chain.append(("lodging", lodging.id, lodging.lat, lodging.lng, "start", city))
+    chain += [("poi", p.id, p.lat, p.lng, None, city) for p in ordered]
+    if departure_hub is not None:
+        dy, dx = _hub_xy(departure_hub)
+        chain.append(("hub", _hub_label(departure_hub), dy, dx, "end", city))
+    else:
+        chain.append(("lodging", lodging.id, lodging.lat, lodging.lng, "end", city))
+    if checkin_stop is not None:
+        cy, cx = _hub_xy(checkin_stop)
+        labels[("lodging", "checkin")] = lodging.name
+        chain.insert(1, ("lodging", "checkin", cy, cx, "checkin", city))
+
+    # one leg per consecutive pair; coordinate tuples per node kind
+    def _xy(node):
+        return (node[2], node[3])
+
     legs = [
         _Leg(transit_provider().get_route(
-            Coord(lat=a.lat, lng=a.lng), Coord(lat=b.lat, lng=b.lng), city=city,
+            Coord(lat=_xy(a)[0], lng=_xy(a)[1]), Coord(lat=_xy(b)[0], lng=_xy(b)[1]), city=city,
         ))
-        for a, b in zip([lodging, *ordered], [*ordered, lodging])  # hotel→p1 … pn→hotel
+        for a, b in zip(chain, chain[1:])
     ]
     events = build_day_schedule(
         chain=chain, legs=legs, poi_by_id={p.id: p for p in ordered},
-        is_first_day=False, has_arrival_hub=False, node_labels=labels,
+        is_first_day=False,
+        has_arrival_hub=arrival_hub is not None, node_labels=labels,
         day_start_min=day_start_min,
     )
     times: dict[str, tuple[str, str]] = {}
