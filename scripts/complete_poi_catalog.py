@@ -161,7 +161,7 @@ PRICE_USD: dict[str, float] = {
 }
 
 CITY_PRICE_USD: dict[tuple[str, str], float] = {
-    ("beijing", "poi"): 4.17,  # 鼓楼钟楼
+    ("beijing", "poi"): 4.17,  # Drum and Bell Tower
     ("jeju", "poi"): 8.15,  # 일출랜드
     ("jeju", "poi-2"): 0.0,  # 중문관광단지 outdoor
 }

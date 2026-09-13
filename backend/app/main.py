@@ -563,9 +563,10 @@ def optimize_route(req: OptimizeRequest, request: Request) -> dict[str, object]:
                     f"{p.id} is on the route but the day runs out before it — "
                     "try moving it to another day on the map"
                 )
-        # T-053: 终检警告的假阳性撤销——schedule.py 用真实交通时长重放后，
-        # 凡是实际拿到了游览行的景点，关于它的终检/规划层警告全部撤销
-        # （用户看到「景点 X 来不及」+ 日程里 X 有游览行 = 自相矛盾）。
+        # T-053: retract false-positive closing warnings — once schedule.py
+        # replays with real transit times, any spot that actually got a visit
+        # row invalidates its planner/terminal-check warning (a "spot X can't
+        # be reached" warning next to a visited X is self-contradictory).
         visited_ids = {p.id for p in planned_day.pois if (p.name_en or p.name) in visit_titles}
         plan.warnings[:] = [
             w for w in plan.warnings
@@ -681,6 +682,183 @@ def transit_legs(req: TransitLegsRequest) -> dict[str, object]:
     with ThreadPoolExecutor(max_workers=8) as pool:
         legs = list(pool.map(_fetch, req.pairs))
     return {"legs": legs}
+
+
+# ---------------------------------------------------------------------------
+# Agent mode (T-A1): Strands Agents SDK chat — conversational planning with
+# human-in-the-loop interrupts. The agent orchestrates (chooses tools, asks
+# questions); the native engine decides geography/feasibility. Zero live
+# SerpApi calls by construction (cache + calibrated estimates only).
+# ---------------------------------------------------------------------------
+
+import asyncio  # noqa: E402
+import json as _json  # noqa: E402
+import os as _os  # noqa: E402
+
+from fastapi.responses import StreamingResponse  # noqa: E402
+
+from .agents.factory import build_agent  # noqa: E402
+from .agents.models import TripPlan as _TripPlan  # noqa: E402
+from .agents.provenance import enrich as _enrich  # noqa: E402
+from .agents.authority import apply_engine_times as _apply_engine_times  # noqa: E402
+
+_agent_sessions: dict[str, object] = {}
+_agent_lock = asyncio.Lock()  # one agent loop at a time (demo scale)
+
+
+def _agent_sse(kind: str, **payload) -> str:
+    return f"data: {_json.dumps({'type': kind, **payload}, ensure_ascii=False)}\n\n"
+
+
+def _agent_for(session_id: str):
+    if session_id not in _agent_sessions:
+        _agent_sessions[session_id] = build_agent()
+    return _agent_sessions[session_id]
+
+
+class AgentChatBody(BaseModel):
+    message: str
+    session_id: str = "web"
+
+
+class AgentResumeBody(BaseModel):
+    session_id: str = "demo"
+    interrupt_id: str
+    response: str
+
+
+class AgentResetBody(BaseModel):
+    session_id: str = "demo"
+
+
+@app.get("/api/trip/agent/spots/{city}")
+def agent_spots(city: str):
+    """Catalog coordinates so the agent-mode map can plot the plan without
+    the model having to echo lat/lng in structured output."""
+    return [
+        {"id": p.id, "name_en": p.name_en or p.name, "lat": p.lat, "lng": p.lng}
+        for p in get_poi_provider().get_pois(city)
+    ]
+
+
+@app.get("/api/trip/agent/info")
+def agent_info():
+    """Build metadata for the terminal statusline (model / version / tools)."""
+    model = (
+        "bedrock:" + _os.environ.get("BEDROCK_MODEL_ID", "us.amazon.nova-lite-v1:0")
+        if _os.environ.get("AGENT_MODEL") == "bedrock"
+        else "deepseek-chat"
+    )
+    return {
+        "app": "TripAgent",
+        "version": "1.0.0",
+        "model": model,
+        "framework": "strands-agents",
+        "tools": 8,
+    }
+
+
+@app.post("/api/trip/agent/reset")
+def agent_reset(body: AgentResetBody):
+    """Drop a wedged/broken session's agent (interrupt state is not resumable
+    with a fresh string prompt)."""
+    _agent_sessions.pop(body.session_id, None)
+    return {"status": "reset", "session_id": body.session_id}
+
+
+def _agent_stream(session_id: str, payload):
+    agent = _agent_for(session_id)
+    MAX_TOOL_EVENTS = 150  # T-A4 hard stop: a looping agent cannot burn the
+    # traveller's time — the structured follow-up still produces a plan.
+
+    async def generate():
+        final = None
+        capped = False
+        tool_events = 0
+        try:
+            async with _agent_lock:
+                async for event in agent.stream_async(payload):
+                    if "data" in event:
+                        yield _agent_sse("text", delta=event["data"])
+                    elif event.get("current_tool_use", {}).get("name"):
+                        tool = event["current_tool_use"]
+                        tool_events += 1
+                        if tool_events > MAX_TOOL_EVENTS:
+                            capped = True  # stop the loop; salvage below
+                            break
+                        yield _agent_sse("tool", name=tool["name"],
+                                         input_preview=str(tool.get("input", {}))[:160])
+                    elif "result" in event:
+                        final = event["result"]
+        except Exception as exc:  # a wedged stream must fail visibly
+            yield _agent_sse("error", message=f"{type(exc).__name__}: {exc}")
+            yield _agent_sse("done", state="error")
+            return
+        if capped:
+            def _emit_plan():
+                return agent(
+                    "You hit the tool-call budget. Emit the best itinerary you have "
+                    "as the structured TripPlan right now - no new tools.",
+                    structured_output_model=_TripPlan,
+                )
+            final = await asyncio.to_thread(_emit_plan)
+        if final is not None and getattr(final, "stop_reason", None) != "interrupt" \
+                and getattr(final, "structured_output", None) is None:
+            # stream_async can't take structured_output_model per-call — a
+            # prose-ending turn gets one forced structured follow-up so the
+            # plan card always renders.
+            def _emit_plan():
+                return agent(
+                    "Emit the final confirmed itinerary as the structured TripPlan now — "
+                    "no new tools, just the structured answer.",
+                    structured_output_model=_TripPlan,
+                )
+
+            try:
+                final = await asyncio.to_thread(_emit_plan)
+            except Exception as exc:
+                yield _agent_sse("error", message=f"plan emit failed: {type(exc).__name__}: {exc}")
+                yield _agent_sse("done", state="error")
+                return
+        if final is None:
+            yield _agent_sse("error", message="agent produced no result")
+            return
+        if getattr(final, "stop_reason", None) == "interrupt":
+            for intr in final.interrupts or []:
+                reason = intr.reason if isinstance(intr.reason, dict) else {}
+                yield _agent_sse(
+                    "decision", interrupt_id=intr.id, question=reason.get("question", ""),
+                    options=reason.get("options", []), context=reason.get("context", ""),
+                )
+            yield _agent_sse("done", state="waiting_for_decision")
+            return
+        plan = getattr(final, "structured_output", None)
+        if plan is not None:
+            plan_dict = plan.model_dump()  # not `payload` — closure param shadowing
+            # T-A2: display times are engine-authoritative — the model's draft
+            # times are overwritten by the deterministic replay (closing-time
+            # clipping, arrival-day starts) before anyone sees them.
+            plan_dict, engine_notes = _apply_engine_times(plan_dict)
+            extra = _enrich(plan_dict["days"][0]["city"], plan_dict) if plan.days else {}
+            yield _agent_sse("plan", plan=plan_dict, engine_notes=engine_notes, **extra)
+        yield _agent_sse("done", state="complete")
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
+
+
+@app.post("/api/trip/agent/chat")
+async def agent_chat(body: AgentChatBody):
+    return _agent_stream(body.session_id, body.message)
+
+
+@app.post("/api/trip/agent/resume")
+async def agent_resume(body: AgentResumeBody):
+    if body.session_id not in _agent_sessions:
+        return {"error": "unknown session"}
+    resume_payload = [{
+        "interruptResponse": {"interruptId": body.interrupt_id, "response": body.response},
+    }]
+    return _agent_stream(body.session_id, resume_payload)
 
 
 if __name__ == "__main__":

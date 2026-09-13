@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+  * { margin: 0; box-sizing: border-box; }
+  body { width: 1600px; height: 900px; background: #0d1117; color: #e6edf3;
+         font: 15px/1.45 "SF Mono", Menlo, monospace; padding: 36px 44px; position: relative; }
+  h1 { font-size: 26px; color: #06b6d4; letter-spacing: 1px; }
+  h1 span { color: #e3b341; }
+  .sub { color: #8b949e; font-size: 13px; margin: 4px 0 24px; }
+  .grid { display: grid; grid-template-columns: 340px 1fr 340px; gap: 22px; }
+  .box { background: #161b22; border: 1px solid #2d333b; border-radius: 10px; padding: 16px 18px; }
+  .box h2 { font-size: 14px; color: #06b6d4; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+  .box .item { background: #0d1117; border: 1px solid #2d333b; border-radius: 6px;
+               padding: 7px 10px; margin: 6px 0; font-size: 13.5px; }
+  .box .item small { color: #8b949e; display: block; font-size: 11.5px; }
+  .loop { border: 2px solid #e3b341; }
+  .loop h2 { color: #e3b341; }
+  .tool { display: flex; justify-content: space-between; gap: 8px; }
+  .tool b { color: #e6edf3; font-weight: 600; }
+  .engine h2 { color: #3fb950; }
+  .engine { border-color: #3fb950; }
+  .flow { color: #8b949e; font-size: 12.5px; text-align: center; margin: 10px 0; }
+  .arrow { color: #06b6d4; font-size: 20px; text-align: center; margin: 6px 0; }
+  .watch { position: absolute; right: 44px; bottom: 96px; width: 620px;
+           border: 2px dashed #bc8cff; }
+  .watch h2 { color: #bc8cff; }
+  .agentcore { position: absolute; left: 44px; bottom: 40px; width: 640px; border-style: dashed; border-color: #8b949e; }
+  .agentcore h2 { color: #8b949e; }
+  .foot { position: absolute; right: 44px; bottom: 40px; color: #8b949e; font-size: 12px; text-align: right; }
+</style></head>
+<body>
+  <h1>Trip<span>Agent</span> — a background travel agent for East Asia backpackers</h1>
+  <div class="sub">Strands Agents SDK + DeepSeek (OpenAI-compatible endpoint) · planning engine vendored from alontrip (MIT) · zero live SerpApi calls (cache + calibrated estimates)</div>
+
+  <div class="grid">
+    <div class="box">
+      <h2>Traveller</h2>
+      <div class="item">Web chat (dark shell)<small>left: SSE stream · right: itinerary card + Leaflet map (Esri Dark Gray)</small></div>
+      <div class="arrow">▼▲</div>
+      <div class="item">POST /chat<small>streams text deltas + tool-call events</small></div>
+      <div class="item">POST /resume<small>feeds the chosen option back into the paused loop</small></div>
+      <div class="flow">decisions reach the traveller<br>ONLY here — never trivia</div>
+    </div>
+
+    <div class="box loop">
+      <h2>Strands Agent loop (deepseek-chat, temp 0.2)</h2>
+      <div class="item tool"><b>@tool search_pois / spot_detail</b><span>real catalog</span></div>
+      <div class="item tool"><b>@tool draft_day_plan</b><span>engine call</span></div>
+      <div class="item tool"><b>@tool replay_clock</b><span>real transit times</span></div>
+      <div class="item tool"><b>@tool transit_route / trip_budget</b><span>cache → estimate</span></div>
+      <div class="item tool"><b>@tool ask_traveller</b><span>interrupt gate</span></div>
+      <div class="flow">the model decides which tool to call next, sees each result,<br>and pauses the whole loop at a real decision (Strands interrupt)</div>
+      <div class="item">SummarizingConversationManager<small>multi-day re-planning without blowing the context window</small></div>
+      <div class="item">System prompt SOP + honesty rules<small>warnings pass through verbatim — the agent is the messenger, not the spin doctor</small></div>
+    </div>
+
+    <div class="box engine">
+      <h2>Planning engine (vendored, unmodified)</h2>
+      <div class="item">Geographic NN-chain grouping<small>days stay contiguous — no cross-town zigzag</small></div>
+      <div class="item">Capacity packing · 3×(days−2)+2 pace<small>load budget per day, flight-aware</small></div>
+      <div class="item">parse_hours — 328 catalog entries<small>opening windows everywhere downstream</small></div>
+      <div class="item">Closing-time terminal check<small>reorders → moves → swaps before any warning</small></div>
+      <div class="item">data/ — 9 cities, 328 spots, transit cache<small>zero live SerpApi by construction</small></div>
+    </div>
+  </div>
+
+  <div class="box watch">
+    <h2>Background watcher (deterministic, no LLM)</h2>
+    <div class="item">reality event: "Kiyomizu-dera closes 08:30 today" → re-replay affected days with the engine → smallest fix first (in-day reorder → move across days) → ONE push: auto-fixed note or a single decision</div>
+  </div>
+
+  <div class="box agentcore">
+    <h2>🔒 optional hardening — post-registration</h2>
+    <div class="item">Amazon Bedrock AgentCore Runtime deployment + model swap (same agent code) — strengthens Technical Implementation if reachable from the deploy region</div>
+  </div>
+
+  <div class="foot">Agents for Humans (AWS × Devpost) · submission period 2026-08-10 → 09-14<br>engine prior art: github.com/alon1997/alontrip (MIT) — disclosed in README</div>
+</body></html>

@@ -1103,3 +1103,10 @@ body { background: var(--bg-v2); }
   padding: 5px 8px;
   border-radius: 0 5px 5px 0;
 }
+
+/* Dark rendering for OSM raster tiles (see basemap.js history): invert makes
+   light OSM dark; hue-rotate keeps water blue-ish; saturate/brightness tune
+   contrast so markers and labels stay readable. */
+.dark-tiles {
+  filter: grayscale(1) invert(1) brightness(0.82) contrast(0.92);
+}

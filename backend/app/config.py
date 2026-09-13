@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=_ENV_FILE, extra="ignore")
 
     serpapi_key: str = ""
+    # Agent-mode-only SerpApi key (T-A3 scoping): when set, ONLY the agent's
+    # transit tool goes live — the classic tool mode keeps the keyless
+    # cache/estimate provider, so planner traffic never spends quota.
+    agent_serpapi_key: str = ""
     amap_key: str = ""  # Amap (Gaode) web service; mainland-China transit. Empty = mainland legs fall back to the taxi estimate, never Google
     deepseek_api_key: str = ""
     deepseek_base_url: str = "https://api.deepseek.com/anthropic"

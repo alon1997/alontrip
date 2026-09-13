@@ -92,11 +92,15 @@ _COMMUTE_PER_KM_MIN = 1.2
 # takes 99 min. Airports always use a flat conservative 90 min; stations use
 # the straight-line formula.
 _AIRPORT_COMMUTE_MIN = 90.0
-# T-051: 到达日地理锚定——落地晚酒店 5km 内的点才算「顺路」，
-# 更远的点挪去地理上归属的其他天（换乘当晚跨城跑 8 公里 = 差评来源）。
+# T-051: arrival-day geographic anchoring - on landing evening only spots
+# within 5km of the hotel count as "on the way"; anything farther moves to
+# the day it geographically belongs to (an 8km cross-city detour on arrival
+# night was the harshest review this product ever received).
 _ARRIVAL_PROXIMITY_KM = 5.0
-# T-052: 补点锚定——漏掉的景点跟随地理最近的已排景点（≤8km）同天，
-# 远郊景点（大公园+缆车）自动抱团，不再被质心运算撒进市区日。
+# T-052: repair anchoring - a spot the model missed follows its geographically
+# closest placed sibling (<=8km) onto the same day, so far-suburb clusters
+# (big park + cable car) stick together instead of being scattered into
+# downtown days by centroid arithmetic.
 _REPAIR_ANCHOR_KM = 8.0
 # Fixed overhead on an intercity day after the 16:00 station arrival, before
 # sightseeing really starts (baggage storage / transfers / first leg into town)
@@ -247,9 +251,10 @@ def _group_city_pois(pois: list[Poi], n_days: int) -> list[list[Poi]]:
     spread across the block, remaining days stay empty (pure hotel/transit) —
     an earlier version cycled back through the same spots, which meant
     re-visiting a spot on a later day (bug report 2026-08-21)."""
-    # T-052 核心：贪心最近邻链——从距质心最近的点出发，反复走向最近的
-    # 未分组景点，形成地理连续的链，再均分切成 n_days 段。
-    # 无论景点比天多还是少，都用链式分组（地理连贯保证）。
+    # T-052 core: greedy nearest-neighbour chain - start at the spot closest
+    # to the city centroid, repeatedly walk to the nearest unassigned spot,
+    # then cut the chain into n_days contiguous segments. Chain grouping
+    # guarantees geographic contiguity whether spots outnumber days or not.
     if not pois:
         return [[] for _ in range(n_days)]
     c = _centroid(pois)
@@ -868,18 +873,19 @@ def _enforce_arrival_proximity(
     first_from_by_day: dict[int, tuple[float, float] | None] | None,
     hotel: tuple[float, float],
 ) -> tuple[list[list[Poi]], list[tuple[str, int, int]]]:
-    """T-051: 到达日地理锚定（只作用于到达日所在的城块）。
+    """T-051: arrival-day geographic anchoring (only the block owning day 1).
 
-    落地 + 入住 + 长途飞行之后，把旅客拽到 8 公里外的区再折返，
-    是本产品收到过最激烈的差评来源。规则：
-    1. 到达日（本地 day 0）上、距酒店超过 ``_ARRIVAL_PROXIMITY_KM`` 的点
-       → 挪到「地理上离它最近、且塞入后不踩闭馆线」的其他天；
-    2. 全部挪走、到达日空了 → 从其他天里拉一个酒店 5km 内的点进来
-       （『few』的『有余量就塞一个』在地理正确的前提下兑现）。
-    只在城块内挪动；跨城是行程结构，不允许。"""
+    After landing + check-in + a long flight, dragging the traveller to a
+    district 8km away and back was the harshest review this product got. Rules:
+    1. On the arrival day (local day 0), spots farther than
+       ``_ARRIVAL_PROXIMITY_KM`` from the hotel move to the geographically
+       closest day where they still clear the closing-time line;
+    2. If that empties the arrival day, pull in the nearest (<=5km) spot from
+       another day ("few" means one nearby spot when there is room).
+    Moves stay within the city block; cross-city is trip structure, untouchable."""
     groups = [list(g) for g in groups]
     moved: list[tuple[str, int, int]] = []
-    i = 0  # 到达日必为本块第一天
+    i = 0  # the arrival day is always this block's first day
 
     def start_of(j: int) -> int:
         return starts.get(j, DAY_START_MIN)
@@ -893,7 +899,7 @@ def _enforce_arrival_proximity(
     def km_from_hotel(p: Poi) -> float:
         return haversine_km(hotel[0], hotel[1], p.lat, p.lng)
 
-    # 1) 远点放逐：每次挑最远的挪走，直到没有 >5km 的点
+    # 1) exile far spots: move the farthest first until none exceed 5km
     for _ in range(len(groups[i]) + 1):
         far = [
             (km_from_hotel(p), k)
@@ -912,18 +918,18 @@ def _enforce_arrival_proximity(
                 groups[j] + [spot], start_of(j), origin_of(j), end_of(j)
             )
             if _closed_at_arrival(trial, start_of(j), origin_of(j), end_of(j)):
-                continue  # 塞进去会让那天踩闭馆线 → 不要
+                continue  # inserting would breach that day's closing line - skip
             c = _centroid(groups[j] or [spot])
             dist = haversine_km(spot.lat, spot.lng, c[0], c[1])
             dests.append((dist, j, trial))
         if not dests:
-            groups[i].insert(k, spot)  # 无处可去 → 原位保留，警告由上层兜底
+            groups[i].insert(k, spot)  # nowhere legal -> keep in place; upstream reports
             break
         _, j, trial = min(dests)
         groups[j] = trial
         moved.append((spot.id, i + 1, j + 1))
 
-    # 2) 到达日空了 → 从其他天拉一个酒店 5km 内的点进来（就近原则）
+    # 2) arrival day emptied -> pull in the nearest (<=5km) spot from another day
     if not groups[i]:
         cands: list[tuple[float, int, Poi]] = []
         for j in range(len(groups)):
@@ -989,8 +995,9 @@ def _enforce_closing(
                 break
             spot = order[bad[-1]]
             # — Rescue 1: move across days (target day stays closing-feasible) —
-            # T-053: 预算守卫移除——闭馆违规的救援优先于容量管理，
-            # 目标天挤一点但有景点被救活，远好于原天留警告。
+            # T-053: budget guard removed - a closing violation rescue takes
+            # priority over capacity management; a slightly crowded target day
+            # with a saved spot beats a warning left on the original day.
             dests: list[tuple[float, int, int, list[Poi]]] = []
             for j in range(len(groups)):
                 if j == i or j in empty_idx or not groups[j]:
@@ -1855,8 +1862,9 @@ def plan_trip(
                 f"{poi_id} doesn't fit its day (would arrive after closing or past the day's "
                 "cutoff) — the trip is packed; move it to another day on the map or drop a spot"
             )
-        # T-051: 到达日地理锚定——落地当晚只在酒店 5km 内活动，
-        # 远点交还地理归属天；到达日全空则就近拉一个点进来。
+        # T-051: arrival-day anchoring - landing evening stays within 5km of
+        # the hotel; far spots return to their geographic day; if the arrival
+        # day empties, pull in the nearest spot.
         if first_day_global in day_list and arrival_hub is not None:
             groups, prox_moved = _enforce_arrival_proximity(
                 groups, starts_local, ends_local, first_from_local,

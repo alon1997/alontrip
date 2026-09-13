@@ -1,26 +1,25 @@
-// Dark basemap: CARTO dark_all now enforces an API key (verified 2026-08-28:
-// keyless requests return a 1970B "API KEY REQUIRED" placeholder tile, even
-// with an alonuniverse.com Referer), turning every map into a wall of
-// watermarks. Switched to Esri World Dark Gray Canvas (free, keyless, dark,
-// stylistically continuous): Base supplies the terrain, Reference supplies
-// place-name labels (transparent PNG overlay).
-// Note Esri uses {z}/{y}/{x} order, maxZoom 16.
+// Dark basemap history (both keyless):
+// - 2026-08-28: CARTO dark_all keyless → "API KEY REQUIRED" watermark tiles
+//   → switched to Esri World Dark Gray Canvas.
+// - 2026-09-12: Esri started failing outright (0 tiles load from CN browsers;
+//   service behind API-key gating now), AND a re-probe showed CARTO keyless
+//   still watermarks every tile. Only OSM raster loads clean (keyless).
+// Current approach: OSM raster + a CSS invert/hue filter on the tile pane
+// (`.dark-tiles` in style.css) renders it as a dark map. Works everywhere,
+// no key, no watermarks.
 import L from 'leaflet'
 
-const ESRI_BASE_URL =
-  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'
-const ESRI_REFERENCE_URL =
-  'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}'
+const OSM_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 
 const LAYER_OPTS = {
-  maxZoom: 16,
+  maxZoom: 19,
   crossOrigin: true, // required for html-to-image to draw tiles into a canvas
+  className: 'dark-tiles',
 }
 
 export function addDarkBasemap(map) {
-  L.tileLayer(ESRI_BASE_URL, {
+  L.tileLayer(OSM_URL, {
     ...LAYER_OPTS,
-    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, USGS, NOAA',
+    attribution: '&copy; OpenStreetMap contributors',
   }).addTo(map)
-  L.tileLayer(ESRI_REFERENCE_URL, { ...LAYER_OPTS, opacity: 0.85 }).addTo(map)
 }
