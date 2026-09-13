@@ -9,6 +9,8 @@ const GAODE_URL =
 
 const LAYER_OPTS = {
   maxZoom: 19,
+  detectRetina: true, // zoom+1 tiles on HiDPI screens — sharp instead of stretched
+  className: 'dark-tiles', // B&W dark via the CSS filter in style.css
 }
 
 export function addDarkBasemap(map) {

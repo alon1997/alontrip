@@ -226,6 +226,24 @@ def draft_day_plan(
         )
     except PlanningError as exc:  # frozen 400 strings — surface, don't swallow
         return {"error": str(exc)}
+    # T-A7: remember the engine's own output — the final itinerary is REBUILT
+    # from this (server-side), never from the model's echo. Hotels, day
+    # counts and spot sets are engine truth, exactly like classic mode.
+    global _LAST_DRAFT
+    _LAST_DRAFT = {
+        "city": city,
+        "days": [
+            {
+                "day": d.day,
+                "spot_ids": [p.id for p in d.pois],
+                "hotel": {
+                    "name": d.lodging.name, "lat": d.lodging.lat, "lng": d.lodging.lng,
+                },
+            }
+            for d in plan.days
+        ],
+        "warnings": list(plan.warnings),
+    }
     return {
         "days": [
             {
@@ -240,6 +258,9 @@ def draft_day_plan(
         ],
         "warnings": plan.warnings,
     }
+
+
+_LAST_DRAFT: dict | None = None  # last engine draft (single-user demo scope)
 
 
 @tool

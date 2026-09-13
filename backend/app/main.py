@@ -700,7 +700,7 @@ from fastapi.responses import StreamingResponse  # noqa: E402
 from .agents.factory import build_agent  # noqa: E402
 from .agents.models import TripPlan as _TripPlan  # noqa: E402
 from .agents.provenance import enrich as _enrich  # noqa: E402
-from .agents.authority import apply_engine_times as _apply_engine_times  # noqa: E402
+from .agents.authority import rebuild_from_engine as _rebuild_from_engine  # noqa: E402
 
 _agent_sessions: dict[str, object] = {}
 _agent_lock = asyncio.Lock()  # one agent loop at a time (demo scale)
@@ -855,12 +855,12 @@ def _agent_stream(session_id: str, payload):
         plan = getattr(final, "structured_output", None)
         if plan is not None:
             plan_dict = plan.model_dump()  # not `payload` — closure param shadowing
-            # T-A2: display times are engine-authoritative — the model's draft
-            # times are overwritten by the deterministic replay (closing-time
-            # clipping, arrival-day starts) before anyone sees them.
-            plan_dict, engine_notes = _apply_engine_times(plan_dict)
+            # T-A7: the final itinerary is REBUILT from the engine's last
+            # draft — hotels/days/spots/times are planner.py truth (same as
+            # classic mode); the model's echo only contributes display notes.
+            plan_dict = _rebuild_from_engine(plan_dict)
             extra = _enrich(plan_dict["days"][0]["city"], plan_dict) if plan.days else {}
-            yield _agent_sse("plan", plan=plan_dict, engine_notes=engine_notes, **extra)
+            yield _agent_sse("plan", plan=plan_dict, **extra)
         yield _agent_sse("done", state="complete")
 
     return StreamingResponse(generate(), media_type="text/event-stream")

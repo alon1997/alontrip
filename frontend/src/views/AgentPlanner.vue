@@ -286,8 +286,12 @@ function onResize() {
 
 onMounted(async () => {
   map = L.map(mapEl.value).setView([35.0, 135.76], 12)
+  // B&W dark map: standard OSM tiles, retina-doubled (sharp on HiDPI) and
+  // desaturated via the .dark-tiles filter in style.css
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
+    detectRetina: true,
+    className: 'dark-tiles',
     attribution: '&copy; OpenStreetMap contributors | spots: AlonTrip catalog',
   }).addTo(map)
   window.addEventListener('resize', onResize)
