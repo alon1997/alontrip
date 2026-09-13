@@ -172,13 +172,6 @@ def transit_route(
     return _transit_profile(city, from_lat, from_lng, to_lat, to_lng)
 
 
-_draft_log: list[float] = []  # rolling timestamps — draft throttle (T-A6)
-
-
-def reset_draft_budget():
-    """Test helper: clear the rolling draft throttle."""
-    _draft_log.clear()
-
 @tool
 def draft_day_plan(
     city: str,
@@ -204,16 +197,6 @@ def draft_day_plan(
         first_day_density / last_day_density: "few" (light) or "none" (empty)
           for the arrival/departure day.
     """
-    import time as _time
-
-    now = _time.time()
-    while _draft_log and now - _draft_log[0] > 600:
-        _draft_log.pop(0)
-    if len(_draft_log) >= 6:
-        return {"error": "draft budget exhausted (6 drafts / 10 min) — do NOT call again; "
-                         "work with your best draft so far and finish the itinerary"}
-    _draft_log.append(now)
-
     poi = poi_provider()
     by_id = {p.id: p for p in poi.get_pois(city)}
     unknown = [pid for pid in poi_ids if pid not in by_id]

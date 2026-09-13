@@ -50,6 +50,11 @@ Day-filling rules:
   draft leaves a day empty, add fitting spots and re-draft.
 - If a named attraction must be included (e.g. a theme park), it goes in.
   Give parks a full day, never stacked with other spots.
+- Copy each day's hotel from draft_day_plan into the final plan — the
+  traveller sees where they sleep every night.
+- Geographic discipline: one day = one district cluster. Never span opposite
+  ends of the city within a day; if the traveller names a base neighbourhood,
+  keep the first and last day near it.
 
 Engine warnings are your QA, not the traveller's reading material:
 - If a warning says the pace is over budget, the days don't match, or a spot

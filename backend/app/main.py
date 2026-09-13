@@ -741,6 +741,16 @@ def agent_spots(city: str):
     ]
 
 
+@app.get("/api/trip/agent/hotels/{city}")
+def agent_hotels(city: str):
+    """Lodging catalog coordinates so the agent-mode map can plot the hotels
+    the plan references by name."""
+    return [
+        {"name": l.name, "lat": l.lat, "lng": l.lng}
+        for l in get_lodging_provider().get_lodgings(city)
+    ]
+
+
 @app.get("/api/trip/agent/info")
 def agent_info():
     """Build metadata for the terminal statusline (model / version / tools)."""
@@ -801,7 +811,11 @@ def _agent_stream(session_id: str, payload):
                     "as the structured TripPlan right now - no new tools.",
                     structured_output_model=_TripPlan,
                 )
-            final = await asyncio.to_thread(_emit_plan)
+            try:
+                final = await asyncio.to_thread(_emit_plan)
+            except Exception:
+                await asyncio.sleep(3)
+                final = await asyncio.to_thread(_emit_plan)
         if final is not None and getattr(final, "stop_reason", None) != "interrupt" \
                 and getattr(final, "structured_output", None) is None:
             # stream_async can't take structured_output_model per-call — a
@@ -817,9 +831,15 @@ def _agent_stream(session_id: str, payload):
             try:
                 final = await asyncio.to_thread(_emit_plan)
             except Exception as exc:
-                yield _agent_sse("error", message=f"plan emit failed: {type(exc).__name__}: {exc}")
-                yield _agent_sse("done", state="error")
-                return
+                # a previous stream on this session may still be finishing —
+                # wait once and retry before giving up
+                await asyncio.sleep(3)
+                try:
+                    final = await asyncio.to_thread(_emit_plan)
+                except Exception as exc2:
+                    yield _agent_sse("error", message=f"plan emit failed: {type(exc2).__name__}: {exc2}")
+                    yield _agent_sse("done", state="error")
+                    return
         if final is None:
             yield _agent_sse("error", message="agent produced no result")
             return

@@ -11,7 +11,7 @@ at 21:00.
 
 from __future__ import annotations
 
-from .tools import poi_provider, replay_day_events
+from .tools import lodging_provider, poi_provider, replay_day_events
 
 
 def _hhmm_to_min(v: str) -> int:
@@ -34,6 +34,34 @@ def apply_engine_times(plan: dict) -> tuple[dict, list[str]]:
     city = plan["days"][0].get("city", "")
     catalog = {p.id: p for p in poi_provider().get_pois(city)}
     notes: list[str] = []
+
+    # attach hotel coordinates (exact-then-substring match against the
+    # catalog) so the frontend never has to guess by display name. When the
+    # model invented a free-form hotel name, fall back to the engine rule:
+    # the catalog lodging nearest that day's spot centroid — and replace the
+    # display name with the real one (the model's "to be confirmed" noise
+    # would otherwise promise a hotel that was never selected).
+    from math import sqrt
+
+    lodgings = lodging_provider().get_lodgings(city)
+    catalog = {p.id: p for p in poi_provider().get_pois(city)}
+    for day in plan["days"]:
+        name = day.get("hotel", "")
+        match = next((l for l in lodgings if l.name == name), None) \
+            or next((l for l in lodgings if name and (name in l.name or l.name in name)), None)
+        if match is None and lodgings:
+            coords = [catalog[s["id"]] for s in day.get("spots", []) if s["id"] in catalog]
+            if coords:
+                clat = sum(c.lat for c in coords) / len(coords)
+                clng = sum(c.lng for c in coords) / len(coords)
+                match = min(
+                    lodgings,
+                    key=lambda l: sqrt((l.lat - clat) ** 2 + (l.lng - clng) ** 2),
+                )
+        if match is not None:
+            day["hotel_lat"] = match.lat
+            day["hotel_lng"] = match.lng
+            day["hotel"] = match.name
 
     for day in plan["days"]:
         ids = [s["id"] for s in day.get("spots", [])]

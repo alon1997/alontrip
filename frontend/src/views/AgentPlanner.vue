@@ -49,10 +49,39 @@ function push(node) {
 
 async function loadCity(city) {
   if (spotIndex.__city === city) return
-  const r = await fetch(`/api/trip/agent/spots/${encodeURIComponent(city)}`)
-  const spots = await r.json()
+  const [spotRes, hotelRes] = await Promise.all([
+    fetch(`/api/trip/agent/spots/${encodeURIComponent(city)}`),
+    fetch(`/api/trip/agent/hotels/${encodeURIComponent(city)}`),
+  ])
+  const spots = await spotRes.json()
   spots.forEach(s => { spotIndex[s.id] = s })
+  spotIndex.__hotels = spotIndex.__hotels || {}
+  const hotels = await hotelRes.json()
+  hotels.forEach(h => { spotIndex.__hotels[h.name] = h })
   spotIndex.__city = city
+}
+
+// a/b are [lat, lng] arrays — index, never .lat/.lng (NaN kills the whole render loop)
+function bearingDeg(a, b) {
+  const dx = b[1] - a[1], dy = b[0] - a[0]
+  return Math.atan2(dx, dy) * 180 / Math.PI
+}
+function addArrow(map, a, b, color) {
+  const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
+  const deg = bearingDeg(a, b)
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="transform:rotate(${deg}deg);color:${color};font-size:15px;line-height:15px;text-shadow:0 0 3px #fff">▲</div>`,
+    iconSize: [15, 15],
+  })
+  return L.marker(mid, { icon, interactive: false }).addTo(map)
+}
+function hotelIcon() {
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:18px;height:18px;background:#fff;border:2px solid #111;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px">🏨</div>`,
+    iconSize: [18, 18],
+  })
 }
 
 function renderPlanOnMap() {
@@ -60,15 +89,37 @@ function renderPlanOnMap() {
   markers.forEach(m => map.removeLayer(m))
   markers = []
   const pts = []
-  plan.value.days.forEach((d, i) => d.spots.forEach(s => {
-    const meta = spotIndex[s.id]
-    if (!meta) return
-    const m = L.circleMarker([meta.lat, meta.lng], {
-      radius: 7, color: DAY_COLORS[i % DAY_COLORS.length], fillOpacity: 0.9, weight: 2,
-    }).addTo(map).bindTooltip(s.name_en)
-    markers.push(m)
-    pts.push([meta.lat, meta.lng])
-  }))
+  const hotelsSeen = new Set()
+  plan.value.days.forEach((d, i) => {
+    const color = DAY_COLORS[i % DAY_COLORS.length]
+    const ll = []
+    d.spots.forEach(s => {
+      const meta = spotIndex[s.id]
+      if (!meta) return
+      ll.push([meta.lat, meta.lng])
+      const m = L.circleMarker([meta.lat, meta.lng], {
+        radius: 7, color, fillOpacity: 0.9, weight: 2,
+      }).addTo(map).bindTooltip(`${s.start} ${s.name_en}`)
+      markers.push(m)
+    })
+    if (ll.length > 1) {
+      const line = L.polyline(ll, { color, weight: 3, opacity: 0.85 }).addTo(map)
+      markers.push(line)
+      for (let k = 0; k < ll.length - 1; k++) markers.push(addArrow(map, ll[k], ll[k + 1], color))
+    }
+    pts.push(...ll)
+    // hotel coords come server-attached (hotel_lat/hotel_lng); the name
+    // catalog is only a fallback
+    const hLat = d.hotel_lat, hLng = d.hotel_lng
+    const hByName = d.hotel && spotIndex.__hotels && spotIndex.__hotels[d.hotel]
+    const hCoord = hLat != null ? [hLat, hLng] : (hByName ? [hByName.lat, hByName.lng] : null)
+    if (hCoord && !hotelsSeen.has(d.hotel)) {
+      hotelsSeen.add(d.hotel)
+      const hm = L.marker(hCoord, { icon: hotelIcon() }).addTo(map).bindTooltip('🏨 ' + d.hotel)
+      markers.push(hm)
+      pts.push(hCoord)
+    }
+  })
   if (pts.length) map.fitBounds(pts, { padding: [30, 30] })
   map.invalidateSize()
 }
@@ -237,7 +288,6 @@ onMounted(async () => {
   map = L.map(mapEl.value).setView([35.0, 135.76], 12)
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
-    className: 'dark-tiles',
     attribution: '&copy; OpenStreetMap contributors | spots: AlonTrip catalog',
   }).addTo(map)
   window.addEventListener('resize', onResize)
@@ -301,13 +351,6 @@ onBeforeUnmount(() => {
 
             <div v-else-if="m.role === 'plan'" ref="planBlockEl" class="plan-block">
               <div class="p-head">┌─ ITINERARY ────────────────────────</div>
-              <div class="prov" :class="{ bad: m.provenance?.spots_invented || m.provenance?.duplicate_spot_ids?.length }">
-                <span class="ok">✓</span> {{ m.provenance?.spots_catalog_verified }}/{{ m.provenance?.spots_total }} spots catalog-verified
-                <template v-for="(v, k) in m.provenance?.transit_legs || {}" :key="k">
-                  <span v-if="v"> · {{ v }} {{ k }}</span>
-                </template>
-                · {{ m.provenance?.live_api_calls ?? 0 }} live API calls
-              </div>
               <div v-for="(d, i) in m.plan.days" :key="d.day" class="p-day">
                 <div class="d-line" :style="{ color: DAY_COLORS[i % DAY_COLORS.length] }">
                   ├─ Day {{ d.day }} · {{ d.city }}<span v-if="d.hotel"> · {{ d.hotel }}</span>
