@@ -3,16 +3,19 @@
 The model orchestrates the conversation, but the itinerary shown to the
 traveller is REBUILT from the engine's last draft (planner.py output) —
 the same source of truth classic mode has always used. The model's
-structured echo only contributes display notes. This makes hotels per day,
-day counts, spot sets and visit times deterministic engine output; model
+structured echo only contributes display notes. Hotels per night, day
+counts, spot sets and visit times are deterministic engine output; model
 drift (invented hotel names, duplicated spots, wrong day counts, impossible
-times) can no longer reach the screen.
+times) cannot reach the screen.
 """
 
 from __future__ import annotations
 
-from . import tools as _tools
-from .tools import poi_provider, replay_day_events
+import logging
+
+from .tools import load_last_draft, lodging_provider, poi_provider, replay_day_events
+
+logger = logging.getLogger(__name__)
 
 
 def _hhmm_to_min(v: str) -> int:
@@ -25,22 +28,24 @@ def _hhmm_to_min(v: str) -> int:
 
 def rebuild_from_engine(plan: dict) -> dict:
     """Return a plan whose days/hotels/spots/times all come from the last
-    engine draft. Falls back to the model's plan (patched as before) only
-    when no draft exists or the city changed."""
-    draft = getattr(_tools, "_LAST_DRAFT", None)
+    engine draft (file-backed stash). Falls back to patching the model's
+    plan only when no draft exists."""
+    draft = load_last_draft()
     if not draft or not draft.get("days"):
+        logger.warning("rebuild_from_engine: no draft stashed — patching model plan")
         return _fallback_patch(plan)
-    city = draft["city"]
-    if plan.get("days") and plan["days"][0].get("city") not in (None, city):
-        # traveller switched cities mid-conversation — trust the draft anyway
-        pass
 
+    city = draft["city"]
     catalog = {p.id: p for p in poi_provider().get_pois(city)}
-    # model notes, keyed by spot id (nice-to-have only)
+
+    # model notes per spot + day starts (display bits only)
     notes: dict[str, str] = {}
     starts: dict[int, str] = {}
     for d in plan.get("days", []):
-        starts[int(d.get("day", 0))] = d.get("day_start", "09:00")
+        try:
+            starts[int(d.get("day", 0))] = d.get("day_start", "09:00")
+        except (TypeError, ValueError):
+            pass
         for s in d.get("spots", []):
             if s.get("note"):
                 notes[s["id"]] = s["note"]
@@ -68,7 +73,7 @@ def rebuild_from_engine(plan: dict) -> dict:
             })
         if unvisitable:
             warnings.append(
-                "Couldn't fit in Day %s: %s — say the word and I'll re-plan another day"
+                "Couldn't fit in Day %s: %s — say the word and I'll re-plan"
                 % (day_no, ", ".join(unvisitable))
             )
         new_days.append({
@@ -82,9 +87,10 @@ def rebuild_from_engine(plan: dict) -> dict:
             "summary": "",
         })
 
+    logger.info("rebuild_from_engine: city=%s days=%d hotels=%s",
+                city, len(new_days), [d["hotel"] for d in new_days])
     rebuilt = dict(plan)
     rebuilt["days"] = new_days
-    # engine warnings first, then any short model caveats that still apply
     rebuilt["warnings"] = warnings + [
         w for w in plan.get("warnings", []) if w not in warnings
     ][:2]
@@ -92,14 +98,12 @@ def rebuild_from_engine(plan: dict) -> dict:
 
 
 def _fallback_patch(plan: dict) -> dict:
-    """Old path (kept for safety): keep the model plan, attach hotel coords
-    by name match / nearest-centroid fallback, and clip times per day."""
+    """Safety path: keep the model plan, attach hotel coords by name match /
+    nearest-centroid fallback, and clip times per day."""
     if not plan.get("days"):
         return plan
     city = plan["days"][0].get("city", "")
     catalog = {p.id: p for p in poi_provider().get_pois(city)}
-    from .tools import lodging_provider
-
     lodgings = lodging_provider().get_lodgings(city)
     for day in plan["days"]:
         name = day.get("hotel", "")

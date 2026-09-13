@@ -24,6 +24,24 @@ from ..services.schedule import build_day_schedule
 from ..services.transit import Coord, LocalTransitProvider, SerpApiTransitProvider
 
 
+# T-A7: file-backed last-draft stash — the final itinerary is rebuilt from
+# the engine's own output (classic-mode truth), never the model's echo.
+import logging
+import json as _json
+from pathlib import Path as _Path
+
+_STASH_PATH = _Path(__file__).resolve().parent.parent.parent / "logs" / "last_draft.json"
+_STASH_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+
+def load_last_draft() -> dict | None:
+    """Read the engine's last successful draft (for rebuild_from_engine)."""
+    try:
+        return _json.loads(_STASH_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
 class _Leg:
     """build_day_schedule reads .route off each leg."""
 
@@ -229,8 +247,10 @@ def draft_day_plan(
     # T-A7: remember the engine's own output — the final itinerary is REBUILT
     # from this (server-side), never from the model's echo. Hotels, day
     # counts and spot sets are engine truth, exactly like classic mode.
-    global _LAST_DRAFT
-    _LAST_DRAFT = {
+    import json as _json
+    from pathlib import Path as _Path
+
+    _stash = {
         "city": city,
         "days": [
             {
@@ -244,6 +264,10 @@ def draft_day_plan(
         ],
         "warnings": list(plan.warnings),
     }
+    try:  # file-backed: immune to module reloads / executor copies
+        _STASH_PATH.write_text(_json.dumps(_stash), encoding="utf-8")
+    except OSError as exc:
+        logging.getLogger(__name__).warning("draft stash write failed: %s", exc)
     return {
         "days": [
             {
@@ -362,3 +386,14 @@ def trip_budget(city: str, day_plans: list[dict]) -> dict:
         "total_usd": round(transit_usd + tickets_usd + stays_usd, 2),
         "unknown_prices": unknown,
     }
+
+
+def stash_draft(draft: dict | None) -> None:
+    """Write a draft produced elsewhere (e.g. main.py's deterministic re-run)
+    into the file stash consumed by rebuild_from_engine."""
+    if not draft:
+        return
+    try:
+        _STASH_PATH.write_text(_json.dumps(draft), encoding="utf-8")
+    except OSError as exc:
+        logging.getLogger(__name__).warning("draft stash write failed: %s", exc)

@@ -77,10 +77,11 @@ function addArrow(map, a, b, color) {
   return L.marker(mid, { icon, interactive: false }).addTo(map)
 }
 function hotelIcon() {
+  // same gold house pin as classic mode (classes live in style.css)
   return L.divIcon({
-    className: '',
-    html: `<div style="width:18px;height:18px;background:#fff;border:2px solid #111;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px">🏨</div>`,
-    iconSize: [18, 18],
+    className: 'hotel-pin-icon',
+    html: '<div class="hotel-pin"><svg class="hotel-pin-glyph" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 2.2 2.4 7.1v6.5h3.5V9.2h4.2v4.4h3.5V7.1L8 2.2z"/></svg></div>',
+    iconSize: [24, 24],
   })
 }
 
@@ -115,7 +116,7 @@ function renderPlanOnMap() {
     const hCoord = hLat != null ? [hLat, hLng] : (hByName ? [hByName.lat, hByName.lng] : null)
     if (hCoord && !hotelsSeen.has(d.hotel)) {
       hotelsSeen.add(d.hotel)
-      const hm = L.marker(hCoord, { icon: hotelIcon() }).addTo(map).bindTooltip('🏨 ' + d.hotel)
+      const hm = L.marker(hCoord, { icon: hotelIcon() }).addTo(map).bindTooltip(d.hotel)
       markers.push(hm)
       pts.push(hCoord)
     }

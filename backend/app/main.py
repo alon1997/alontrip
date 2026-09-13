@@ -703,6 +703,71 @@ from .agents.provenance import enrich as _enrich  # noqa: E402
 from .agents.authority import rebuild_from_engine as _rebuild_from_engine  # noqa: E402
 
 _agent_sessions: dict[str, object] = {}
+# last draft_day_plan ARGS per session, captured from the SSE tool events —
+# the final plan re-runs the engine with these args directly in this module
+# (T-A7), so the displayed itinerary is engine truth regardless of what the
+# model echoed.
+_session_drafts: dict[str, dict] = {}
+
+
+def _rerun_engine_draft(city: str, args: dict):
+    """Deterministically re-run plan_trip with the agent's last draft args.
+    Returns the engine draft dict (days/hotels/warnings) or None."""
+    from .services.factory import get_lodging_provider as _gl, get_poi_provider as _gp, \
+        get_transport_hub_provider as _gh
+
+    import json as _json
+
+    if isinstance(args, str):
+        try:
+            args = _json.loads(args)
+        except ValueError:
+            return None
+    if not isinstance(args, dict):
+        return None
+    poi_ids = args.get("poi_ids") or []
+    if not poi_ids:
+        return None
+    arrival_time_min = None
+    at = args.get("arrival_time")
+    if at:
+        try:
+            h, m = str(at).strip().split(":")
+            arrival_time_min = int(h) * 60 + int(m)
+        except ValueError:
+            arrival_time_min = None
+    try:
+        plan = plan_trip(
+            cities=[city],
+            days=int(args.get("days", 2)),
+            poi_ids=poi_ids,
+            hotel_mode="system_one",
+            custom_stays=[],
+            poi_catalog={city: _gp().get_pois(city)},
+            lodging_catalog={city: _gl().get_lodgings(city)},
+            deepseek_api_key="",  # engine rule path — deterministic, no LLM
+            deepseek_base_url="",
+            arrival_hub_id=args.get("arrival_hub_id"),
+            hub_catalog={city: _gh().get_hubs(city)},
+            arrival_time_min=arrival_time_min,
+            first_day_density=args.get("first_day_density"),
+            last_day_density=args.get("last_day_density"),
+        )
+    except Exception as exc:  # noqa: BLE001 — degrade to model plan on any error
+        logger.warning("engine draft re-run failed: %s", exc)
+        return None
+    return {
+        "city": city,
+        "days": [
+            {
+                "day": d.day,
+                "spot_ids": [p.id for p in d.pois],
+                "hotel": {"name": d.lodging.name, "lat": d.lodging.lat, "lng": d.lodging.lng},
+            }
+            for d in plan.days
+        ],
+        "warnings": list(plan.warnings),
+    }
 _agent_lock = asyncio.Lock()  # one agent loop at a time (demo scale)
 
 
@@ -784,7 +849,8 @@ def _agent_stream(session_id: str, payload):
     async def generate():
         final = None
         capped = False
-        tool_events = 0
+        tool_calls_seen: set[str] = set()  # unique toolUseIds — strands emits
+        # many current_tool_use events per call while streaming its input
         try:
             async with _agent_lock:
                 async for event in agent.stream_async(payload):
@@ -792,10 +858,16 @@ def _agent_stream(session_id: str, payload):
                         yield _agent_sse("text", delta=event["data"])
                     elif event.get("current_tool_use", {}).get("name"):
                         tool = event["current_tool_use"]
-                        tool_events += 1
-                        if tool_events > MAX_TOOL_EVENTS:
+                        call_id = str(tool.get("toolUseId") or tool.get("id") or "")
+                        if call_id and call_id in tool_calls_seen:
+                            continue  # same call streaming — count once
+                        if call_id:
+                            tool_calls_seen.add(call_id)
+                        if len(tool_calls_seen) > MAX_TOOL_EVENTS:
                             capped = True  # stop the loop; salvage below
                             break
+                        if tool["name"] == "draft_day_plan":
+                            _session_drafts[session_id] = tool.get("input", {})
                         yield _agent_sse("tool", name=tool["name"],
                                          input_preview=str(tool.get("input", {}))[:160])
                     elif "result" in event:
@@ -855,9 +927,15 @@ def _agent_stream(session_id: str, payload):
         plan = getattr(final, "structured_output", None)
         if plan is not None:
             plan_dict = plan.model_dump()  # not `payload` — closure param shadowing
-            # T-A7: the final itinerary is REBUILT from the engine's last
-            # draft — hotels/days/spots/times are planner.py truth (same as
-            # classic mode); the model's echo only contributes display notes.
+            # T-A7: re-run the engine with the captured draft args and REBUILD
+            # the itinerary from planner.py truth (classic-mode source);
+            # the model's echo only contributes display notes.
+            _draft_args = _session_drafts.get(session_id) or {}
+            _city = plan_dict["days"][0].get("city") if plan_dict.get("days") else _draft_args.get("city", "")
+            if _draft_args and _city:
+                from .agents.tools import stash_draft
+
+                stash_draft(_rerun_engine_draft(_city, _draft_args))
             plan_dict = _rebuild_from_engine(plan_dict)
             extra = _enrich(plan_dict["days"][0]["city"], plan_dict) if plan.days else {}
             yield _agent_sse("plan", plan=plan_dict, **extra)
