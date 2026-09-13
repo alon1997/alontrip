@@ -93,7 +93,14 @@ function renderPlanOnMap() {
   const hotelsSeen = new Set()
   plan.value.days.forEach((d, i) => {
     const color = DAY_COLORS[i % DAY_COLORS.length]
-    const ll = []
+    // the day's route starts AND ends at the hotel — same chain as the
+    // itinerary text (hotel -> spots -> hotel)
+    const hCoord = d.hotel_lat != null && d.hotel_lng != null
+      ? [d.hotel_lat, d.hotel_lng]
+      : (d.hotel && spotIndex.__hotels && spotIndex.__hotels[d.hotel]
+          ? [spotIndex.__hotels[d.hotel].lat, spotIndex.__hotels[d.hotel].lng]
+          : null)
+    const ll = hCoord ? [hCoord] : []
     d.spots.forEach(s => {
       const meta = spotIndex[s.id]
       if (!meta) return
@@ -103,17 +110,13 @@ function renderPlanOnMap() {
       }).addTo(map).bindTooltip(`${s.start} ${s.name_en}`)
       markers.push(m)
     })
+    if (hCoord) ll.push(hCoord)
     if (ll.length > 1) {
       const line = L.polyline(ll, { color, weight: 3, opacity: 0.85 }).addTo(map)
       markers.push(line)
       for (let k = 0; k < ll.length - 1; k++) markers.push(addArrow(map, ll[k], ll[k + 1], color))
     }
     pts.push(...ll)
-    // hotel coords come server-attached (hotel_lat/hotel_lng); the name
-    // catalog is only a fallback
-    const hLat = d.hotel_lat, hLng = d.hotel_lng
-    const hByName = d.hotel && spotIndex.__hotels && spotIndex.__hotels[d.hotel]
-    const hCoord = hLat != null ? [hLat, hLng] : (hByName ? [hByName.lat, hByName.lng] : null)
     if (hCoord && !hotelsSeen.has(d.hotel)) {
       hotelsSeen.add(d.hotel)
       const hm = L.marker(hCoord, { icon: hotelIcon() }).addTo(map).bindTooltip(d.hotel)
