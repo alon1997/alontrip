@@ -460,12 +460,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="layout">
+  <div class="classic-page">
+    <div class="topbar-wrap"><AppHeader /></div>
+    <div class="layout">
     <aside class="sidebar">
-      <div class="brand-block">
-        <AppHeader />
-      </div>
-
       <div v-if="errorMsg" class="error-banner">
         <span>{{ errorMsg }}</span>
         <button class="close" aria-label="Dismiss" @click="errorMsg = ''">×</button>
@@ -726,5 +724,6 @@ onBeforeUnmount(() => {
       </div>
     </aside>
     <MapView :pois="allPoisFlat" :selected-ids="selectedPoiIds" @toggle-poi="onMapTogglePoi" />
+    </div>
   </div>
 </template>

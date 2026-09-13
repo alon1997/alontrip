@@ -184,6 +184,78 @@ const values = [
           </div>
         </section>
 
+        <!-- ============ ARCHITECTURE ============ -->
+        <section class="sec">
+          <div class="sec-head"><span class="no">06</span><h2>The system, drawn honestly</h2></div>
+          <p class="body intro">
+            One process, four layers, zero hand-waving — data flows top to bottom:
+          </p>
+
+          <div class="arch">
+            <!-- LAYER 1: browser -->
+            <div class="layer l-browser">
+              <span class="layer-tag">browser</span>
+              <div class="boxes">
+                <div class="box">Agent console<span class="sub">chat · plan · decision cards</span></div>
+                <div class="box">Classic form<span class="sub">cities · spots · hubs · flights</span></div>
+                <div class="box">Map<span class="sub">routes · hotel pins · arrows</span></div>
+              </div>
+            </div>
+            <div class="flow"><span>SSE stream / JSON</span></div>
+
+            <!-- LAYER 2: api -->
+            <div class="layer l-api">
+              <span class="layer-tag">FastAPI · :5003</span>
+              <div class="boxes">
+                <div class="box gold">/agent/chat · /agent/resume<span class="sub">Strands agent loop, streamed</span></div>
+                <div class="box">/optimize-route<span class="sub">classic six-pass engine</span></div>
+                <div class="box">/transit-legs<span class="sub">map fine-tuning</span></div>
+              </div>
+            </div>
+            <div class="flow"><span>tool calls (agent) · direct calls (classic)</span></div>
+
+            <!-- LAYER 3: agent + engine -->
+            <div class="layer-split">
+              <div class="layer l-agent">
+                <span class="layer-tag">Strands agent</span>
+                <div class="boxes">
+                  <div class="box">6 tools<span class="sub">search · draft · replay · transit · budget · ask</span></div>
+                  <div class="box">interrupts<span class="sub">⏸ human decisions only</span></div>
+                </div>
+              </div>
+              <div class="layer l-engine">
+                <span class="layer-tag">deterministic engine</span>
+                <div class="boxes">
+                  <div class="box">planner.py<span class="sub">NN-chain · capacity · closing check</span></div>
+                  <div class="box">schedule.py<span class="sub">clock replay · meals · caps</span></div>
+                  <div class="box">hours.py<span class="sub">328-spot opening-hours parser</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="flow"><span>reads / writes</span></div>
+
+            <!-- LAYER 4: data -->
+            <div class="layer l-data">
+              <span class="layer-tag">data</span>
+              <div class="boxes">
+                <div class="box">spot catalog<span class="sub">328 POIs · 9 cities</span></div>
+                <div class="box">lodgings<span class="sub">hostels per city</span></div>
+                <div class="box">transit cache<span class="sub">real Google-Maps legs</span></div>
+                <div class="box">SerpApi<span class="sub">live legs, agent mode only</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout side">
+            <p class="call-head">The trust boundary</p>
+            <p class="body">
+              The model lives <em>only</em> in the Strands layer. Everything below it
+              is arithmetic on real data — which is why the itinerary can be
+              rebuilt deterministically after every conversation turn.
+            </p>
+          </div>
+        </section>
+
         <!-- ============ CTA ============ -->
         <section class="cta">
           <p class="cta-line">Try both doors to the same engine —</p>
@@ -435,6 +507,72 @@ const values = [
   color: var(--muted);
   text-wrap: pretty;
 }
+
+/* architecture diagram */
+.arch { display: flex; flex-direction: column; gap: 0; }
+.layer {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  padding: 14px 16px 16px 92px;
+}
+.layer-tag {
+  position: absolute;
+  left: 14px; top: 14px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-left: 1px solid var(--border);
+  padding-left: 6px;
+  max-height: calc(100% - 28px);
+}
+.boxes { display: flex; gap: 10px; flex-wrap: wrap; }
+.box {
+  flex: 1 1 150px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.box .sub { font-size: 11px; color: var(--muted); font-weight: 400; }
+.box.gold { border-color: var(--gold); }
+.flow {
+  display: flex; align-items: center; justify-content: center;
+  height: 34px; position: relative;
+}
+.flow::before {
+  content: '';
+  position: absolute; left: 50%; top: 0; bottom: 0;
+  width: 1px; background: var(--border);
+}
+.flow::after {
+  content: '';
+  position: absolute; left: calc(50% - 4px); bottom: 0;
+  border-top: 5px solid var(--border);
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+}
+.flow span {
+  position: relative;
+  background: var(--bg);
+  padding: 0 10px;
+  font-size: 10.5px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+.layer-split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 760px) { .layer-split { grid-template-columns: 1fr; } }
+.layer { padding-left: 84px; }
+.callout.side { margin-top: 24px; border-left-color: var(--gold); }
 
 /* cta */
 .cta {

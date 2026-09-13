@@ -21,6 +21,15 @@ body {
   font-size: 14px;
 }
 
+.classic-page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 22px 14px;
+  gap: 10px;
+}
+.topbar-wrap { flex: none; }
+.classic-page .layout { flex: 1; min-height: 0; height: auto; }
 .layout { display: flex; height: 100vh; overflow: hidden; }
 
 /* ---------- Sidebar 35% ---------- */
