@@ -361,11 +361,21 @@ onBeforeUnmount(() => {
                   ├─ Day {{ d.day }} · {{ d.city }}<span v-if="d.hotel"> · {{ d.hotel }}</span>
                   <span v-if="m.dayCosts.find(c => c.day === d.day)"> · ≈ ${{ m.dayCosts.find(c => c.day === d.day).total_usd }}</span>
                 </div>
-                <div v-if="!d.spots.length" class="d-spot dim">(transit / free day)</div>
-                <div v-for="s in d.spots" :key="s.id" class="d-spot">
-                  <span class="t">{{ s.start }}–{{ s.end }}</span> {{ s.name_en }}
-                  <span v-if="s.note" class="s-note">· {{ s.note }}</span>
-                </div>
+                <div v-if="!d.spots.length && !d.chain?.length" class="d-spot dim">(transit / free day)</div>
+                <template v-if="d.chain?.length">
+                  <div v-for="(e, k) in d.chain" :key="d.day + '-' + k" class="d-spot" :class="{ transit: e.kind === 'transit', meal: e.kind === 'lunch' || e.kind === 'dinner' }">
+                    <span class="t">{{ e.start }}–{{ e.end }}</span>
+                    <span v-if="e.kind === 'transit'" class="leg">↳ {{ e.title }}<span v-if="e.summary" class="leg-line"> · {{ e.summary }}</span></span>
+                    <template v-else-if="e.kind === 'lunch' || e.kind === 'dinner'">🍽 {{ e.title }}</template>
+                    <template v-else>{{ e.title }}</template>
+                  </div>
+                </template>
+                <template v-else>
+                  <div v-for="s in d.spots" :key="s.id" class="d-spot">
+                    <span class="t">{{ s.start }}–{{ s.end }}</span> {{ s.name_en }}
+                    <span v-if="s.note" class="s-note">· {{ s.note }}</span>
+                  </div>
+                </template>
                 <div
                   v-for="c in [m.dayCosts.find(c => c.day === d.day)]"
                   v-show="c && (c.transit_usd || c.tickets_usd)"
@@ -576,6 +586,10 @@ onBeforeUnmount(() => {
 .d-spot { padding-left: 16px; padding: 1px 0 1px 16px; }
 .d-spot .t { color: var(--muted); margin-right: 8px; }
 .d-spot.cost { color: var(--muted); font-size: 12px; }
+.d-spot.transit { color: var(--muted); font-size: 12px; padding-left: 24px; }
+.d-spot.meal { color: var(--muted); font-size: 12px; }
+.leg { font-style: normal; }
+.leg-line { opacity: 0.75; }
 .s-note { color: var(--muted); font-size: 12px; }
 .warn { color: var(--gold); font-size: 12px; padding-left: 12px; }
 .total { padding-left: 0; font-size: 13px; }

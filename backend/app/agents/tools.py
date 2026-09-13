@@ -322,12 +322,18 @@ def replay_clock(city: str, day_plan: dict, day_start: str = "") -> dict:
     return {"events": events, "engine_times": engine_times, "day_start": day_start or "09:00"}
 
 
-def replay_day_events(city: str, ordered: list, day_start_min: int = 540):
+def replay_day_events(city: str, ordered: list, day_start_min: int = 540, hotel_name: str = ""):
     """Engine-authoritative clock replay for one ordered day (no LLM involved).
     Returns (events, times) where times maps spot id -> (start, end) — the
-    only visit times the product is allowed to display."""
-    lodging = lodging_provider().get_lodgings(city)[0]  # clock origin only
-    labels = {("poi", p.id): p.name_en or p.name for p in ordered}
+    only visit times the product is allowed to display. ``hotel_name``
+    selects the engine-chosen lodging as the day's origin/return anchor."""
+    lodgings = lodging_provider().get_lodgings(city)
+    lodging = next((l for l in lodgings if hotel_name and l.name == hotel_name), None) \
+        or lodgings[0]
+    labels = {
+        ("poi", p.id): p.name_en or p.name for p in ordered
+    }
+    labels[("lodging", lodging.id)] = lodging.name  # hotel shows by name
     chain = [("lodging", lodging.id, lodging.lat, lodging.lng, "start", city)] + [
         ("poi", p.id, p.lat, p.lng, None, city) for p in ordered
     ] + [("lodging", lodging.id, lodging.lat, lodging.lng, "end", city)]

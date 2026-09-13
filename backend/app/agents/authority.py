@@ -56,7 +56,9 @@ def rebuild_from_engine(plan: dict) -> dict:
         day_no = dd["day"]
         pois = [catalog[i] for i in dd["spot_ids"] if i in catalog]
         day_start = starts.get(day_no, "09:00")
-        _events, times = replay_day_events(city, pois, _hhmm_to_min(day_start))
+        events, times = replay_day_events(
+            city, pois, _hhmm_to_min(day_start), hotel_name=dd["hotel"]["name"]
+        )
         spots = []
         unvisitable = []
         for p in pois:
@@ -76,11 +78,47 @@ def rebuild_from_engine(plan: dict) -> dict:
                 "Couldn't fit in Day %s: %s — say the word and I'll re-plan"
                 % (day_no, ", ".join(unvisitable))
             )
+        # full day chain incl. hotel->first / last->hotel legs (classic's
+        # schedule shape) — the day visibly starts and ends at the hotel.
+        # Unvisitable waypoints (closed on arrival) stay in the chain but are
+        # annotated, so nothing looks like a planned visit that isn't; a
+        # hotel->hotel self-leg on an empty day is dropped.
+        visited = set()
+        for e in events:
+            if e["kind"] == "visit":
+                visited.add(e["title"])
+        hotel_name = dd["hotel"]["name"]
+        chain = []
+        for e in events:
+            if e["kind"] not in ("transit", "visit", "lunch", "dinner", "checkin"):
+                continue
+            title = e["title"]
+            if e["kind"] == "transit":
+                if " → " not in title:
+                    chain.append(e)
+                    continue
+                src, dst = title.split(" → ", 1)
+                if src == hotel_name and dst == hotel_name:
+                    continue  # empty-day self leg
+                marks = []
+                for stop in (src, dst):
+                    if stop != hotel_name and stop not in visited:
+                        marks.append(stop)
+                if marks:
+                    title += "  · closed, skipped: " + ", ".join(marks)
+            chain.append({
+                "kind": e["kind"],
+                "start": e["start"],
+                "end": e["end"],
+                "title": title,
+                **({"summary": e["line_summary"]} if e.get("line_summary") else {}),
+            })
         new_days.append({
             "day": day_no,
             "city": city,
             "day_start": day_start,
             "spots": spots,
+            "chain": chain,
             "hotel": dd["hotel"]["name"],
             "hotel_lat": dd["hotel"]["lat"],
             "hotel_lng": dd["hotel"]["lng"],
