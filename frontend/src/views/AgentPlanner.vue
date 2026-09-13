@@ -1,6 +1,6 @@
 <script setup>
 import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue'
-import BrandHeader from '../components/BrandHeader.vue'
+import AppHeader from '../components/AppHeader.vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -288,8 +288,17 @@ function onResize() {
   if (map) map.invalidateSize()
 }
 
+const MAP_VIEW_KEY = 'alontrip.mapView'
+
 onMounted(async () => {
-  map = L.map(mapEl.value).setView([35.0, 135.76], 12)
+  // restore the traveller's last map view (saved on every move/zoom) — the
+  // app opens where they left it, not on a hardcoded city
+  let center = [35.0, 135.76], zoom = 12
+  try {
+    const saved = JSON.parse(localStorage.getItem(MAP_VIEW_KEY) || 'null')
+    if (saved && Array.isArray(saved.center)) ({ center, zoom } = saved)
+  } catch { /* corrupted entry — fall back to default */ }
+  map = L.map(mapEl.value).setView(center, zoom)
   // B&W dark map: standard OSM tiles, retina-doubled (sharp on HiDPI) and
   // desaturated via the .dark-tiles filter in style.css
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -298,6 +307,9 @@ onMounted(async () => {
     className: 'dark-tiles',
     attribution: '&copy; OpenStreetMap contributors | spots: AlonTrip catalog',
   }).addTo(map)
+  map.on('moveend zoomend', () => {
+    localStorage.setItem(MAP_VIEW_KEY, JSON.stringify({ center: map.getCenter(), zoom: map.getZoom() }))
+  })
   window.addEventListener('resize', onResize)
   fetch('/api/trip/agent/info').then(r => r.json()).then(j => { info.value = j }).catch(() => {})
 })
@@ -309,7 +321,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="agent-page">
-    <BrandHeader tagline="agent mode · talk to plan · it watches the trip afterwards" />
+    <AppHeader tagline="agent mode · talk to plan · it watches the trip afterwards" />
 
     <div class="agent-grid">
       <!-- ============ left: terminal conversation ============ -->

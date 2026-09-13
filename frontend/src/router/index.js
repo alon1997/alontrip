@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AgentPlanner from '../views/AgentPlanner.vue'
+import HowItWorks from '../views/HowItWorks.vue'
 import Planner from '../views/Planner.vue'
 import Result from '../views/Result.vue'
 
@@ -11,6 +12,7 @@ const router = createRouter({
   routes: [
     { path: '/', name: 'agent', component: AgentPlanner },
     { path: '/classic', name: 'planner', component: Planner },
+    { path: '/how', name: 'how', component: HowItWorks },
     { path: '/result', name: 'result', component: Result },
   ],
 })

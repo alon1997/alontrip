@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import BrandHeader from '../components/BrandHeader.vue'
+import AppHeader from '../components/AppHeader.vue'
 import MapView from '../components/MapView.vue'
 import {
   fetchCities,
@@ -463,7 +463,7 @@ onBeforeUnmount(() => {
   <div class="layout">
     <aside class="sidebar">
       <div class="brand-block">
-        <BrandHeader />
+        <AppHeader />
       </div>
 
       <div v-if="errorMsg" class="error-banner">
