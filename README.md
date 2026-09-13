@@ -1,95 +1,97 @@
-# AlonTrip
+# TripAgent — a background travel agent for East Asia backpackers
 
-> A public-transit-optimized travel planner for budget backpackers in East Asia.
->
-> Live: https://alonuniverse.com/trip/
+> Built for the [Agents for Humans](https://agentsforhumans.devpost.com/) hackathon
+> (AWS × Devpost, submission deadline 2026-09-14 5pm PDT).
 
-Plan multi-day trips by public transit only — subway, bus, and walking; no
-taxis, no car rentals — with AI-optimized daily routes and map visualization
-of real transit itineraries: transfers, times, and fares.
+TripAgent is two products in one:
 
-## Tech Stack
+- **🤖 Agent mode** (default at [`/`](https://alonuniverse.com/trip/)) — describe your
+  trip in plain language. A [Strands Agents SDK](https://github.com/strands-agents)
+  agent researches real spots, real transit minutes and real opening hours through
+  tools, drafts the itinerary through a deterministic planning engine, **pauses only
+  when there is a genuine decision to make** (a Strands interrupt), and afterwards
+  keeps watching the trip in the background.
+- **🧭 Classic mode** (`/classic`) — the original guided form for travellers who
+  prefer to pick every spot themselves. Both modes share the same planning engine
+  and the same live map.
 
-| Layer | Choice |
-|-------|--------|
-| Frontend | Vue 3 + Vite |
-| Map | Leaflet + OpenStreetMap |
-| Backend | FastAPI (Python) |
-| Transit & POI data | SerpApi (`google_maps_directions` and `google_maps` engines) |
-| AI route grouping | DeepSeek API (Anthropic-compatible endpoint) |
-| Database | MySQL |
-| Deployment | Nginx reverse proxy |
+The agent works; you keep the pen.
 
-## Local Setup
+## What it does
 
-### Backend
+- **Conversational planning** — the Strands agent looks up real spots, real transit
+  minutes and real opening hours through tools, then drafts a day-by-day plan
+  (structured output, not free text).
+- **Human-in-the-loop at decision points only** — a spot that can't be reached
+  before closing, an over-packed pace, an over-budget stay: the agent pauses and
+  asks, with concrete options, instead of silently choosing for you.
+- **Engine-authoritative output** — every displayed time is produced by the
+  deterministic engine (real cached transit legs, closing-time clipping,
+  arrival-day starts). The model orchestrates; the engine guarantees. Provenance
+  badges on the plan show what is catalog-verified, cached, or estimated.
+- **Background watching** — a deterministic watcher (no LLM) re-replays affected
+  days when reality changes (an early closure) and pushes ONE notification:
+  either "fixed, here's what changed" or a single decision.
 
-```bash
-cp .env.example .env        # from 04app/ — optional, only needed for live SerpApi/DeepSeek/MySQL
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python -m app.main          # serves on APP_PORT (default 5003)
-```
+## Architecture
 
-`.env` lives at the repo root (`04app/.env`), not inside `backend/`. `Settings` resolves it by
-an absolute path, so it's found regardless of which directory you launch uvicorn from.
+![Architecture](docs/architecture.png)
 
-> **Zero-key mode:** without `SERPAPI_KEY` / `DEEPSEEK_API_KEY` the backend
-> automatically falls back to local seed data (POIs), distance-based route
-> estimates, and rule-based grouping — the whole flow runs with no
-> configuration at all.
+Strands agent loop (model of choice — DeepSeek over an OpenAI-compatible endpoint
+by default, Bedrock via `AGENT_MODEL=bedrock`) → 8 tools wrapping the native
+planning services → FastAPI SSE streaming to a terminal-styled web shell with a
+Leaflet map.
 
-Verify the API is up:
-
-```bash
-curl http://localhost:5003/api/trip/health
-# → {"status":"ok","poi_provider":"local-json","transit_provider":"local-json","grouper":"rule-based"}
-```
-
-For development with auto-reload:
+## Run it
 
 ```bash
-uvicorn app.main:app --reload --port 5003
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+cd frontend && npm ci && npm run build && cd ..
+cp .env.example .env            # fill DEEPSEEK_API_KEY (agent brain)
+cd backend && ../.venv/bin/python -m uvicorn app.main:app --port 5003
+# open http://127.0.0.1:5003/trip/            (agent mode web shell)
 ```
 
-### Frontend
+Demos and tests:
 
 ```bash
-cd frontend
-npm install
-npm run dev          # http://localhost:5173/trip/
+.venv/bin/python -m pytest backend/tests   # 17 offline tests, no API calls
 ```
 
-Production build must set `VITE_API_BASE_URL=''` (same-origin `/api/trip`). Forgetting this points the UI at localhost:5003.
+## Repository layout
 
-## Environment Variables
+```
+backend/app/agents/     Strands agent layer (tools, decisions, factory, provenance)
+backend/app/services/   deterministic planning engine (grouping, packing, hours)
+backend/tests/          offline regression suite (verdict-flip tests included)
+frontend/               terminal-styled web shell (Vue 3 + Leaflet)
+docs/                   architecture diagram, engine issues log
+```
 
-Copy `.env.example` to `.env` and fill in the values. `.env` is gitignored —
-never commit it.
+## Prior art / disclosure
 
-| Variable | Required | Default | Description |
-|----------|:--------:|---------|-------------|
-| `SERPAPI_KEY` | ✅ | — | SerpApi API key (serpapi.com) |
-| `DEEPSEEK_API_KEY` | ✅ | — | DeepSeek API key |
-| `DEEPSEEK_BASE_URL` | — | `https://api.deepseek.com/anthropic` | Anthropic-compatible API base URL |
-| `APP_PORT` | — | `5003` | Port the backend listens on |
-| `CORS_ORIGINS` | — | `http://localhost:5173,http://localhost:4173` | Comma-separated browser origins allowed by CORS |
+The deterministic planning engine in `backend/app/services/` — geographic
+nearest-neighbour grouping, capacity packing, the opening-hours parser (328-entry
+catalog audit) and the closing-time terminal check — originated in my earlier
+open-source project [alontrip](https://github.com/alon1997/alontrip) (MIT), which
+was submitted to a different hackathon (DevNetwork API + Cloud + AI, deadline
+2026-09-03) that concluded before this submission period began. It is vendored
+into this repository **unmodified, with attribution headers on every file**, and
+everything built on top of it — the Strands agent layer, conversation and
+interrupt design, background watcher, web shell — was **created new during the
+Agents for Humans submission period (2026-09-05 → 2026-09-14)**, in line with the
+hackathon rules on disclosed open-source reuse.
 
-## API
+## Status (2026-09-13)
 
-Current routes, and which ones call SerpApi / DeepSeek: **[docs/API.md](docs/API.md)**. Interactive: `http://127.0.0.1:5003/docs`.
+- ✅ Devpost entry registered for Agents for Humans; $50 AWS credits approved
+- ✅ AWS Builder ID created; server→Bedrock (us-east-1) reachability confirmed
+  (Bedrock model access pending AWS allowlisting review — the agent runs on
+  DeepSeek over an OpenAI-compatible endpoint in the meantime; Strands'
+  model portability makes the swap a one-line change)
+- Remaining: record the ≤5 min demo video ([shot list](docs/video-script.md)),
+  publish the builder.aws.com build story
 
-## Project Status
+## License
 
-- Live demo: https://alonuniverse.com/trip/ (kept current with the repo via `scripts/deploy.sh`)
-- Local: frontend `http://localhost:5173/trip/`, backend `:5003`
-- This folder is its own git repo, kept out of the private `personal` remote (D-005).
-
-## Acknowledgments
-
-- **SerpApi** — powers every transit leg and the POI catalog. Extra thanks to
-  **Alaa, Roi and Jordanne** from the SerpApi team, who manually onboarded this
-  project when signup was blocked and granted hackathon credits mid-competition.
-- **DeepSeek** (`deepseek-v4-flash`) — fast, affordable day-by-day plan drafting.
+MIT — see [LICENSE](LICENSE).
