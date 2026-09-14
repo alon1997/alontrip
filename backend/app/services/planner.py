@@ -1002,6 +1002,12 @@ def _enforce_closing(
             for j in range(len(groups)):
                 if j == i or j in empty_idx or not groups[j]:
                     continue
+                # a full-day park (Disney/USJ) owns its day — closing rescues
+                # must never stack other spots onto it, no matter how well the
+                # late-closing park passes the feasibility sim (prod 2026-09-14:
+                # Tsukiji + Senso-ji landed on the Disneyland day)
+                if any((q.suggested_duration_min or 0) >= FULL_DAY_DURATION_MIN for q in groups[j]):
+                    continue
                 trial = _reorder_for_closing(groups[j] + [spot], start_of(j), origin_of(j), end_of(j))
                 if not _closed_at_arrival(trial, start_of(j), origin_of(j), end_of(j)):
                     # T-054: nearest feasible day, not lightest — a closing
