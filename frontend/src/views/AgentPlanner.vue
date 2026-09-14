@@ -76,6 +76,15 @@ function addArrow(map, a, b, color) {
   })
   return L.marker(mid, { icon, interactive: false }).addTo(map)
 }
+function hubIcon() {
+  // plane pin, same visual language as classic's hub marker
+  return L.divIcon({
+    className: 'hub-pin-icon',
+    html: '<div class="hub-pin">✈</div>',
+    iconSize: [24, 24],
+  })
+}
+
 function hotelIcon() {
   // same gold house pin as classic mode (classes live in style.css)
   return L.divIcon({
@@ -100,7 +109,11 @@ function renderPlanOnMap() {
       : (d.hotel && spotIndex.__hotels && spotIndex.__hotels[d.hotel]
           ? [spotIndex.__hotels[d.hotel].lat, spotIndex.__hotels[d.hotel].lng]
           : null)
-    const ll = hCoord ? [hCoord] : []
+    // day anchors mirror the chain: arrival hub opens day 1, departure hub
+    // closes the last day; the hotel anchors every other day
+    const startAnchor = d.start_hub ? [d.start_hub.lat, d.start_hub.lng] : hCoord
+    const endAnchor = d.end_hub ? [d.end_hub.lat, d.end_hub.lng] : hCoord
+    const ll = startAnchor ? [startAnchor] : []
     d.spots.forEach(s => {
       const meta = spotIndex[s.id]
       if (!meta) return
@@ -110,7 +123,15 @@ function renderPlanOnMap() {
       }).addTo(map).bindTooltip(`${s.start} ${s.name_en}`)
       markers.push(m)
     })
-    if (hCoord) ll.push(hCoord)
+    if (endAnchor) ll.push(endAnchor)
+    // hub pins (plane glyph — same class as classic)
+    for (const hub of [d.start_hub, d.end_hub]) {
+      if (hub && !hotelsSeen.has('hub:' + hub.name)) {
+        hotelsSeen.add('hub:' + hub.name)
+        const hm = L.marker([hub.lat, hub.lng], { icon: hubIcon() }).addTo(map).bindTooltip(hub.name)
+        markers.push(hm)
+      }
+    }
     if (ll.length > 1) {
       const line = L.polyline(ll, { color, weight: 3, opacity: 0.85 }).addTo(map)
       markers.push(line)

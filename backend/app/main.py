@@ -878,6 +878,9 @@ def _render_days_classic(city: str, args: dict) -> dict | None:
         is_departure_day = planned_day.day == n_days and plan.departure_hub is not None
         reported_hotel = planned_day.morning_lodging if is_departure_day else planned_day.lodging
         start_val = arrival_start_min if planned_day.day == 1 and arrival_start_min is not None else 9 * 60
+        def _hub_dict(h):
+            return {"name": h.name_en or h.name, "lat": h.lat, "lng": h.lng} if h else None
+
         days_out.append({
             "day": planned_day.day,
             "city": planned_day.city,
@@ -887,6 +890,11 @@ def _render_days_classic(city: str, args: dict) -> dict | None:
             "hotel": reported_hotel.name,
             "hotel_lat": reported_hotel.lat,
             "hotel_lng": reported_hotel.lng,
+            # the map draws the day's route through these anchors, so the
+            # line starts at the arrival hub on day 1 and ends at the
+            # departure hub on the last day — mirroring the chain exactly
+            "start_hub": _hub_dict(plan.arrival_hub) if planned_day.day == 1 else None,
+            "end_hub": _hub_dict(plan.departure_hub) if planned_day.day == n_days else None,
             "summary": "",
         })
 
