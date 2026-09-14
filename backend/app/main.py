@@ -44,7 +44,7 @@ from .services.schedule import (
     build_day_schedule,
 )
 from .services.search import search_lodgings, search_pois
-from .services.transit import Coord, TransitRoute, estimate_route
+from .services.transit import Coord, TransitRoute, estimate_route, haversine_km
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -734,6 +734,14 @@ def _rerun_engine_draft(city: str, args: dict):
             return None
     if not isinstance(args, dict):
         return None
+    # T-A9: the model sometimes guesses first_day_density="none" and the
+    # arrival evening goes to waste (the lottery: identical prompts produced
+    # a 0-spot day 1 every other run). "few" is strictly safer here — when a
+    # landing is too late the engine's flight-aware budget empties day 1 on
+    # its own, so "few" only ever asks for one nearby evening spot when the
+    # clock genuinely allows it. Coercion can never create an impossible day.
+    if str(args.get("first_day_density") or "").strip().lower() == "none":
+        args["first_day_density"] = "few"
     poi_ids = args.get("poi_ids") or []
     if not poi_ids:
         return None
@@ -779,6 +787,17 @@ def _render_days_classic(city: str, args: dict) -> dict | None:
     check-in row, the departure hub closes the last day (no hotel return,
     no dinner after), flight buffers shape the day clock, closing-time
     clipping and meals come from the same schedule function classic uses.
+
+    T-A9 rescue pass: the planner's closing check runs on a calibrated
+    transit APPROXIMATION, so a spot its simulation blessed can still arrive
+    after closing once real leg times are in — classic mode surfaces that as
+    a user-facing warning (fine there: that UI lets the traveller move spots
+    between days). An agent has no one to punt to. So before anything ships,
+    every spot without a visit row is RE-PLACED here: nearest day first, and
+    a destination only counts if its real schedule still visits everything
+    it already had. A spot no day can hold leaves the plan (server log
+    only). "On the route but couldn't be visited" is an engine failure to
+    fix in this module — never a traveller-facing warning.
     """
     plan = _rerun_engine_draft(city, args)
     if plan is None:
@@ -801,9 +820,12 @@ def _render_days_classic(city: str, args: dict) -> dict | None:
     arrival_start_min = arrival_time_min + LANDING_BUFFER_MIN if arrival_time_min is not None else None
     departure_cutoff_min = departure_time_min - TAKEOFF_BUFFER_MIN if departure_time_min is not None else None
 
-    warnings: list[str] = list(plan.warnings)
-    days_out = []
-    for planned_day in plan.days:
+    def _title(p) -> str:
+        return p.name_en or p.name
+
+    def _render_one(planned_day):
+        """(schedule, visits) for one day — the classic per-day pipeline,
+        re-runnable as many times as a rescue needs (legs hit the cache)."""
         chain = _build_day_chain(planned_day, n_days, plan.arrival_hub, plan.departure_hub)
         node_labels: dict[tuple[str, str], str] = {}
         for kind, ident, *_rest in chain:
@@ -841,39 +863,107 @@ def _render_days_classic(city: str, args: dict) -> dict | None:
             day_start_min=arrival_start_min if planned_day.day == 1 else None,
             day_end_cutoff_min=departure_cutoff_min if planned_day.day == n_days else None,
         )
-
         visits = {e["title"]: (e["start"], e["end"]) for e in schedule if e["kind"] == "visit"}
-        # spots that never got a visit row (closed by arrival) must not linger
-        # as ghost transit anchors — their legs are dropped; the warning names
-        # them instead
-        unvisited_titles = {
-            (poi.name_en or poi.name) for poi in planned_day.pois
-            if (poi.name_en or poi.name) not in visits
-        }
+        return schedule, visits
+
+    rendered: dict[int, tuple] = {
+        i: (*_render_one(pd), pd) for i, pd in enumerate(plan.days)
+    }
+
+    # ---- rescue pass: a spot without a visit row is re-placed, not warned ----
+    def _day_centroid(pois):
+        if not pois:
+            return None
+        return (sum(p.lat for p in pois) / len(pois), sum(p.lng for p in pois) / len(pois))
+
+    def _insert_best(pois, poi):
+        """Position adding the least straight-line chain distance."""
+        if not pois:
+            return [poi]
+        best_trial, best_cost = None, None
+        for k in range(len(pois) + 1):
+            trial = pois[:k] + [poi] + pois[k:]
+            cost = sum(haversine_km(a.lat, a.lng, b.lat, b.lng) for a, b in zip(trial, trial[1:]))
+            if best_cost is None or cost < best_cost:
+                best_trial, best_cost = trial, cost
+        return best_trial
+
+    queue = [
+        (i, poi)
+        for i, (schedule, visits, _pd) in sorted(rendered.items())
+        for poi in _pd.pois
+        if _title(poi) not in visits
+    ]
+    while queue:
+        i, poi = queue.pop(0)
+        src_pd = plan.days[i]
+        if poi not in src_pd.pois:
+            continue  # an earlier rescue in this pass already moved it
+        src_pd.pois.remove(poi)
+        schedule, visits = _render_one(src_pd)
+        rendered[i] = (schedule, visits, src_pd)
+        # nearest day first; empty days last — a rest/flight day is a last
+        # resort, never an attractive "0 load" dump site
+        dest_order = sorted(
+            (j for j in range(n_days) if j != i),
+            key=lambda j: (
+                1e9 if not plan.days[j].pois
+                else haversine_km(poi.lat, poi.lng, *_day_centroid(plan.days[j].pois))
+            ),
+        )
+        placed = False
+        for j in dest_order:
+            dest_pd = plan.days[j]
+            original = dest_pd.pois
+            dest_pd.pois = _insert_best(original, poi)
+            schedule2, visits2 = _render_one(dest_pd)
+            if all(_title(q) in visits2 for q in dest_pd.pois):
+                # the day visits everything it already had PLUS the rescue —
+                # a rescue may never cost the destination an existing visit
+                rendered[j] = (schedule2, visits2, dest_pd)
+                placed = True
+                break
+            dest_pd.pois = original  # that day cannot hold it — undo cleanly
+        if not placed:
+            logger.warning(
+                "agent renderer: %s cannot be visited on any day even after "
+                "rescue — removed from the plan (never shown as a warning)",
+                poi.id,
+            )
+
+    # rescues/drops supersede the planner's approximation-era spot warnings —
+    # a "doesn't fit" line naming a spot is either solved or moot now, and
+    # either way reads as engine failure. Pacing-style advisories stay.
+    warnings = [
+        w for w in plan.warnings
+        if "doesn't fit its day" not in w and "cannot fit within opening hours" not in w
+    ]
+
+    days_out = []
+    for planned_day in plan.days:
+        schedule, visits, _pd = rendered[planned_day.day - 1]
+        unvisited_titles = {_title(p) for p in planned_day.pois if _title(p) not in visits}
         chain_rows = []
         for e in schedule:
             if e["kind"] not in ("transit", "visit", "lunch", "dinner", "checkin"):
                 continue
             if e["kind"] == "transit" and " → " in e["title"]:
-                src, dst = e["title"].split(" → ", 1)
-                if src in unvisited_titles or dst in unvisited_titles:
+                leg_src, leg_dst = e["title"].split(" → ", 1)
+                if leg_src in unvisited_titles or leg_dst in unvisited_titles:
                     continue  # ghost leg touching a never-visited spot
             row = {"kind": e["kind"], "start": e["start"], "end": e["end"], "title": e["title"]}
             if e.get("line_summary"):
                 row["summary"] = e["line_summary"]
             chain_rows.append(row)
 
-        spots = []
-        for poi in planned_day.pois:
-            title = poi.name_en or poi.name
-            if title in visits:
-                start, end = visits[title]
-                spots.append({"id": poi.id, "name_en": title, "start": start, "end": end, "note": ""})
-            elif not any(poi.id in w for w in warnings):
-                warnings.append(
-                    f"{poi.id} is on the route but couldn't be visited (closed by the time "
-                    "you'd arrive) — say the word and I'll re-plan"
-                )
+        spots = [
+            {
+                "id": p.id, "name_en": _title(p),
+                "start": visits[_title(p)][0], "end": visits[_title(p)][1],
+                "note": "",
+            }
+            for p in planned_day.pois if _title(p) in visits
+        ]
 
         is_departure_day = planned_day.day == n_days and plan.departure_hub is not None
         reported_hotel = planned_day.morning_lodging if is_departure_day else planned_day.lodging
@@ -1084,13 +1174,26 @@ def _agent_stream(session_id: str, payload):
                 for _k in ("arrival_time", "departure_time"):
                     if not _draft_args.get(_k) and plan_dict.get(_k):
                         _draft_args[_k] = plan_dict[_k]
+                # density reconciliation: if the model's final plan SHOWS spots
+                # on day 1 / the last day, the engine rerun must not empty
+                # them behind the model's back (the model occasionally passes
+                # first_day_density=none while still placing an arrival-evening
+                # spot — the rerun then produced a 0-spot day 1, the "lottery"
+                # the traveller kept hitting)
+                _m_days = plan_dict.get("days") or []
+                if _m_days:
+                    if _m_days[0].get("spots") and _draft_args.get("first_day_density") == "none":
+                        _draft_args["first_day_density"] = "few"
+                    if _m_days[-1].get("spots") and _draft_args.get("last_day_density") == "none":
+                        _draft_args["last_day_density"] = "few"
             _rendered = _render_days_classic(_city, _draft_args) if (_draft_args and _city) else None
             logger.info("plan emit: classic renderer -> %s", "OK" if _rendered is not None else "FALLBACK")
             if _rendered is not None:
                 plan_dict["days"] = _rendered["days"]
-                plan_dict["warnings"] = _rendered["warnings"] + [
-                    w for w in plan_dict.get("warnings", []) if w not in _rendered["warnings"]
-                ][:2]
+                # the renderer is the authority — its warnings are the only
+                # ones describing the shipped itinerary; the model's echo
+                # hedging (about a grouping that no longer exists) is noise
+                plan_dict["warnings"] = _rendered["warnings"]
             else:
                 plan_dict = _rebuild_from_engine(plan_dict)
             extra = _enrich(plan_dict["days"][0]["city"], plan_dict) if plan.days else {}

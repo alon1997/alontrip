@@ -973,21 +973,33 @@ def _enforce_arrival_proximity(
         groups[j] = trial
         moved.append((spot.id, i + 1, j + 1))
 
-    # 2) arrival day emptied -> pull in the nearest (<=5km) spot from another day
+    # 2) arrival day emptied -> pull in the nearest spot that can actually be
+    #    visited in the landing-evening window. T-A9: the pull used to be
+    #    purely nearest — ueno/nakamise (close ~17:00) kept being pulled onto
+    #    an 18:50 arrival evening the closing check had just evacuated them
+    #    from, and the agent renderer had to rescue them straight back out
+    #    (arrival day empty again). Verify the evening clock BEFORE pulling;
+    #    if nothing inside the 5km ring can be open, the nearest OPEN spot
+    #    anywhere beats an empty arrival evening.
     if not groups[i]:
         cands: list[tuple[float, int, Poi]] = []
         for j in range(len(groups)):
             if j == i:
                 continue
             for p in groups[j]:
-                d = km_from_hotel(p)
-                if d <= _ARRIVAL_PROXIMITY_KM:
-                    cands.append((d, j, p))
-        if cands:
-            _, j, p = min(cands)
+                cands.append((km_from_hotel(p), j, p))
+        # inside the ring first, then anywhere — both nearest-first
+        cands.sort(key=lambda t: (t[0] > _ARRIVAL_PROXIMITY_KM, t[0]))
+        for _d, j, p in cands:
+            trial = _reorder_for_closing(
+                groups[i] + [p], start_of(i), origin_of(i), end_of(i)
+            )
+            if _closed_at_arrival(trial, start_of(i), origin_of(i), end_of(i)):
+                continue  # closed by the time the traveller would arrive
             groups[j] = [q for q in groups[j] if q.id != p.id]
-            groups[i] = [p]
+            groups[i] = list(trial)
             moved.append((p.id, j + 1, i + 1))
+            break
     return groups, moved
 
 

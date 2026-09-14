@@ -67,12 +67,15 @@ def rebuild_from_engine(plan: dict) -> dict:
             hotel_name=dd["hotel"]["name"],
             arrival_hub=day_arrival, departure_hub=day_departure,
         )
+        # T-A9: a spot schedule.py refused to visit is dropped from the day —
+        # "couldn't be visited" is an engine failure to fix, never a
+        # traveller-facing warning, and its ghost legs leave with it
         spots = []
-        unvisitable = []
+        unvisited_titles = set()
         for p in pois:
             t = times.get(p.id)
             if t is None:
-                unvisitable.append(p.name_en or p.name)
+                unvisited_titles.add(p.name_en or p.name)
                 continue
             spots.append({
                 "id": p.id,
@@ -81,21 +84,10 @@ def rebuild_from_engine(plan: dict) -> dict:
                 "end": t[1],
                 "note": notes.get(p.id, ""),
             })
-        if unvisitable:
-            warnings.append(
-                "Couldn't fit in Day %s: %s — say the word and I'll re-plan"
-                % (day_no, ", ".join(unvisitable))
-            )
         # full day chain incl. hotel->first / last->hotel legs (classic's
         # schedule shape) — the day visibly starts and ends at the hotel.
-        # Unvisitable waypoints (closed on arrival) stay in the chain but are
-        # annotated, so nothing looks like a planned visit that isn't; a
-        # hotel->hotel self-leg on an empty day is dropped.
-        visited = set()
+        # A hotel->hotel self-leg on an empty day is dropped.
         hub_names = {h["name"] for h in (draft.get("arrival_hub"), draft.get("departure_hub")) if h}
-        for e in events:
-            if e["kind"] == "visit":
-                visited.add(e["title"])
         hotel_name = dd["hotel"]["name"]
         chain = []
         for e in events:
@@ -109,16 +101,8 @@ def rebuild_from_engine(plan: dict) -> dict:
                 src, dst = title.split(" → ", 1)
                 if src == hotel_name and dst == hotel_name:
                     continue  # empty-day self leg
-                # annotate only real SPOTS that never got a visit row; hubs and
-                # the hotel are legitimate chain endpoints, never "skipped"
-                marks = [
-                    stop for stop in (src, dst)
-                    if stop != hotel_name
-                    and stop not in hub_names
-                    and stop not in visited
-                ]
-                if marks:
-                    title += "  · closed, skipped: " + ", ".join(marks)
+                if any(stop in unvisited_titles for stop in (src, dst)):
+                    continue  # ghost leg touching a spot that never got a visit
             chain.append({
                 "kind": e["kind"],
                 "start": e["start"],
@@ -178,7 +162,6 @@ def _fallback_patch(plan: dict) -> dict:
             day["hotel_lng"] = match.lng
             day["hotel"] = match.name
 
-    notes: list[str] = []
     for day in plan["days"]:
         ids = [s["id"] for s in day.get("spots", [])]
         ordered = [catalog[i] for i in ids if i in catalog]
@@ -186,13 +169,17 @@ def _fallback_patch(plan: dict) -> dict:
             continue
         day_start = _hhmm_to_min(day.get("day_start", "09:00"))
         _events, times = replay_day_events(city, ordered, day_start)
-        for s in day["spots"]:
+        # T-A9: a spot the replay cannot visit is dropped from the day —
+        # never annotated on the row, never warned about
+        kept = []
+        for s in day.get("spots", []):
             if s["id"] in times:
                 s["start"], s["end"] = times[s["id"]]
+                kept.append(s)
             else:
-                name = s.get("name_en", s["id"])
-                s["note"] = (s.get("note", "") + " · could not be visited in this day's window").strip(" ·")
-                notes.append(f"{name}: not visitable within Day {day.get('day')}'s window")
-    if notes:
-        plan.setdefault("warnings", []).extend(notes[:3])
+                logger.info(
+                    "fallback: %s not visitable in day %s window — dropped",
+                    s["id"], day.get("day"),
+                )
+        day["spots"] = kept
     return plan
