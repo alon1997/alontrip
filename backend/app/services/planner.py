@@ -701,20 +701,64 @@ def _rebalance_edge_days(
 ) -> list[list[Poi]]:
     """Trim the trip's global first/last day (when they land in this city).
 
-    Does not re-run geographic clustering: POIs stay in their current
-    concatenated order, only the day cuts move.
+    T-055: the old flatten-and-reslice re-cut the concatenated list by raw
+    counts, which split NN-chain segments mid-group and mixed east/west
+    districts into the same day. Trimming is now geographic: a day over its
+    target hands its excess to the geographically nearest day still under
+    target (spot-to-centroid distance), so chain segments survive intact.
     """
     if first_mode is None and last_mode is None:
         return groups
-    n = len(groups)
-    n_pois = sum(len(group) for group in groups)
+    out = [list(group) for group in groups]
+    n = len(out)
+    n_pois = sum(len(group) for group in out)
     targets = _edge_target_counts(n, n_pois, first_mode, last_mode)
-    flat = [poi for group in groups for poi in group]
-    out: list[list[Poi]] = []
-    cursor = 0
-    for want in targets:
-        out.append(flat[cursor:cursor + want])
-        cursor += want
+    # a full-day park owns its day: its target freezes at the current count
+    # and it neither donates nor receives — edge trimming must not drag a
+    # 540-minute park into the arrival day or scatter its neighbours
+    park_days = {
+        i for i, group in enumerate(out)
+        if any((p.suggested_duration_min or 0) >= FULL_DAY_DURATION_MIN for p in group)
+    }
+    for i in park_days:
+        if i < len(targets):
+            targets[i] = len(out[i])
+
+    def _dist_to_day(spot: Poi, j: int) -> float:
+        group = out[j]
+        if not group:
+            return float("inf")
+        clat, clng = _centroid(group)
+        return haversine_km(spot.lat, spot.lng, clat, clng)
+
+    # two passes: drain over-target days, then fill under-target ones from the
+    # nearest over-target donor — order keeps the loop convergent
+    for _ in range(n_pois + 1):
+        over = [i for i in range(n) if len(out[i]) > targets[i]]
+        under = [j for j in range(n) if len(out[j]) < targets[j]]
+        if not over or not under:
+            break
+        moved = False
+        for i in over:
+            if i in park_days:
+                continue
+            # hand the spot FARTHEST from this day's centroid — it belongs to
+            # a neighbour district anyway
+            donor = max(out[i], key=lambda sp: _dist_to_day(sp, i), default=None)
+            if donor is None:
+                continue
+            under_np = [j for j in under if j not in park_days]
+            if not under_np:
+                continue
+            dest = min(under_np, key=lambda j: _dist_to_day(donor, j))
+            if _dist_to_day(donor, dest) == float("inf"):
+                continue
+            out[i].remove(donor)
+            _insert_best_position(out[dest], donor)
+            moved = True
+            break
+        if not moved:
+            break
     return out
 
 
@@ -1175,8 +1219,16 @@ def _isolate_full_day_pois(groups: list[list[Poi]]) -> list[list[Poi]]:
             if not sinks:
                 new[idx].append(poi)
                 continue
-            sink = min(sinks, key=lambda i: len(new[i]))
-            new[sink].append(poi)
+            # T-055: nearest district wins, not least-crowded — a displaced
+            # Asakusa spot must go to the Asakusa day, never to Shibuya's
+            def _dist(j: int) -> float:
+                g = new[j]
+                if not g:
+                    return float("inf")
+                clat, clng = _centroid(g)
+                return haversine_km(poi.lat, poi.lng, clat, clng)
+            sink = min(sinks, key=_dist)
+            _insert_best_position(new[sink], poi)
     return new
 
 
@@ -1789,19 +1841,32 @@ def plan_trip(
             groups, _moved, stuck = _move_infeasible_for_windows(groups, windows, empty_idx)
             window_stuck_ids.update(stuck)  # hold back; no warning if the final check rescues it
             groups = _pack_day_capacity(groups, empty_idx=empty_idx, budget_by_idx=budgets)
+            # T-055: packing/rescues can still split a district (Senso-ji on
+            # a Shibuya day while Nakamise sits elsewhere) — the district
+            # police used for model tables runs here too, then the closing
+            # check re-verifies feasibility on the repaired layout
+            groups, _post = _repair_districts(groups)
         else:
             city_groupers[city] = "rule-based"
             groups = _group_city_pois(pois, n_days)
+            # T-055: isolate full-day parks FIRST — later count-based stages
+            # (edge rebalance, capacity packing) used to drag the park into a
+            # wrong day and then scatter its displaced neighbours cross-town
+            groups = _isolate_full_day_pois(groups)
             groups = _pack_day_capacity(groups, empty_idx=empty_idx, budget_by_idx=budgets)
             if first_mode_here is not None or last_mode_here is not None:
                 groups = _rebalance_edge_days(
                     groups, first_mode=first_mode_here, last_mode=last_mode_here,
                 )
-            groups = _isolate_full_day_pois(groups)
             groups = _pack_day_capacity(groups, empty_idx=empty_idx)
             groups, _moved, stuck = _move_infeasible_for_windows(groups, windows, empty_idx)
             window_stuck_ids.update(stuck)  # hold back; no warning if the final check rescues it
             groups = _pack_day_capacity(groups, empty_idx=empty_idx, budget_by_idx=budgets)
+            # T-055: packing/rescues can still split a district (Senso-ji on
+            # a Shibuya day while Nakamise sits elsewhere) — the district
+            # police used for model tables runs here too, then the closing
+            # check re-verifies feasibility on the repaired layout
+            groups, _post = _repair_districts(groups)
             if hotel_mode == "system_one":
                 chosen = _select_hotels_system_one(candidates, groups)
                 lodging_by_local = {i + 1: chosen for i in range(n_days)}
