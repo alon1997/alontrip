@@ -86,9 +86,11 @@ hackathon rules on disclosed open-source reuse.
 
 - ✅ Devpost entry registered for Agents for Humans; $50 AWS credits approved
 - ✅ AWS Builder ID created; server→Bedrock (us-east-1) reachability confirmed
-  (Bedrock model access pending AWS allowlisting review — the agent runs on
-  DeepSeek over an OpenAI-compatible endpoint in the meantime; Strands'
-  model portability makes the swap a one-line change)
+- ℹ️ Bedrock model access: AWS confirmed (support case 178905460400334) that
+  Bedrock is currently restricted to registered business users — an individual
+  account cannot be allowlisted. The agent runs on DeepSeek over an
+  OpenAI-compatible endpoint; Strands' model portability keeps the swap to
+  Bedrock a one-line change (`AGENT_MODEL=bedrock`) the day access opens.
 - Remaining: record the ≤5 min demo video ([shot list](docs/video-script.md)),
   publish the builder.aws.com build story
 
