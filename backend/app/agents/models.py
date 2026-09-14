@@ -37,6 +37,14 @@ class OpenQuestion(BaseModel):
 
 class TripPlan(BaseModel):
     destination: str = Field(description="Where this trip goes, display form")
+    arrival_time: str = Field(
+        default="",
+        description="Landing time HH:MM if the traveller named one ('' otherwise)",
+    )
+    departure_time: str = Field(
+        default="",
+        description="Departure flight/train time HH:MM if named ('' otherwise)",
+    )
     days: list[DayPlan] = Field(description="Day-by-day plan")
     total_usd: float = Field(default=0.0, description="Rough total budget in USD (trip_budget tool)")
     warnings: list[str] = Field(default_factory=list, description="Honest feasibility notes — never hide these")

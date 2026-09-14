@@ -710,13 +710,22 @@ _agent_sessions: dict[str, object] = {}
 _session_drafts: dict[str, dict] = {}
 
 
+def _hhmm_arg(v) -> int | None:
+    """Agent tool arg "HH:MM" -> minutes, or None."""
+    try:
+        h, m = str(v).strip().split(":")
+        return int(h) * 60 + int(m)
+    except (ValueError, AttributeError):
+        return None
+
+
 def _rerun_engine_draft(city: str, args: dict):
-    """Deterministically re-run plan_trip with the agent's last draft args.
-    Returns the engine draft dict (days/hotels/warnings) or None."""
+    """Deterministically re-run plan_trip with the agent's last draft args
+    (rule path — no LLM). Returns the engine TripPlan object or None."""
+    import json as _json
+
     from .services.factory import get_lodging_provider as _gl, get_poi_provider as _gp, \
         get_transport_hub_provider as _gh
-
-    import json as _json
 
     if isinstance(args, str):
         try:
@@ -728,16 +737,10 @@ def _rerun_engine_draft(city: str, args: dict):
     poi_ids = args.get("poi_ids") or []
     if not poi_ids:
         return None
-    arrival_time_min = None
-    at = args.get("arrival_time")
-    if at:
-        try:
-            h, m = str(at).strip().split(":")
-            arrival_time_min = int(h) * 60 + int(m)
-        except ValueError:
-            arrival_time_min = None
+    arrival_time_min = _hhmm_arg(args.get("arrival_time")) if args.get("arrival_time") else None
+    departure_time_min = _hhmm_arg(args.get("departure_time")) if args.get("departure_time") else None
     try:
-        plan = plan_trip(
+        return plan_trip(
             cities=[city],
             days=int(args.get("days", 2)),
             poi_ids=poi_ids,
@@ -751,24 +754,143 @@ def _rerun_engine_draft(city: str, args: dict):
             departure_hub_id=args.get("departure_hub_id"),
             hub_catalog={city: _gh().get_hubs(city)},
             arrival_time_min=arrival_time_min,
+            departure_time_min=departure_time_min,
             first_day_density=args.get("first_day_density"),
             last_day_density=args.get("last_day_density"),
         )
     except Exception as exc:  # noqa: BLE001 — degrade to model plan on any error
         logger.warning("engine draft re-run failed: %s", exc)
         return None
-    return {
-        "city": city,
-        "days": [
-            {
-                "day": d.day,
-                "spot_ids": [p.id for p in d.pois],
-                "hotel": {"name": d.lodging.name, "lat": d.lodging.lat, "lng": d.lodging.lng},
-            }
-            for d in plan.days
-        ],
-        "warnings": list(plan.warnings),
-    }
+
+
+class _ChainLeg:
+    """build_day_schedule reads .route off each leg."""
+
+    def __init__(self, route):
+        self.route = route
+
+
+def _render_days_classic(city: str, args: dict) -> dict | None:
+    """Render the final itinerary through the EXACT classic pipeline:
+    _build_day_chain -> per-leg _query_leg -> build_day_schedule.
+
+    One implementation for both modes. Every classic behaviour is inherited
+    here instead of re-approximated: arrival hub opens the chain with a
+    check-in row, the departure hub closes the last day (no hotel return,
+    no dinner after), flight buffers shape the day clock, closing-time
+    clipping and meals come from the same schedule function classic uses.
+    """
+    plan = _rerun_engine_draft(city, args)
+    if plan is None:
+        return None
+    if isinstance(args, str):
+        import json as _json
+
+        try:
+            args = _json.loads(args)
+        except ValueError:
+            args = {}
+    args = args if isinstance(args, dict) else {}
+
+    n_days = len(plan.days)
+    poi_by_id = {p.id: p for p in get_poi_provider().get_pois(city)}
+    transit = get_transit_provider()
+
+    arrival_time_min = _hhmm_arg(args.get("arrival_time")) if args.get("arrival_time") else None
+    departure_time_min = _hhmm_arg(args.get("departure_time")) if args.get("departure_time") else None
+    arrival_start_min = arrival_time_min + LANDING_BUFFER_MIN if arrival_time_min is not None else None
+    departure_cutoff_min = departure_time_min - TAKEOFF_BUFFER_MIN if departure_time_min is not None else None
+
+    warnings: list[str] = list(plan.warnings)
+    days_out = []
+    for planned_day in plan.days:
+        chain = _build_day_chain(planned_day, n_days, plan.arrival_hub, plan.departure_hub)
+        node_labels: dict[tuple[str, str], str] = {}
+        for kind, ident, *_rest in chain:
+            if kind == "poi":
+                poi = poi_by_id.get(ident)
+                node_labels[(kind, ident)] = (poi.name_en or poi.name) if poi else ident
+            elif kind == "hub":
+                hub = next(
+                    (h for h in (plan.arrival_hub, plan.departure_hub) if h is not None and h.id == ident),
+                    None,
+                )
+                node_labels[(kind, ident)] = (hub.name_en or hub.name) if hub else ident
+            else:
+                hotel = planned_day.morning_lodging if ident == planned_day.morning_lodging.id else planned_day.lodging
+                node_labels[(kind, ident)] = hotel.name if hotel.id == ident else ident
+
+        hour_override = arrival_start_min // 60 if (planned_day.day == 1 and arrival_start_min is not None) else None
+        legs = []
+        for (from_kind, from_id, from_lat, from_lng, _fr, from_city), \
+                (to_kind, to_id, to_lat, to_lng, _tr, to_city) in zip(chain, chain[1:]):
+            route = _query_leg(
+                transit, Coord(lat=from_lat, lng=from_lng), Coord(lat=to_lat, lng=to_lng),
+                tz_name=CITY_TIMEZONES.get(from_city, "Asia/Tokyo"),
+                intercity=from_city != to_city,
+                trip_day=planned_day.day, city=from_city,
+                hour_override=hour_override,
+            )
+            legs.append(_ChainLeg(route))
+
+        schedule = build_day_schedule(
+            chain=chain, legs=legs, poi_by_id=poi_by_id,
+            is_first_day=planned_day.day == 1,
+            has_arrival_hub=plan.arrival_hub is not None,
+            node_labels=node_labels,
+            day_start_min=arrival_start_min if planned_day.day == 1 else None,
+            day_end_cutoff_min=departure_cutoff_min if planned_day.day == n_days else None,
+        )
+
+        visits = {e["title"]: (e["start"], e["end"]) for e in schedule if e["kind"] == "visit"}
+        # spots that never got a visit row (closed by arrival) must not linger
+        # as ghost transit anchors — their legs are dropped; the warning names
+        # them instead
+        unvisited_titles = {
+            (poi.name_en or poi.name) for poi in planned_day.pois
+            if (poi.name_en or poi.name) not in visits
+        }
+        chain_rows = []
+        for e in schedule:
+            if e["kind"] not in ("transit", "visit", "lunch", "dinner", "checkin"):
+                continue
+            if e["kind"] == "transit" and " → " in e["title"]:
+                src, dst = e["title"].split(" → ", 1)
+                if src in unvisited_titles or dst in unvisited_titles:
+                    continue  # ghost leg touching a never-visited spot
+            row = {"kind": e["kind"], "start": e["start"], "end": e["end"], "title": e["title"]}
+            if e.get("line_summary"):
+                row["summary"] = e["line_summary"]
+            chain_rows.append(row)
+
+        spots = []
+        for poi in planned_day.pois:
+            title = poi.name_en or poi.name
+            if title in visits:
+                start, end = visits[title]
+                spots.append({"id": poi.id, "name_en": title, "start": start, "end": end, "note": ""})
+            elif not any(poi.id in w for w in warnings):
+                warnings.append(
+                    f"{poi.id} is on the route but couldn't be visited (closed by the time "
+                    "you'd arrive) — say the word and I'll re-plan"
+                )
+
+        is_departure_day = planned_day.day == n_days and plan.departure_hub is not None
+        reported_hotel = planned_day.morning_lodging if is_departure_day else planned_day.lodging
+        start_val = arrival_start_min if planned_day.day == 1 and arrival_start_min is not None else 9 * 60
+        days_out.append({
+            "day": planned_day.day,
+            "city": planned_day.city,
+            "day_start": f"{start_val // 60:02d}:{start_val % 60:02d}",
+            "chain": chain_rows,
+            "spots": spots,
+            "hotel": reported_hotel.name,
+            "hotel_lat": reported_hotel.lat,
+            "hotel_lng": reported_hotel.lng,
+            "summary": "",
+        })
+
+    return {"days": days_out, "warnings": warnings}
 _agent_lock = asyncio.Lock()  # one agent loop at a time (demo scale)
 
 
@@ -860,6 +982,12 @@ def _agent_stream(session_id: str, payload):
                     elif event.get("current_tool_use", {}).get("name"):
                         tool = event["current_tool_use"]
                         call_id = str(tool.get("toolUseId") or tool.get("id") or "")
+                        # capture on EVERY event: strands streams the input
+                        # incrementally, so the first event of a call carries
+                        # an EMPTY/partial input — the last write wins with
+                        # the complete args
+                        if tool["name"] == "draft_day_plan":
+                            _session_drafts[session_id] = tool.get("input", {}) or {}
                         if call_id and call_id in tool_calls_seen:
                             continue  # same call streaming — count once
                         if call_id:
@@ -867,8 +995,6 @@ def _agent_stream(session_id: str, payload):
                         if len(tool_calls_seen) > MAX_TOOL_EVENTS:
                             capped = True  # stop the loop; salvage below
                             break
-                        if tool["name"] == "draft_day_plan":
-                            _session_drafts[session_id] = tool.get("input", {})
                         yield _agent_sse("tool", name=tool["name"],
                                          input_preview=str(tool.get("input", {}))[:160])
                     elif "result" in event:
@@ -933,11 +1059,32 @@ def _agent_stream(session_id: str, payload):
             # the model's echo only contributes display notes.
             _draft_args = _session_drafts.get(session_id) or {}
             _city = plan_dict["days"][0].get("city") if plan_dict.get("days") else _draft_args.get("city", "")
-            if _draft_args and _city:
-                from .agents.tools import stash_draft
+            logger.info("plan emit: session=%s captured_args=%s city=%r",
+                        session_id, list(_draft_args.keys())[:8] if isinstance(_draft_args, dict) else type(_draft_args).__name__, _city)
+            # reconcile flight times: the model states them in the final
+            # plan even when a tool call missed them — the renderer's cutoff
+            # must never depend on the model remembering one specific call.
+            # (args may arrive as a JSON string — parse before merging)
+            import json as _json7
 
-                stash_draft(_rerun_engine_draft(_city, _draft_args))
-            plan_dict = _rebuild_from_engine(plan_dict)
+            if isinstance(_draft_args, str):
+                try:
+                    _draft_args = _json7.loads(_draft_args)
+                except ValueError:
+                    _draft_args = {}
+            if isinstance(_draft_args, dict):
+                for _k in ("arrival_time", "departure_time"):
+                    if not _draft_args.get(_k) and plan_dict.get(_k):
+                        _draft_args[_k] = plan_dict[_k]
+            _rendered = _render_days_classic(_city, _draft_args) if (_draft_args and _city) else None
+            logger.info("plan emit: classic renderer -> %s", "OK" if _rendered is not None else "FALLBACK")
+            if _rendered is not None:
+                plan_dict["days"] = _rendered["days"]
+                plan_dict["warnings"] = _rendered["warnings"] + [
+                    w for w in plan_dict.get("warnings", []) if w not in _rendered["warnings"]
+                ][:2]
+            else:
+                plan_dict = _rebuild_from_engine(plan_dict)
             extra = _enrich(plan_dict["days"][0]["city"], plan_dict) if plan.days else {}
             yield _agent_sse("plan", plan=plan_dict, **extra)
         yield _agent_sse("done", state="complete")

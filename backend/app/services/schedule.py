@@ -215,9 +215,16 @@ def build_day_schedule(
                 clock += remain
                 remain = 0
             if not dinner_done and not more_pois:
-                if clock < DINNER_EARLIEST:
-                    clock = DINNER_EARLIEST
-                add_dinner()  # skipped entirely when it would run past the cap
+                if DINNER_EARLIEST + DINNER_MIN > cap:
+                    # a real dinner cannot fit before the day's cutoff (e.g. a
+                    # departure-day flight) — skip it WITHOUT jumping the
+                    # clock to 18:00, so the final hub leg follows the last
+                    # visit immediately
+                    dinner_done = True
+                else:
+                    if clock < DINNER_EARLIEST:
+                        clock = DINNER_EARLIEST
+                    add_dinner()
 
     ends_at_hub = bool(chain) and chain[-1][0] == "hub"
     if poi_count and not dinner_done and not ends_at_hub:

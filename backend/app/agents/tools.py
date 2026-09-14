@@ -198,6 +198,7 @@ def draft_day_plan(
     arrival_hub_id: str | None = None,
     arrival_time: str | None = None,
     departure_hub_id: str | None = None,
+    departure_time: str | None = None,
     first_day_density: str | None = None,
     last_day_density: str | None = None,
 ) -> dict:
@@ -215,6 +216,9 @@ def draft_day_plan(
         arrival_time: optional "HH:MM" landing time (24h) with arrival_hub_id.
         departure_hub_id: optional airport/station id for the last day —
           the final leg goes last spot -> this hub, not the hotel.
+        departure_time: "HH:MM" (24h) takeoff/departure time with
+          departure_hub_id — sightseeing on the last day must END well
+          before it (the engine applies a 2-hour buffer).
         first_day_density / last_day_density: "few" (light) or "none" (empty)
           for the arrival/departure day.
     """
@@ -230,6 +234,13 @@ def draft_day_plan(
             arrival_time_min = int(h) * 60 + int(m)
         except ValueError:
             return {"error": "arrival_time must be HH:MM (24h)"}
+    departure_time_min = None
+    if departure_time:
+        try:
+            h, m = departure_time.strip().split(":")
+            departure_time_min = int(h) * 60 + int(m)
+        except ValueError:
+            return {"error": "departure_time must be HH:MM (24h)"}
     try:
         plan = plan_trip(
             cities=[city],
@@ -243,6 +254,7 @@ def draft_day_plan(
             departure_hub_id=departure_hub_id,
             hub_catalog={city: get_transport_hub_provider().get_hubs(city)},
             arrival_time_min=arrival_time_min,
+            departure_time_min=departure_time_min,
             first_day_density=first_day_density,
             last_day_density=last_day_density,
         )
