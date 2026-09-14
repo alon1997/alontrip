@@ -61,6 +61,7 @@ def rebuild_from_engine(plan: dict) -> dict:
         day_start = starts.get(day_no, "09:00")
         day_arrival = arrival_hub if day_no == 1 else None
         day_departure = departure_hub if day_no == n_days else None
+        # classic rule: no dinner after the departure airport leg
         events, times = replay_day_events(
             city, pois, _hhmm_to_min(day_start),
             hotel_name=dd["hotel"]["name"],
@@ -91,6 +92,7 @@ def rebuild_from_engine(plan: dict) -> dict:
         # annotated, so nothing looks like a planned visit that isn't; a
         # hotel->hotel self-leg on an empty day is dropped.
         visited = set()
+        hub_names = {h["name"] for h in (draft.get("arrival_hub"), draft.get("departure_hub")) if h}
         for e in events:
             if e["kind"] == "visit":
                 visited.add(e["title"])
@@ -107,10 +109,14 @@ def rebuild_from_engine(plan: dict) -> dict:
                 src, dst = title.split(" → ", 1)
                 if src == hotel_name and dst == hotel_name:
                     continue  # empty-day self leg
-                marks = []
-                for stop in (src, dst):
-                    if stop != hotel_name and stop not in visited:
-                        marks.append(stop)
+                # annotate only real SPOTS that never got a visit row; hubs and
+                # the hotel are legitimate chain endpoints, never "skipped"
+                marks = [
+                    stop for stop in (src, dst)
+                    if stop != hotel_name
+                    and stop not in hub_names
+                    and stop not in visited
+                ]
                 if marks:
                     title += "  · closed, skipped: " + ", ".join(marks)
             chain.append({
@@ -120,6 +126,10 @@ def rebuild_from_engine(plan: dict) -> dict:
                 "title": title,
                 **({"summary": e["line_summary"]} if e.get("line_summary") else {}),
             })
+        if day_departure is not None:
+            # classic rule: nothing after the departure hub — drop the
+            # hotel-return dinner so the airport leg closes the day
+            chain = [e for e in chain if e.get("kind") != "dinner"]
         new_days.append({
             "day": day_no,
             "city": city,
