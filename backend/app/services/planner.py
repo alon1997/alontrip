@@ -1534,43 +1534,41 @@ def _deepseek_fill_city(
     # remaining day instead of rejecting the whole table (both 2026-09-23
     # seoul-4d runs failed validation exactly this way and lost the LLM
     # grouping to the rule fallback).
-    few_edge_days: set[int] = set()
-    if first_mode == "few":
-        few_edge_days.add(1)
-    if last_mode == "few":
-        few_edge_days.add(n_days)
-    if few_edge_days:
-        for entry in raw_days:
-            if not isinstance(entry, dict):
-                continue
-            day = entry.get("day")
-            if entry.get("poi_ids") == [] and day in few_edge_days:
-                donor = max(
-                    (
-                        e
-                        for e in raw_days
-                        if isinstance(e, dict)
-                        and isinstance(e.get("day"), int)
-                        and e.get("day") != day
-                        and len(e.get("poi_ids") or []) >= 2
-                    ),
-                    key=lambda e: len(e["poi_ids"]),
-                    default=None,
-                )
-                if donor is None:
-                    break
-                moved = donor["poi_ids"].pop()
-                entry["poi_ids"] = [moved]
-                logger.info(
-                    "DeepSeek empty edge-day repair city=%s day=%s <- %s", city, day, moved
-                )
-
     both_none_two_days = first_mode == "none" and last_mode == "none" and n_days == 2
     empty_ok: set[int] = set()
     if first_mode == "none" and not both_none_two_days:
         empty_ok.add(1)
     if last_mode == "none" and not both_none_two_days:
         empty_ok.add(n_days)
+
+    # T-A10: the model empties *some* day for flight itineraries — sometimes
+    # the departure day, sometimes a random middle one (seoul 2026-09-24:
+    # "empty day 3"). Any empty day outside empty_ok is repairable: steal one
+    # spot from the fullest remaining day instead of rejecting the table.
+    for entry in raw_days:
+        if not isinstance(entry, dict):
+            continue
+        day = entry.get("day")
+        if entry.get("poi_ids") == [] and isinstance(day, int) and day not in empty_ok:
+            donor = max(
+                (
+                    e
+                    for e in raw_days
+                    if isinstance(e, dict)
+                    and isinstance(e.get("day"), int)
+                    and e.get("day") != day
+                    and len(e.get("poi_ids") or []) >= 2
+                ),
+                key=lambda e: len(e["poi_ids"]),
+                default=None,
+            )
+            if donor is None:
+                break
+            moved = donor["poi_ids"].pop()
+            entry["poi_ids"] = [moved]
+            logger.info(
+                "DeepSeek empty day repair city=%s day=%s <- %s", city, day, moved
+            )
 
     groups_by_local_day: dict[int, list[Poi]] = {}
     lodging_by_local_day: dict[int, Lodging] = {}
@@ -1623,8 +1621,12 @@ def _deepseek_fill_city(
     # one copy, leaving day 4 empty. The deepseek path has no rebalance step,
     # so refill here: nearest spot to that day's lodging, from the fullest
     # day. "few" never ships as an empty day.
-    if few_edge_days:
-        for day in sorted(few_edge_days):
+    refill_days = sorted(
+        day for day in groups_by_local_day
+        if not groups_by_local_day[day] and day not in empty_ok
+    )
+    if refill_days:
+        for day in refill_days:
             if groups_by_local_day.get(day):
                 continue
             donors = [
