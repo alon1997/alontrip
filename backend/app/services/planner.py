@@ -1946,6 +1946,21 @@ def plan_trip(
             # police used for model tables runs here too, then the closing
             # check re-verifies feasibility on the repaired layout
             groups, _post = _repair_districts(groups)
+            # T-A10c: hotels are engine truth, not model opinion. Left to the
+            # model, "budget backpacker" deterministically gravitates to the
+            # cheapest central listing (seoul: THE CAPSULE Myeongdong every
+            # single run, $31) regardless of where the days actually sit.
+            # Re-derive from the final grouping with the same centroid rule
+            # the rule path uses.
+            if hotel_mode == "system_one":
+                lodging_by_local = {
+                    i + 1: _select_hotels_system_one(candidates, groups)
+                    for i in range(n_days)
+                }
+            elif hotel_mode == "system_multi":
+                lodging_by_local = _select_hotels_system_multi(
+                    candidates, list(range(1, n_days + 1)), groups
+                )
         else:
             city_groupers[city] = "rule-based"
             groups = _group_city_pois(pois, n_days)
