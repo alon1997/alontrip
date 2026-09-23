@@ -255,6 +255,12 @@ def _group_city_pois(pois: list[Poi], n_days: int) -> list[list[Poi]]:
     # to the city centroid, repeatedly walk to the nearest unassigned spot,
     # then cut the chain into n_days contiguous segments. Chain grouping
     # guarantees geographic contiguity whether spots outnumber days or not.
+    #
+    # T-A10: the cut positions are the (n_days-1) WIDEST neighbour gaps, not
+    # an even count split. Even cutting can slice BETWEEN two spots 500m
+    # apart (Insadong / Jogyesa 2026-09-24) purely because the counts were
+    # even — a day boundary belongs where the city is sparse, so tight
+    # clusters always stay on one day.
     if not pois:
         return [[] for _ in range(n_days)]
     c = _centroid(pois)
@@ -265,13 +271,22 @@ def _group_city_pois(pois: list[Poi], n_days: int) -> list[list[Poi]]:
         nxt = min(remaining, key=lambda p: haversine_km(chain[-1].lat, chain[-1].lng, p.lat, p.lng))
         chain.append(nxt)
         remaining.remove(nxt)
+    if n_days >= len(chain):
+        groups = [[spot] for spot in chain]
+        groups += [[] for _ in range(n_days - len(chain))]
+        return groups
+    gaps = sorted(
+        range(len(chain) - 1),
+        key=lambda k: haversine_km(chain[k].lat, chain[k].lng, chain[k + 1].lat, chain[k + 1].lng),
+        reverse=True,
+    )[: n_days - 1]
+    cut_after = sorted(gaps)
     groups: list[list[Poi]] = []
-    base, extra = divmod(len(chain), n_days)
     idx = 0
-    for _ in range(n_days):
-        size = base + (1 if _ < extra else 0)
-        groups.append(chain[idx:idx + size])
-        idx += size
+    for k in cut_after:
+        groups.append(chain[idx : k + 1])
+        idx = k + 1
+    groups.append(chain[idx:])
     return groups
 
 
@@ -1392,13 +1407,16 @@ def _deepseek_city_prompt(
         edge_rules.append("Day 1 is the trip arrival day: poi_ids must be [].")
     elif first_mode == "few":
         edge_rules.append(
-            "Day 1 is the trip arrival day: keep it light (prefer 1 spot; more only if later days cannot hold the rest)."
+            "Day 1 is the trip arrival day: keep it light (prefer 1 spot; more only if later days cannot hold "
+            "the rest). It must contain at least one poi_id — never an empty list."
         )
     if last_mode == "none" and not both_none_two_days:
         edge_rules.append(f"Day {n_days} is the trip departure day: poi_ids must be [].")
     elif last_mode == "few":
         edge_rules.append(
-            f"Day {n_days} is the trip departure day: keep it light (prefer 1 spot; more only if earlier days cannot hold the rest)."
+            f"Day {n_days} is the trip departure day: keep it light (prefer 1 spot; more only if earlier days cannot "
+            "hold the rest). It must contain at least one poi_id — never an empty list, the flight does not remove "
+            "the day itself."
         )
     if both_none_two_days:
         edge_rules.append(
@@ -1416,6 +1434,8 @@ def _deepseek_city_prompt(
         "Reply with ONLY a JSON object of the exact form "
         '{"days": [{"day": 1, "city": "' + city + '", "poi_ids": ["..."], '
         '"lodging_id": "..."}, ...]}. '
+        "Every day's poi_ids must be non-empty except days explicitly marked with the arrival/departure empty "
+        "rule above. "
         "Copy poi_ids and lodging_id values character-for-character from the lists above — "
         "do not abbreviate, reword or re-space them. "
         f"``day`` must run 1..{n_days}, each exactly once."
@@ -1508,6 +1528,43 @@ def _deepseek_fill_city(
     if id_repairs:
         logger.info("DeepSeek poi-id repair city=%s %s", city, id_repairs)
 
+    # T-A10: the model loves an empty departure day for flight itineraries
+    # even when the traveller asked for a light-but-non-empty day. An empty
+    # edge-"few" day is repairable — steal one spot for it from the fullest
+    # remaining day instead of rejecting the whole table (both 2026-09-23
+    # seoul-4d runs failed validation exactly this way and lost the LLM
+    # grouping to the rule fallback).
+    few_edge_days: set[int] = set()
+    if first_mode == "few":
+        few_edge_days.add(1)
+    if last_mode == "few":
+        few_edge_days.add(n_days)
+    if few_edge_days:
+        for entry in raw_days:
+            if not isinstance(entry, dict):
+                continue
+            day = entry.get("day")
+            if entry.get("poi_ids") == [] and day in few_edge_days:
+                donor = max(
+                    (
+                        e
+                        for e in raw_days
+                        if isinstance(e, dict)
+                        and isinstance(e.get("day"), int)
+                        and e.get("day") != day
+                        and len(e.get("poi_ids") or []) >= 2
+                    ),
+                    key=lambda e: len(e["poi_ids"]),
+                    default=None,
+                )
+                if donor is None:
+                    break
+                moved = donor["poi_ids"].pop()
+                entry["poi_ids"] = [moved]
+                logger.info(
+                    "DeepSeek empty edge-day repair city=%s day=%s <- %s", city, day, moved
+                )
+
     both_none_two_days = first_mode == "none" and last_mode == "none" and n_days == 2
     empty_ok: set[int] = set()
     if first_mode == "none" and not both_none_two_days:
@@ -1559,6 +1616,35 @@ def _deepseek_fill_city(
         return None
     if repaired_sets:
         logger.info("DeepSeek poi-set repair city=%s %s", city, repaired_sets)
+
+    # T-A10b: the dedupe above can empty an edge-"few" day — the model's
+    # favourite trick is reusing the arrival spot as the departure-day spot
+    # (seoul 2026-09-24: myeongdong on day 1 AND day 4), and the dedupe keeps
+    # one copy, leaving day 4 empty. The deepseek path has no rebalance step,
+    # so refill here: nearest spot to that day's lodging, from the fullest
+    # day. "few" never ships as an empty day.
+    if few_edge_days:
+        for day in sorted(few_edge_days):
+            if groups_by_local_day.get(day):
+                continue
+            donors = [
+                (d, g) for d, g in groups_by_local_day.items()
+                if len(g) >= 2 and d != day
+            ]
+            if not donors:
+                continue
+            d_src, _ = max(donors, key=lambda t: len(t[1]))
+            lod = lodging_by_local_day.get(day)
+            src = groups_by_local_day[d_src]
+            if lod is not None:
+                move = min(src, key=lambda p: haversine_km(lod.lat, lod.lng, p.lat, p.lng))
+            else:
+                move = src[-1]
+            src.remove(move)
+            groups_by_local_day[day] = [move]
+            logger.info(
+                "DeepSeek empty edge-day refill city=%s day=%s <- %s", city, day, move.id
+            )
     if hotel_mode == "system_one" and len({l.id for l in lodging_by_local_day.values()}) != 1:
         logger.error("DeepSeek fill FAILED for city=%s (system_one used multiple hotels); falling back", city)
         return None
