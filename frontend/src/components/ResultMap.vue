@@ -443,7 +443,7 @@ function buildExportModel() {
     }))
     const statsBits = [
       fmt(summary?.minutes ?? 0),
-      money(summary?.cost ?? 0, summary?.currency || 'USD'),
+      ...(summary?.cost > 0 ? [money(summary.cost, summary.currency || 'USD')] : []),
       summary?.transfers ? `${summary.transfers} transfer${summary.transfers === 1 ? '' : 's'}` : 'direct',
     ]
     let statsText = statsBits.join(' · ')

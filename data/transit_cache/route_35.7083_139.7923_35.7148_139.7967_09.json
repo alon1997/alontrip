@@ -1,0 +1,1 @@
+{"total_duration_min":6,"total_cost":5.85,"currency":"USD","transfer_count":0,"legs":[{"travel_mode":"taxi","line_name":"","from_stop":"","to_stop":"","stop_count":0,"start_time":"","end_time":"","duration_min":6,"cost":5.85,"estimated":true}],"estimated":true,"frequency":"","alternatives":[],"data_source":"taxi"}

@@ -140,8 +140,7 @@ async function onDownload() {
             <span class="trip-total-value">≈ {{ money(budget.grand, 'USD') }}</span>
           </div>
           <div v-if="budget" class="trip-total-note">
-            transit {{ money(budget.transit, 'USD') }} ·
-            tickets {{ money(budget.tickets, 'USD') }} ·
+            <template v-if="budget.transit > 0">transit {{ money(budget.transit, 'USD') }} · </template>tickets {{ money(budget.tickets, 'USD') }} ·
             stays {{ money(budget.stays, 'USD') }}<template v-if="budget.unknown">
               · {{ budget.unknown }} unknown price{{ budget.unknown === 1 ? '' : 's' }} (counted as $0)</template>
           </div>
@@ -176,7 +175,7 @@ async function onDownload() {
             </li>
           </ol>
           <div class="day-stats">
-            {{ fmt(day.minutes) }} · {{ money(day.cost, day.currency) }}
+            {{ fmt(day.minutes) }}<template v-if="day.cost > 0"> · {{ money(day.cost, day.currency) }}</template>
             <template v-if="day.transfers">
               · {{ day.transfers }} transfer{{ day.transfers === 1 ? '' : 's' }}
             </template>
