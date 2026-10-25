@@ -1,6 +1,7 @@
 #   pip install -r requirements.txt
 # Backend dependencies — minimum known-good versions, install with:
 fastapi>=0.115.0
+starlette>=0.37.2,<0.39.0  # fastapi 0.115 的声明范围；镜像曾装出 starlette 1.7 导致 on_startup 崩溃
 gunicorn>=22.0.0
 httpx>=0.27.0
 openai
